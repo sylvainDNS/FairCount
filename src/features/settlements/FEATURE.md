@@ -2,11 +2,9 @@
 
 ## Description
 
-Les remboursements permettent d'équilibrer les soldes entre les personnes du groupe.
+Les remboursements permettent d'équilibrer les soldes entre les personnes du groupe. Un remboursement est une transaction distincte d'une dépense, avec un modèle de données dédié.
 
-**Simplification** : Un remboursement est simplement une **dépense négative**. Quand Alex rembourse 50€ à Sam, c'est une dépense de -50€ payée par Alex, qui concerne uniquement Sam.
-
-Cette approche simplifie le modèle de données et les calculs : pas besoin de confirmation, pas de statuts complexes.
+**Avantage du modèle séparé** : Un remboursement ne peut concerner qu'une seule personne destinataire, ce qui est garanti par le typage.
 
 ## User Stories
 
@@ -29,7 +27,7 @@ Cette approche simplifie le modèle de données et les calculs : pas besoin de c
 #### Critères d'acceptation
 - [ ] Formulaire pré-rempli avec le montant suggéré
 - [ ] Possibilité de modifier le montant (remboursement partiel)
-- [ ] Sélection de la personne à qui on rembourse
+- [ ] Sélection de la personne destinataire (une seule)
 - [ ] Mise à jour immédiate des soldes
 
 ### US-SET-03: Voir l'historique des remboursements
@@ -38,115 +36,114 @@ Cette approche simplifie le modèle de données et les calculs : pas besoin de c
 **Afin de** garder une trace des transactions
 
 #### Critères d'acceptation
-- [ ] Les remboursements apparaissent dans la liste des dépenses (montant négatif)
-- [ ] Filtre pour afficher uniquement les remboursements
-- [ ] Distinction visuelle (couleur, icône) des remboursements
+- [ ] Liste chronologique des remboursements
+- [ ] Filtres : tous, envoyés par moi, reçus par moi
+- [ ] Affichage : date, montant, de qui, à qui
 
 ---
 
 ## Spécifications Techniques
 
-### Modèle simplifié
-
-Un remboursement est une dépense avec :
-- `amount` négatif
-- `paidBy` = la personne qui rembourse
-- Un seul participant = la personne qui reçoit
-
-```typescript
-// Un remboursement est créé comme une dépense spéciale
-interface Settlement {
-  readonly fromMember: string;  // Qui rembourse
-  readonly toMember: string;    // Qui reçoit
-  readonly amount: number;      // Montant positif
-}
-
-// Converti en Expense pour stockage
-const settlementToExpense = (
-  settlement: Settlement,
-  groupId: string,
-  createdBy: string
-): Omit<Expense, 'id' | 'createdAt' | 'updatedAt'> => ({
-  groupId,
-  paidBy: settlement.fromMember,
-  amount: -settlement.amount, // Montant négatif
-  description: `Remboursement`,
-  date: new Date(),
-  createdBy,
-  deletedAt: null,
-});
-```
-
 ### Endpoints API
 
 | Méthode | Route | Description |
 |---------|-------|-------------|
+| GET | `/api/groups/:id/settlements` | Historique des remboursements |
 | GET | `/api/groups/:id/settlements/suggested` | Remboursements suggérés |
 | POST | `/api/groups/:id/settlements` | Enregistrer un remboursement |
+| DELETE | `/api/groups/:id/settlements/:settlementId` | Annuler un remboursement |
 
-Note : L'historique des remboursements est accessible via `/api/groups/:id/expenses` en filtrant les montants négatifs.
+### Schéma de données
+
+```typescript
+interface Settlement {
+  readonly id: string;
+  readonly groupId: string;
+  readonly fromMember: string;  // Qui rembourse (memberId)
+  readonly toMember: string;    // Qui reçoit (memberId) - toujours une seule personne
+  readonly amount: number;      // Montant en centimes (toujours positif)
+  readonly date: Date;
+  readonly createdAt: Date;
+}
+
+interface SuggestedSettlement {
+  readonly fromMember: GroupMember;
+  readonly toMember: GroupMember;
+  readonly amount: number;
+}
+```
+
+### Avantages du Modèle Séparé
+
+| Aspect | Modèle séparé | Dépense négative |
+|--------|---------------|------------------|
+| **Contrainte "une seule personne"** | Garantie par le type | À valider manuellement |
+| **Montant** | Toujours positif | Négatif (risque de confusion) |
+| **Requêtes** | Filtrées par table | Filtrées par condition |
+| **Sémantique** | Claire et explicite | Implicite |
 
 ### Algorithme d'Optimisation
 
 L'objectif est de minimiser le nombre de transactions tout en équilibrant tous les soldes.
 
 ```typescript
-interface SuggestedSettlement {
-  readonly fromMember: GroupMember;
-  readonly toMember: GroupMember;
-  readonly amount: number;
-}
-
 const suggestSettlements = (
   balances: readonly Balance[]
 ): readonly SuggestedSettlement[] => {
-  // Séparer créditeurs et débiteurs
+  // Séparer créditeurs (solde > 0) et débiteurs (solde < 0)
   const debtors = balances
     .filter((b) => b.balance < 0)
-    .map((b) => ({ memberId: b.memberId, remaining: Math.abs(b.balance) }))
+    .map((b) => ({ memberId: b.memberId, memberName: b.memberName, remaining: Math.abs(b.balance) }))
     .sort((a, b) => b.remaining - a.remaining);
 
   const creditors = balances
     .filter((b) => b.balance > 0)
-    .map((b) => ({ memberId: b.memberId, remaining: b.balance }))
+    .map((b) => ({ memberId: b.memberId, memberName: b.memberName, remaining: b.balance }))
     .sort((a, b) => b.remaining - a.remaining);
 
-  // Algorithme glouton : matcher les plus gros montants
-  const settlements: SuggestedSettlement[] = [];
+  return computeSettlements(debtors, creditors, []);
+};
 
-  const processSettlements = (
-    debtors: typeof debtors,
-    creditors: typeof creditors
-  ): readonly SuggestedSettlement[] => {
-    if (debtors.length === 0 || creditors.length === 0) {
-      return settlements;
-    }
+// Fonction récursive pure (pas de mutation)
+const computeSettlements = (
+  debtors: readonly { memberId: string; memberName: string; remaining: number }[],
+  creditors: readonly { memberId: string; memberName: string; remaining: number }[],
+  accumulated: readonly SuggestedSettlement[]
+): readonly SuggestedSettlement[] => {
+  // Filtrer les personnes avec solde restant
+  const activeDebtors = debtors.filter((d) => d.remaining > 0);
+  const activeCreditors = creditors.filter((c) => c.remaining > 0);
 
-    const [debtor, ...remainingDebtors] = debtors;
-    const [creditor, ...remainingCreditors] = creditors;
+  if (activeDebtors.length === 0 || activeCreditors.length === 0) {
+    return accumulated;
+  }
 
-    if (debtor.remaining === 0) {
-      return processSettlements(remainingDebtors, [creditor, ...remainingCreditors]);
-    }
-    if (creditor.remaining === 0) {
-      return processSettlements([debtor, ...remainingDebtors], remainingCreditors);
-    }
+  const [debtor, ...restDebtors] = activeDebtors;
+  const [creditor, ...restCreditors] = activeCreditors;
 
-    const amount = Math.min(debtor.remaining, creditor.remaining);
+  const amount = Math.min(debtor.remaining, creditor.remaining);
 
-    settlements.push({
-      fromMember: debtor.memberId,
-      toMember: creditor.memberId,
-      amount,
-    });
-
-    return processSettlements(
-      [{ ...debtor, remaining: debtor.remaining - amount }, ...remainingDebtors],
-      [{ ...creditor, remaining: creditor.remaining - amount }, ...remainingCreditors]
-    );
+  const newSettlement: SuggestedSettlement = {
+    fromMember: { id: debtor.memberId, name: debtor.memberName } as GroupMember,
+    toMember: { id: creditor.memberId, name: creditor.memberName } as GroupMember,
+    amount,
   };
 
-  return processSettlements(debtors, creditors);
+  const updatedDebtors = [
+    { ...debtor, remaining: debtor.remaining - amount },
+    ...restDebtors,
+  ];
+
+  const updatedCreditors = [
+    { ...creditor, remaining: creditor.remaining - amount },
+    ...restCreditors,
+  ];
+
+  return computeSettlements(
+    updatedDebtors,
+    updatedCreditors,
+    [...accumulated, newSettlement]
+  );
 };
 ```
 
@@ -174,20 +171,20 @@ const suggestSettlements = (
 - Message si aucun remboursement nécessaire
 
 ### `SettlementCard`
-- Avatars des deux personnes avec flèche
+- Avatars des deux personnes avec flèche directionnelle
 - Montant
 - Bouton d'action si je suis la personne qui doit payer
 
 ### `SettlementForm`
-- Montant pré-rempli (modifiable)
-- Sélecteur de la personne qui reçoit
+- Montant pré-rempli (modifiable pour remboursement partiel)
+- Personne destinataire (sélection unique)
 - Bouton de validation
 - Aperçu de l'impact sur les soldes
 
-### `SettlementBadge`
-- Badge visuel dans la liste des dépenses
-- Icône distincte (flèche circulaire)
-- Couleur différente (neutre)
+### `SettlementHistory`
+- Liste chronologique
+- Filtres : tous / envoyés / reçus
+- Affichage clair de la direction (de → à)
 
 ---
 
@@ -196,9 +193,11 @@ const suggestSettlements = (
 ### `useSettlements`
 ```typescript
 interface UseSettlements {
+  readonly settlements: readonly Settlement[];
   readonly suggested: readonly SuggestedSettlement[];
   readonly isLoading: boolean;
-  recordSettlement: (settlement: Settlement) => Promise<void>;
+  recordSettlement: (fromMember: string, toMember: string, amount: number) => Promise<void>;
+  deleteSettlement: (settlementId: string) => Promise<void>;
 }
 ```
 
@@ -214,20 +213,7 @@ interface UseMySettlements {
 
 ---
 
-## Affichage dans la Liste des Dépenses
-
-Les remboursements apparaissent dans la liste des dépenses avec :
-
-| Élément | Dépense normale | Remboursement |
-|---------|-----------------|---------------|
-| Montant | Positif (ex: 50,00 €) | Négatif (ex: -50,00 €) |
-| Icône | Panier/catégorie | Flèche circulaire |
-| Description | "Courses", "Restaurant"... | "Remboursement à [Nom]" |
-| Couleur | Standard | Gris/neutre |
-
----
-
-## Workflow Simplifié
+## Workflow
 
 ```
 ┌─────────────────┐
@@ -250,6 +236,7 @@ Les remboursements apparaissent dans la liste des dépenses avec :
 ┌─────────────────┐
 │ Enregistrer le  │
 │ remboursement   │
+│ (dans l'app)    │
 └────────┬────────┘
          │
          ▼
@@ -263,10 +250,34 @@ Pas de confirmation nécessaire : la confiance entre membres du groupe est prés
 
 ---
 
-## Avantages de l'Approche "Dépense Négative"
+## Intégration avec les Soldes
 
-1. **Simplicité** : Un seul type d'entité (Expense) à gérer
-2. **Cohérence** : Les calculs de solde fonctionnent automatiquement
-3. **Historique unifié** : Tout est dans la même liste
-4. **Pas de workflow complexe** : Pas de statuts, pas de confirmation
-5. **Confiance** : Adapté aux groupes de confiance (couples, familles, amis proches)
+Le calcul des soldes prend en compte les remboursements :
+
+```typescript
+const calculateBalances = (
+  members: readonly GroupMember[],
+  expenses: readonly Expense[],
+  settlements: readonly Settlement[]
+): readonly Balance[] => {
+  // ... calcul des soldes basé sur les dépenses ...
+
+  // Appliquer les remboursements
+  return balancesAfterExpenses.map((balance) => {
+    const paid = settlements
+      .filter((s) => s.fromMember === balance.memberId)
+      .reduce((sum, s) => sum + s.amount, 0);
+
+    const received = settlements
+      .filter((s) => s.toMember === balance.memberId)
+      .reduce((sum, s) => sum + s.amount, 0);
+
+    return {
+      ...balance,
+      settlementsPaid: paid,
+      settlementsReceived: received,
+      netBalance: balance.balance - paid + received,
+    };
+  });
+};
+```

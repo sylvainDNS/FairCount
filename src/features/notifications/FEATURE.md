@@ -105,9 +105,10 @@ interface Notification {
 }
 
 type NotificationType =
-  | 'expense_added'      // Nouvelle dépense (inclut les remboursements)
+  | 'expense_added'      // Nouvelle dépense
   | 'expense_updated'    // Dépense modifiée
   | 'expense_deleted'    // Dépense supprimée
+  | 'settlement_added'   // Nouveau remboursement
   | 'group_invitation'   // Invitation à un groupe
   | 'member_joined'      // Nouvelle personne dans le groupe
   | 'member_left'        // Personne ayant quitté le groupe
@@ -339,8 +340,7 @@ const isPushSupported = (): boolean =>
 | Dépense ajoutée | `expense_added` | Tous les membres sauf le créateur |
 | Dépense modifiée | `expense_updated` | Tous les membres concernés |
 | Dépense supprimée | `expense_deleted` | Tous les membres concernés |
+| Remboursement enregistré | `settlement_added` | La personne qui reçoit le remboursement |
 | Invitation envoyée | `group_invitation` | Personne invitée (si inscrite) |
 | Personne rejoint | `member_joined` | Tous les membres |
 | Rappel hebdomadaire | `reminder` | Personnes avec solde négatif |
-
-Note : Les remboursements sont des dépenses négatives et génèrent donc une notification `expense_added`.

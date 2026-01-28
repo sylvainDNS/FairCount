@@ -4,7 +4,7 @@
 
 Permet d'enregistrer et gérer les dépenses du groupe. Chaque dépense est répartie équitablement entre les personnes concernées selon leurs coefficients.
 
-**Note** : Les remboursements sont des dépenses avec un montant négatif. Voir la feature `settlements` pour plus de détails.
+**Note** : Les remboursements sont gérés par un modèle séparé (`settlements`). Voir la feature `settlements` pour plus de détails.
 
 ## User Stories
 
@@ -95,7 +95,7 @@ interface Expense {
   readonly id: string;
   readonly groupId: string;
   readonly paidBy: string; // memberId
-  readonly amount: number; // en centimes, positif = dépense, négatif = remboursement
+  readonly amount: number; // en centimes (toujours positif)
   readonly description: string;
   readonly date: Date;
   readonly createdBy: string; // memberId
@@ -110,9 +110,6 @@ interface ExpenseParticipant {
   readonly memberId: string;
   readonly customAmount: number | null; // null = calcul équitable
 }
-
-// Helper pour identifier les remboursements
-const isSettlement = (expense: Expense): boolean => expense.amount < 0;
 ```
 
 ### Calcul de la Part Équitable

@@ -65,16 +65,20 @@ Calcule et affiche les soldes de chaque personne du groupe en temps réel. Le so
 
 ```typescript
 interface Balance {
-  memberId: string;
-  memberName: string;
-  totalPaid: number;      // Ce que la personne a payé (dépenses positives)
-  totalOwed: number;      // Ce que la personne devrait payer
-  balance: number;        // totalPaid - totalOwed
+  readonly memberId: string;
+  readonly memberName: string;
+  readonly totalPaid: number;      // Ce que la personne a payé (dépenses)
+  readonly totalOwed: number;      // Ce que la personne devrait payer
+  readonly balance: number;        // totalPaid - totalOwed
+  readonly settlementsPaid: number;    // Remboursements effectués
+  readonly settlementsReceived: number; // Remboursements reçus
+  readonly netBalance: number;     // balance - settlementsPaid + settlementsReceived
 }
 
 interface BalanceDetail {
-  balance: Balance;
-  expenses: ExpenseWithShare[];  // Dépenses avec ma part (inclut les remboursements)
+  readonly balance: Balance;
+  readonly expenses: readonly ExpenseWithShare[];  // Dépenses avec ma part
+  readonly settlements: readonly Settlement[];      // Remboursements envoyés/reçus
 }
 
 interface GroupStats {
@@ -104,11 +108,15 @@ const createEmptyBalance = (member: GroupMember): Balance => ({
   totalPaid: 0,
   totalOwed: 0,
   balance: 0,
+  settlementsPaid: 0,
+  settlementsReceived: 0,
+  netBalance: 0,
 });
 
 const calculateBalances = (
   members: readonly GroupMember[],
-  expenses: readonly Expense[]
+  expenses: readonly Expense[],
+  settlements: readonly Settlement[]
 ): readonly Balance[] => {
   const activeMembers = members.filter((m) => m.leftAt === null);
   const activeExpenses = expenses.filter((e) => e.deletedAt === null);
@@ -149,21 +157,45 @@ const calculateBalances = (
     return updatedBalances;
   }, initialBalances);
 
+  // Appliquer les remboursements
+  const balancesAfterSettlements = settlements.reduce((balances, settlement) => {
+    const updatedBalances = new Map(balances);
+
+    const payer = updatedBalances.get(settlement.fromMember);
+    if (payer) {
+      updatedBalances.set(settlement.fromMember, {
+        ...payer,
+        settlementsPaid: payer.settlementsPaid + settlement.amount,
+      });
+    }
+
+    const receiver = updatedBalances.get(settlement.toMember);
+    if (receiver) {
+      updatedBalances.set(settlement.toMember, {
+        ...receiver,
+        settlementsReceived: receiver.settlementsReceived + settlement.amount,
+      });
+    }
+
+    return updatedBalances;
+  }, balancesAfterExpenses);
+
   // Calculer les soldes finaux
-  return Array.from(balancesAfterExpenses.values()).map((balance) => ({
+  return Array.from(balancesAfterSettlements.values()).map((balance) => ({
     ...balance,
     balance: balance.totalPaid - balance.totalOwed,
+    netBalance: balance.totalPaid - balance.totalOwed - balance.settlementsPaid + balance.settlementsReceived,
   }));
 };
 ```
 
 ### Vérification d'Intégrité
 
-La somme de tous les soldes doit toujours être égale à 0 :
+La somme de tous les soldes nets doit toujours être égale à 0 :
 
 ```typescript
 const verifyBalanceIntegrity = (balances: readonly Balance[]): boolean => {
-  const total = balances.reduce((sum, b) => sum + b.balance, 0);
+  const total = balances.reduce((sum, b) => sum + b.netBalance, 0);
   return Math.abs(total) < 1; // Tolérance de 1 centime pour les arrondis
 };
 ```
@@ -187,7 +219,7 @@ const verifyBalanceIntegrity = (balances: readonly Balance[]): boolean => {
 - Décomposition du solde
 - Section "Ce que j'ai payé" avec liste des dépenses
 - Section "Ce que je dois" avec liste des parts
-- Les remboursements apparaissent comme des dépenses négatives
+- Section "Remboursements" avec historique envoyés/reçus
 
 ### `BalanceChart`
 - Graphique en camembert des parts

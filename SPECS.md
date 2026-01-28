@@ -67,8 +67,8 @@ Pour garantir un vocabulaire inclusif et accessible :
 
 ### 6. Remboursements (`settlements`)
 - Suggestions de remboursements optimisés
-- Remboursements = dépenses négatives (simplicité)
-- Historique unifié avec les dépenses
+- Modèle séparé des dépenses (garantit qu'un remboursement = une seule personne destinataire)
+- Pas de confirmation nécessaire (confiance présumée)
 
 ### 7. Notifications (`notifications`)
 - Notifications push dans le navigateur
@@ -220,6 +220,15 @@ expense_participants
 ├── expense_id (fk: expenses)
 ├── member_id (fk: group_members)
 └── custom_amount (nullable, pour exceptions)
+
+settlements
+├── id (uuid)
+├── group_id (fk: groups)
+├── from_member (fk: group_members)
+├── to_member (fk: group_members) -- toujours une seule personne
+├── amount (toujours positif)
+├── date
+└── created_at
 ```
 
 ---
@@ -314,7 +323,7 @@ Préparation pour :
 - [ ] Ajout de personnes membres avec revenus (transparence)
 - [ ] Ajout de dépenses
 - [ ] Calcul des soldes (recalcul automatique)
-- [ ] Remboursements (dépenses négatives)
+- [ ] Remboursements (modèle dédié)
 
 ### v1.1 - Améliorations
 - [ ] Notifications push
