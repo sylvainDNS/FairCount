@@ -4,6 +4,8 @@
 
 Permet d'enregistrer et gérer les dépenses du groupe. Chaque dépense est répartie équitablement entre les personnes concernées selon leurs coefficients.
 
+**Note** : Les remboursements sont des dépenses avec un montant négatif. Voir la feature `settlements` pour plus de détails.
+
 ## User Stories
 
 ### US-EXP-01: Ajouter une dépense
@@ -90,69 +92,61 @@ Permet d'enregistrer et gérer les dépenses du groupe. Chaque dépense est rép
 
 ```typescript
 interface Expense {
-  id: string;
-  groupId: string;
-  paidBy: string; // memberId
-  amount: number; // en centimes pour éviter les erreurs de float
-  description: string;
-  date: Date;
-  createdBy: string; // memberId
-  createdAt: Date;
-  updatedAt: Date;
-  deletedAt: Date | null;
+  readonly id: string;
+  readonly groupId: string;
+  readonly paidBy: string; // memberId
+  readonly amount: number; // en centimes, positif = dépense, négatif = remboursement
+  readonly description: string;
+  readonly date: Date;
+  readonly createdBy: string; // memberId
+  readonly createdAt: Date;
+  readonly updatedAt: Date;
+  readonly deletedAt: Date | null;
 }
 
 interface ExpenseParticipant {
-  id: string;
-  expenseId: string;
-  memberId: string;
-  customAmount: number | null; // null = calcul équitable
+  readonly id: string;
+  readonly expenseId: string;
+  readonly memberId: string;
+  readonly customAmount: number | null; // null = calcul équitable
 }
+
+// Helper pour identifier les remboursements
+const isSettlement = (expense: Expense): boolean => expense.amount < 0;
 ```
 
 ### Calcul de la Part Équitable
 
+Approche fonctionnelle avec immutabilité :
+
 ```typescript
 interface ExpenseShare {
-  memberId: string;
-  amount: number; // Ce que la personne doit payer
+  readonly memberId: string;
+  readonly amount: number; // Ce que la personne doit payer
 }
 
-function calculateShares(
+const calculateShares = (
   expense: Expense,
-  participants: ExpenseParticipant[],
-  members: GroupMember[]
-): ExpenseShare[] {
-  const shares: ExpenseShare[] = [];
-
+  participants: readonly ExpenseParticipant[],
+  members: readonly GroupMember[]
+): readonly ExpenseShare[] => {
   // Récupérer les coefficients normalisés des personnes concernées
-  const relevantMembers = members.filter(m =>
-    participants.some(p => p.memberId === m.id)
+  const relevantMembers = members.filter((m) =>
+    participants.some((p) => p.memberId === m.id)
   );
   const coefficients = calculateCoefficients(relevantMembers);
 
-  for (const participant of participants) {
-    if (participant.customAmount !== null) {
-      // Montant personnalisé
-      shares.push({
-        memberId: participant.memberId,
-        amount: participant.customAmount
-      });
-    } else {
-      // Calcul équitable
-      const coefficient = coefficients.get(participant.memberId) || 0;
-      shares.push({
-        memberId: participant.memberId,
-        amount: Math.round(expense.amount * coefficient)
-      });
-    }
-  }
+  const rawShares = participants.map((participant) => ({
+    memberId: participant.memberId,
+    amount:
+      participant.customAmount !== null
+        ? participant.customAmount
+        : Math.round(expense.amount * (coefficients.get(participant.memberId) ?? 0)),
+  }));
 
   // Ajustement pour que le total = montant exact (gestion des arrondis)
-  adjustForRounding(shares, expense.amount);
-
-  return shares;
-}
+  return adjustForRounding(rawShares, expense.amount);
+};
 ```
 
 ### Gestion des Arrondis
@@ -160,18 +154,27 @@ function calculateShares(
 Pour éviter les erreurs de centimes dues aux arrondis :
 
 ```typescript
-function adjustForRounding(shares: ExpenseShare[], totalAmount: number): void {
+const adjustForRounding = (
+  shares: readonly ExpenseShare[],
+  totalAmount: number
+): readonly ExpenseShare[] => {
   const currentTotal = shares.reduce((sum, s) => sum + s.amount, 0);
   const diff = totalAmount - currentTotal;
 
-  if (diff !== 0) {
-    // Ajouter/retirer la différence à la personne avec le plus gros coefficient
-    const maxShare = shares.reduce((max, s) =>
-      s.amount > max.amount ? s : max
-    );
-    maxShare.amount += diff;
-  }
-}
+  if (diff === 0) return shares;
+
+  // Trouver la personne avec le plus gros montant
+  const maxIndex = shares.reduce(
+    (maxIdx, share, idx) =>
+      share.amount > shares[maxIdx].amount ? idx : maxIdx,
+    0
+  );
+
+  // Retourner un nouveau tableau avec l'ajustement
+  return shares.map((share, idx) =>
+    idx === maxIndex ? { ...share, amount: share.amount + diff } : share
+  );
+};
 ```
 
 ---
@@ -216,10 +219,10 @@ function adjustForRounding(shares: ExpenseShare[], totalAmount: number): void {
 ### `useExpenses`
 ```typescript
 interface UseExpenses {
-  expenses: Expense[];
-  isLoading: boolean;
-  hasMore: boolean;
-  filters: ExpenseFilters;
+  readonly expenses: readonly Expense[];
+  readonly isLoading: boolean;
+  readonly hasMore: boolean;
+  readonly filters: ExpenseFilters;
   setFilters: (filters: ExpenseFilters) => void;
   loadMore: () => Promise<void>;
   refetch: () => Promise<void>;
@@ -229,8 +232,8 @@ interface UseExpenses {
 ### `useExpense`
 ```typescript
 interface UseExpense {
-  expense: ExpenseWithShares | null;
-  isLoading: boolean;
+  readonly expense: ExpenseWithShares | null;
+  readonly isLoading: boolean;
   createExpense: (data: CreateExpenseInput) => Promise<Expense>;
   updateExpense: (data: UpdateExpenseInput) => Promise<void>;
   deleteExpense: () => Promise<void>;

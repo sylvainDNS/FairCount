@@ -4,6 +4,8 @@
 
 Permet aux personnes utilisatrices de créer et gérer des groupes de partage de frais. Chaque groupe réunit des personnes qui partagent des dépenses communes.
 
+**Philosophie d'horizontalité** : Il n'y a pas de hiérarchie dans un groupe. Toutes les personnes membres ont les mêmes droits et responsabilités. Pas d'admin, pas de rôles spéciaux.
+
 ## User Stories
 
 ### US-GRP-01: Créer un groupe
@@ -15,7 +17,7 @@ Permet aux personnes utilisatrices de créer et gérer des groupes de partage de
 - [ ] Formulaire avec nom du groupe (obligatoire)
 - [ ] Description optionnelle
 - [ ] Choix de la devise (EUR par défaut)
-- [ ] La personne créatrice devient automatiquement admin
+- [ ] La personne créatrice est ajoutée au groupe
 - [ ] Redirection vers le groupe créé
 
 ### US-GRP-02: Voir mes groupes
@@ -30,17 +32,17 @@ Permet aux personnes utilisatrices de créer et gérer des groupes de partage de
 - [ ] Accès rapide au dernier groupe consulté
 
 ### US-GRP-03: Modifier un groupe
-**En tant qu'** admin d'un groupe
+**En tant que** membre d'un groupe
 **Je veux** modifier les informations du groupe
 **Afin de** corriger ou mettre à jour les détails
 
 #### Critères d'acceptation
 - [ ] Modification du nom et de la description
-- [ ] Seules les personnes admin peuvent modifier
+- [ ] Toute personne membre peut modifier
 - [ ] Confirmation de la sauvegarde
 
 ### US-GRP-04: Inviter des personnes
-**En tant qu'** admin d'un groupe
+**En tant que** membre d'un groupe
 **Je veux** inviter des personnes par email
 **Afin qu'** elles puissent participer au partage
 
@@ -69,11 +71,11 @@ Permet aux personnes utilisatrices de créer et gérer des groupes de partage de
 #### Critères d'acceptation
 - [ ] Confirmation avant de quitter
 - [ ] Avertissement si solde non nul
-- [ ] La dernière personne admin ne peut pas quitter
+- [ ] La dernière personne ne peut pas quitter (le groupe serait supprimé)
 - [ ] Historique des dépenses conservé
 
 ### US-GRP-07: Archiver un groupe
-**En tant qu'** admin d'un groupe
+**En tant que** membre d'un groupe
 **Je veux** archiver le groupe
 **Afin de** le conserver en lecture seule
 
@@ -132,8 +134,8 @@ interface GroupInvitation {
 ### Règles métier
 
 1. **Création** : Toute personne connectée peut créer un groupe
-2. **Admin** : La personne créatrice est automatiquement admin
-3. **Invitation** : Seules les personnes admin peuvent inviter
+2. **Horizontalité** : Toutes les personnes membres ont les mêmes droits
+3. **Invitation** : Toute personne membre peut inviter
 4. **Archivage** : Un groupe archivé est en lecture seule
 5. **Suppression** : Un groupe ne peut être supprimé que s'il n'a aucune dépense
 
@@ -185,8 +187,8 @@ interface GroupInvitation {
 ### `useGroups`
 ```typescript
 interface UseGroups {
-  groups: Group[];
-  isLoading: boolean;
+  readonly groups: readonly Group[];
+  readonly isLoading: boolean;
   createGroup: (data: CreateGroupInput) => Promise<Group>;
   refetch: () => Promise<void>;
 }
@@ -195,10 +197,10 @@ interface UseGroups {
 ### `useGroup`
 ```typescript
 interface UseGroup {
-  group: Group | null;
-  members: GroupMember[];
-  isLoading: boolean;
-  isAdmin: boolean;
+  readonly group: Group | null;
+  readonly members: readonly GroupMember[];
+  readonly isLoading: boolean;
+  readonly isMember: boolean;
   updateGroup: (data: UpdateGroupInput) => Promise<void>;
   archiveGroup: () => Promise<void>;
   leaveGroup: () => Promise<void>;
@@ -208,8 +210,8 @@ interface UseGroup {
 ### `useInvitations`
 ```typescript
 interface UseInvitations {
-  invitations: GroupInvitation[];
-  isLoading: boolean;
+  readonly invitations: readonly GroupInvitation[];
+  readonly isLoading: boolean;
   sendInvitation: (email: string) => Promise<void>;
   resendInvitation: (invitationId: string) => Promise<void>;
   cancelInvitation: (invitationId: string) => Promise<void>;
@@ -219,9 +221,9 @@ interface UseInvitations {
 ### `useAcceptInvitation`
 ```typescript
 interface UseAcceptInvitation {
-  invitation: GroupInvitation | null;
-  group: Group | null;
-  isLoading: boolean;
+  readonly invitation: GroupInvitation | null;
+  readonly group: Group | null;
+  readonly isLoading: boolean;
   accept: () => Promise<void>;
 }
 ```

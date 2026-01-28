@@ -2,217 +2,192 @@
 
 ## Description
 
-Gère les remboursements entre personnes du groupe pour équilibrer les soldes. Propose des suggestions optimisées pour minimiser le nombre de transactions.
+Les remboursements permettent d'équilibrer les soldes entre les personnes du groupe.
+
+**Simplification** : Un remboursement est simplement une **dépense négative**. Quand Alex rembourse 50€ à Sam, c'est une dépense de -50€ payée par Alex, qui concerne uniquement Sam.
+
+Cette approche simplifie le modèle de données et les calculs : pas besoin de confirmation, pas de statuts complexes.
 
 ## User Stories
 
 ### US-SET-01: Voir les remboursements suggérés
 **En tant que** membre d'un groupe
-**Je veux** voir les remboursements à effectuer
-**Afin de** savoir combien et à qui je dois rembourser
+**Je veux** voir les remboursements optimaux à effectuer
+**Afin de** savoir combien et à qui rembourser
 
 #### Critères d'acceptation
-- [ ] Liste des remboursements optimisés
-- [ ] Pour chaque remboursement : de qui, à qui, combien
-- [ ] Mise en évidence de mes propres remboursements
-- [ ] Explication de l'optimisation
+- [ ] Liste des remboursements suggérés (optimisés pour minimiser les transactions)
+- [ ] Pour chaque suggestion : de qui, à qui, combien
+- [ ] Mise en évidence de mes propres remboursements à faire
+- [ ] Bouton pour enregistrer un remboursement
 
-### US-SET-02: Marquer un remboursement comme effectué
-**En tant que** personne devant de l'argent
-**Je veux** marquer un remboursement comme fait
+### US-SET-02: Enregistrer un remboursement
+**En tant que** personne avec un solde négatif
+**Je veux** enregistrer un remboursement effectué
 **Afin de** mettre à jour les soldes
 
 #### Critères d'acceptation
-- [ ] Bouton "Marquer comme payé"
-- [ ] Confirmation avec le montant
-- [ ] Notification à la personne qui reçoit
+- [ ] Formulaire pré-rempli avec le montant suggéré
+- [ ] Possibilité de modifier le montant (remboursement partiel)
+- [ ] Sélection de la personne à qui on rembourse
 - [ ] Mise à jour immédiate des soldes
 
-### US-SET-03: Confirmer la réception d'un remboursement
-**En tant que** personne recevant de l'argent
-**Je veux** confirmer la réception
-**Afin de** valider la transaction
-
-#### Critères d'acceptation
-- [ ] Notification de remboursement en attente
-- [ ] Bouton "Confirmer la réception"
-- [ ] Option "Contester" si non reçu
-- [ ] Historique des confirmations
-
-### US-SET-04: Effectuer un remboursement partiel
-**En tant que** personne devant de l'argent
-**Je veux** faire un remboursement partiel
-**Afin de** payer progressivement
-
-#### Critères d'acceptation
-- [ ] Option de modifier le montant
-- [ ] Montant minimum (ex: 1€)
-- [ ] Solde restant affiché après remboursement
-
-### US-SET-05: Voir l'historique des remboursements
+### US-SET-03: Voir l'historique des remboursements
 **En tant que** membre d'un groupe
 **Je veux** voir l'historique des remboursements
 **Afin de** garder une trace des transactions
 
 #### Critères d'acceptation
-- [ ] Liste chronologique des remboursements
-- [ ] Filtres : tous, envoyés, reçus
-- [ ] Statut : en attente, confirmé, contesté
-- [ ] Date et montant de chaque remboursement
-
-### US-SET-06: Annuler un remboursement
-**En tant que** personne ayant marqué un remboursement
-**Je veux** pouvoir l'annuler
-**Afin de** corriger une erreur
-
-#### Critères d'acceptation
-- [ ] Bouton d'annulation disponible si non confirmé
-- [ ] Confirmation avant annulation
-- [ ] Notification à l'autre personne
-- [ ] Retour aux soldes précédents
+- [ ] Les remboursements apparaissent dans la liste des dépenses (montant négatif)
+- [ ] Filtre pour afficher uniquement les remboursements
+- [ ] Distinction visuelle (couleur, icône) des remboursements
 
 ---
 
 ## Spécifications Techniques
 
+### Modèle simplifié
+
+Un remboursement est une dépense avec :
+- `amount` négatif
+- `paidBy` = la personne qui rembourse
+- Un seul participant = la personne qui reçoit
+
+```typescript
+// Un remboursement est créé comme une dépense spéciale
+interface Settlement {
+  readonly fromMember: string;  // Qui rembourse
+  readonly toMember: string;    // Qui reçoit
+  readonly amount: number;      // Montant positif
+}
+
+// Converti en Expense pour stockage
+const settlementToExpense = (
+  settlement: Settlement,
+  groupId: string,
+  createdBy: string
+): Omit<Expense, 'id' | 'createdAt' | 'updatedAt'> => ({
+  groupId,
+  paidBy: settlement.fromMember,
+  amount: -settlement.amount, // Montant négatif
+  description: `Remboursement`,
+  date: new Date(),
+  createdBy,
+  deletedAt: null,
+});
+```
+
 ### Endpoints API
 
 | Méthode | Route | Description |
 |---------|-------|-------------|
-| GET | `/api/groups/:id/settlements` | Historique des remboursements |
 | GET | `/api/groups/:id/settlements/suggested` | Remboursements suggérés |
-| POST | `/api/groups/:id/settlements` | Créer un remboursement |
-| PATCH | `/api/groups/:id/settlements/:settlementId` | Modifier (confirmer/annuler) |
-| DELETE | `/api/groups/:id/settlements/:settlementId` | Annuler un remboursement |
+| POST | `/api/groups/:id/settlements` | Enregistrer un remboursement |
 
-### Schéma de données
+Note : L'historique des remboursements est accessible via `/api/groups/:id/expenses` en filtrant les montants négatifs.
 
-```typescript
-interface Settlement {
-  id: string;
-  groupId: string;
-  fromMember: string;    // Qui paie
-  toMember: string;      // Qui reçoit
-  amount: number;        // Montant en centimes
-  status: SettlementStatus;
-  createdAt: Date;
-  confirmedAt: Date | null;
-  cancelledAt: Date | null;
-}
-
-type SettlementStatus =
-  | 'pending'     // Marqué comme payé, en attente de confirmation
-  | 'confirmed'   // Confirmé par la personne qui reçoit
-  | 'cancelled';  // Annulé
-
-interface SuggestedSettlement {
-  fromMember: GroupMember;
-  toMember: GroupMember;
-  amount: number;
-}
-```
-
-### Algorithme d'Optimisation des Remboursements
+### Algorithme d'Optimisation
 
 L'objectif est de minimiser le nombre de transactions tout en équilibrant tous les soldes.
 
 ```typescript
-function suggestSettlements(balances: Balance[]): SuggestedSettlement[] {
-  const settlements: SuggestedSettlement[] = [];
+interface SuggestedSettlement {
+  readonly fromMember: GroupMember;
+  readonly toMember: GroupMember;
+  readonly amount: number;
+}
 
+const suggestSettlements = (
+  balances: readonly Balance[]
+): readonly SuggestedSettlement[] => {
   // Séparer créditeurs et débiteurs
   const debtors = balances
-    .filter(b => b.netBalance < 0)
-    .map(b => ({ ...b, remaining: Math.abs(b.netBalance) }))
-    .sort((a, b) => b.remaining - a.remaining); // Plus gros débiteur en premier
+    .filter((b) => b.balance < 0)
+    .map((b) => ({ memberId: b.memberId, remaining: Math.abs(b.balance) }))
+    .sort((a, b) => b.remaining - a.remaining);
 
   const creditors = balances
-    .filter(b => b.netBalance > 0)
-    .map(b => ({ ...b, remaining: b.netBalance }))
-    .sort((a, b) => b.remaining - a.remaining); // Plus gros créditeur en premier
+    .filter((b) => b.balance > 0)
+    .map((b) => ({ memberId: b.memberId, remaining: b.balance }))
+    .sort((a, b) => b.remaining - a.remaining);
 
   // Algorithme glouton : matcher les plus gros montants
-  for (const debtor of debtors) {
-    while (debtor.remaining > 0) {
-      // Trouver le créditeur avec le plus gros solde restant
-      const creditor = creditors.find(c => c.remaining > 0);
-      if (!creditor) break;
+  const settlements: SuggestedSettlement[] = [];
 
-      // Calculer le montant du remboursement
-      const amount = Math.min(debtor.remaining, creditor.remaining);
-
-      settlements.push({
-        fromMember: debtor.memberId,
-        toMember: creditor.memberId,
-        amount: amount
-      });
-
-      debtor.remaining -= amount;
-      creditor.remaining -= amount;
+  const processSettlements = (
+    debtors: typeof debtors,
+    creditors: typeof creditors
+  ): readonly SuggestedSettlement[] => {
+    if (debtors.length === 0 || creditors.length === 0) {
+      return settlements;
     }
-  }
 
-  return settlements;
-}
+    const [debtor, ...remainingDebtors] = debtors;
+    const [creditor, ...remainingCreditors] = creditors;
+
+    if (debtor.remaining === 0) {
+      return processSettlements(remainingDebtors, [creditor, ...remainingCreditors]);
+    }
+    if (creditor.remaining === 0) {
+      return processSettlements([debtor, ...remainingDebtors], remainingCreditors);
+    }
+
+    const amount = Math.min(debtor.remaining, creditor.remaining);
+
+    settlements.push({
+      fromMember: debtor.memberId,
+      toMember: creditor.memberId,
+      amount,
+    });
+
+    return processSettlements(
+      [{ ...debtor, remaining: debtor.remaining - amount }, ...remainingDebtors],
+      [{ ...creditor, remaining: creditor.remaining - amount }, ...remainingCreditors]
+    );
+  };
+
+  return processSettlements(debtors, creditors);
+};
 ```
 
 ### Exemple d'optimisation
 
-**Soldes avant optimisation :**
+**Soldes :**
 - Alex : +100€ (créditeur)
 - Sam : +50€ (créditeur)
 - Charlie : -80€ (débiteur)
 - Jordan : -70€ (débiteur)
 
-**Sans optimisation (4 transactions) :**
-- Charlie → Alex : 53€
-- Charlie → Sam : 27€
-- Jordan → Alex : 47€
-- Jordan → Sam : 23€
-
-**Avec optimisation (3 transactions) :**
-- Charlie → Alex : 80€
-- Jordan → Alex : 20€
-- Jordan → Sam : 50€
+**Remboursements suggérés (3 transactions au lieu de 4) :**
+1. Charlie → Alex : 80€
+2. Jordan → Alex : 20€
+3. Jordan → Sam : 50€
 
 ---
 
 ## Composants UI
 
 ### `SettlementSuggestions`
-- Carte pour chaque remboursement suggéré
-- De qui → À qui
-- Montant
-- Bouton "Marquer comme payé" si je suis débiteur
-- Méthodes de paiement suggérées (Lydia, PayPal, virement...)
+- Liste des remboursements suggérés
+- Carte pour chaque remboursement avec avatars
+- Bouton "Enregistrer" pour chaque suggestion
+- Message si aucun remboursement nécessaire
 
 ### `SettlementCard`
 - Avatars des deux personnes avec flèche
 - Montant
-- Statut visuel (en attente, confirmé)
-- Actions contextuelles
+- Bouton d'action si je suis la personne qui doit payer
 
 ### `SettlementForm`
 - Montant pré-rempli (modifiable)
-- Sélection de la méthode de paiement (informatif)
-- Note optionnelle
+- Sélecteur de la personne qui reçoit
 - Bouton de validation
+- Aperçu de l'impact sur les soldes
 
-### `SettlementHistory`
-- Liste des remboursements passés
-- Filtres par statut et par personne
-- Date et montant
-- Statut avec icône
-
-### `SettlementConfirmation`
-- Modal de confirmation
-- Résumé : qui, combien
-- Boutons Confirmer / Contester
-
-### `PendingSettlements`
-- Badge de notification
-- Liste des remboursements en attente de ma confirmation
-- Actions rapides
+### `SettlementBadge`
+- Badge visuel dans la liste des dépenses
+- Icône distincte (flèche circulaire)
+- Couleur différente (neutre)
 
 ---
 
@@ -221,71 +196,38 @@ function suggestSettlements(balances: Balance[]): SuggestedSettlement[] {
 ### `useSettlements`
 ```typescript
 interface UseSettlements {
-  settlements: Settlement[];
-  suggested: SuggestedSettlement[];
-  pending: Settlement[]; // En attente de ma confirmation
-  isLoading: boolean;
-  createSettlement: (data: CreateSettlementInput) => Promise<void>;
-  confirmSettlement: (id: string) => Promise<void>;
-  cancelSettlement: (id: string) => Promise<void>;
+  readonly suggested: readonly SuggestedSettlement[];
+  readonly isLoading: boolean;
+  recordSettlement: (settlement: Settlement) => Promise<void>;
 }
 ```
 
 ### `useMySettlements`
 ```typescript
 interface UseMySettlements {
-  toPay: SuggestedSettlement[];    // Ce que je dois payer
-  toReceive: SuggestedSettlement[]; // Ce que je dois recevoir
-  pendingConfirmation: Settlement[]; // À confirmer
+  readonly toPay: readonly SuggestedSettlement[];   // Ce que je dois payer
+  readonly toReceive: readonly SuggestedSettlement[]; // Ce que je dois recevoir
+  readonly totalToPay: number;
+  readonly totalToReceive: number;
 }
 ```
 
 ---
 
-## Notifications
+## Affichage dans la Liste des Dépenses
 
-### Lors d'un remboursement marqué comme payé
+Les remboursements apparaissent dans la liste des dépenses avec :
 
-**À la personne qui reçoit :**
-```
-[Nom] vous a envoyé un remboursement de [montant]
-Confirmez-vous la réception ?
-[Confirmer] [Voir le détail]
-```
-
-### Lors d'une confirmation
-
-**À la personne qui a payé :**
-```
-[Nom] a confirmé la réception de votre remboursement de [montant]
-```
-
-### Rappel de remboursement
-
-**Aux personnes débitrices (optionnel, paramétrable) :**
-```
-Vous devez encore [montant] au groupe [Nom du groupe]
-[Voir les détails]
-```
+| Élément | Dépense normale | Remboursement |
+|---------|-----------------|---------------|
+| Montant | Positif (ex: 50,00 €) | Négatif (ex: -50,00 €) |
+| Icône | Panier/catégorie | Flèche circulaire |
+| Description | "Courses", "Restaurant"... | "Remboursement à [Nom]" |
+| Couleur | Standard | Gris/neutre |
 
 ---
 
-## Méthodes de Paiement (Informatif)
-
-L'application ne gère pas les paiements réels, mais peut suggérer des méthodes :
-
-- Espèces
-- Virement bancaire
-- Lydia
-- PayPal
-- Pumpkin
-- Autre
-
-Ces informations sont purement indicatives et n'ont pas d'impact sur le calcul.
-
----
-
-## Workflow de Remboursement
+## Workflow Simplifié
 
 ```
 ┌─────────────────┐
@@ -294,52 +236,37 @@ Ces informations sont purement indicatives et n'ont pas d'impact sur le calcul.
          │
          ▼
 ┌─────────────────┐
-│ Voir suggestion │
+│ Voir suggestions│
 └────────┬────────┘
          │
          ▼
 ┌─────────────────┐
 │ Effectuer le    │
 │ paiement réel   │
+│ (hors app)      │
 └────────┬────────┘
          │
          ▼
 ┌─────────────────┐
-│ Marquer comme   │
-│ payé dans l'app │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐     ┌─────────────────┐
-│ En attente de   │────▶│   Confirmé      │
-│ confirmation    │     └─────────────────┘
+│ Enregistrer le  │
+│ remboursement   │
 └────────┬────────┘
          │
          ▼
 ┌─────────────────┐
-│    Contesté     │
+│ Soldes mis à    │
+│ jour            │
 └─────────────────┘
 ```
 
+Pas de confirmation nécessaire : la confiance entre membres du groupe est présumée.
+
 ---
 
-## Cas Particuliers
+## Avantages de l'Approche "Dépense Négative"
 
-### Remboursement contesté
-
-1. La personne peut ajouter un commentaire
-2. Discussion possible via commentaires
-3. Le remboursement reste en attente jusqu'à résolution
-4. L'admin peut forcer la confirmation ou l'annulation
-
-### Remboursement partiel
-
-1. La personne saisit un montant inférieur au suggéré
-2. Le solde est mis à jour partiellement
-3. Un nouveau remboursement apparaît pour le reste
-
-### Personne non inscrite
-
-1. Les remboursements vers/depuis une personne non inscrite sont possibles
-2. La confirmation est faite par un·e admin
-3. Encouragement à inviter la personne à s'inscrire
+1. **Simplicité** : Un seul type d'entité (Expense) à gérer
+2. **Cohérence** : Les calculs de solde fonctionnent automatiquement
+3. **Historique unifié** : Tout est dans la même liste
+4. **Pas de workflow complexe** : Pas de statuts, pas de confirmation
+5. **Confiance** : Adapté aux groupes de confiance (couples, familles, amis proches)

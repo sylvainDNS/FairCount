@@ -67,18 +67,14 @@ Calcule et affiche les soldes de chaque personne du groupe en temps réel. Le so
 interface Balance {
   memberId: string;
   memberName: string;
-  totalPaid: number;      // Ce que la personne a payé
+  totalPaid: number;      // Ce que la personne a payé (dépenses positives)
   totalOwed: number;      // Ce que la personne devrait payer
   balance: number;        // totalPaid - totalOwed
-  settlementsReceived: number;  // Remboursements reçus
-  settlementsPaid: number;      // Remboursements effectués
-  netBalance: number;     // balance + settlementsReceived - settlementsPaid
 }
 
 interface BalanceDetail {
   balance: Balance;
-  expenses: ExpenseWithShare[];  // Dépenses avec ma part
-  settlements: Settlement[];      // Remboursements
+  expenses: ExpenseWithShare[];  // Dépenses avec ma part (inclut les remboursements)
 }
 
 interface GroupStats {
@@ -99,85 +95,77 @@ interface MemberStats {
 
 ### Calcul des Soldes
 
+Approche fonctionnelle avec immutabilité :
+
 ```typescript
-function calculateBalances(
-  members: GroupMember[],
-  expenses: Expense[],
-  settlements: Settlement[]
-): Balance[] {
-  const balances = new Map<string, Balance>();
+const createEmptyBalance = (member: GroupMember): Balance => ({
+  memberId: member.id,
+  memberName: member.name,
+  totalPaid: 0,
+  totalOwed: 0,
+  balance: 0,
+});
 
-  // Initialiser les soldes à 0
-  for (const member of members) {
-    if (member.leftAt !== null) continue;
-    balances.set(member.id, {
-      memberId: member.id,
-      memberName: member.name,
-      totalPaid: 0,
-      totalOwed: 0,
-      balance: 0,
-      settlementsReceived: 0,
-      settlementsPaid: 0,
-      netBalance: 0
-    });
-  }
+const calculateBalances = (
+  members: readonly GroupMember[],
+  expenses: readonly Expense[]
+): readonly Balance[] => {
+  const activeMembers = members.filter((m) => m.leftAt === null);
+  const activeExpenses = expenses.filter((e) => e.deletedAt === null);
 
-  // Calculer les paiements et les parts
-  for (const expense of expenses) {
-    if (expense.deletedAt !== null) continue;
+  // Calculer les coefficients actuels (toujours à jour)
+  const coefficients = calculateCoefficients(activeMembers);
+
+  // Initialiser les soldes
+  const initialBalances = new Map(
+    activeMembers.map((m) => [m.id, createEmptyBalance(m)])
+  );
+
+  // Réduire les dépenses pour calculer les soldes
+  const balancesAfterExpenses = activeExpenses.reduce((balances, expense) => {
+    const updatedBalances = new Map(balances);
 
     // Ajouter ce que la personne a payé
-    const payerBalance = balances.get(expense.paidBy);
-    if (payerBalance) {
-      payerBalance.totalPaid += expense.amount;
+    const payer = updatedBalances.get(expense.paidBy);
+    if (payer) {
+      updatedBalances.set(expense.paidBy, {
+        ...payer,
+        totalPaid: payer.totalPaid + expense.amount,
+      });
     }
 
-    // Calculer les parts et ajouter ce que chaque personne doit
-    const shares = calculateShares(expense, members);
-    for (const share of shares) {
-      const memberBalance = balances.get(share.memberId);
-      if (memberBalance) {
-        memberBalance.totalOwed += share.amount;
+    // Calculer et ajouter les parts (avec coefficients actuels)
+    const shares = calculateShares(expense, activeMembers, coefficients);
+    shares.forEach((share) => {
+      const member = updatedBalances.get(share.memberId);
+      if (member) {
+        updatedBalances.set(share.memberId, {
+          ...member,
+          totalOwed: member.totalOwed + share.amount,
+        });
       }
-    }
-  }
+    });
 
-  // Prendre en compte les remboursements
-  for (const settlement of settlements) {
-    if (settlement.completedAt === null) continue;
-
-    const fromBalance = balances.get(settlement.fromMember);
-    const toBalance = balances.get(settlement.toMember);
-
-    if (fromBalance) {
-      fromBalance.settlementsPaid += settlement.amount;
-    }
-    if (toBalance) {
-      toBalance.settlementsReceived += settlement.amount;
-    }
-  }
+    return updatedBalances;
+  }, initialBalances);
 
   // Calculer les soldes finaux
-  for (const balance of balances.values()) {
-    balance.balance = balance.totalPaid - balance.totalOwed;
-    balance.netBalance = balance.balance
-      + balance.settlementsReceived
-      - balance.settlementsPaid;
-  }
-
-  return Array.from(balances.values());
-}
+  return Array.from(balancesAfterExpenses.values()).map((balance) => ({
+    ...balance,
+    balance: balance.totalPaid - balance.totalOwed,
+  }));
+};
 ```
 
 ### Vérification d'Intégrité
 
-La somme de tous les soldes nets doit toujours être égale à 0 :
+La somme de tous les soldes doit toujours être égale à 0 :
 
 ```typescript
-function verifyBalanceIntegrity(balances: Balance[]): boolean {
-  const total = balances.reduce((sum, b) => sum + b.netBalance, 0);
+const verifyBalanceIntegrity = (balances: readonly Balance[]): boolean => {
+  const total = balances.reduce((sum, b) => sum + b.balance, 0);
   return Math.abs(total) < 1; // Tolérance de 1 centime pour les arrondis
-}
+};
 ```
 
 ---
@@ -199,7 +187,7 @@ function verifyBalanceIntegrity(balances: Balance[]): boolean {
 - Décomposition du solde
 - Section "Ce que j'ai payé" avec liste des dépenses
 - Section "Ce que je dois" avec liste des parts
-- Section "Remboursements" avec historique
+- Les remboursements apparaissent comme des dépenses négatives
 
 ### `BalanceChart`
 - Graphique en camembert des parts
@@ -291,11 +279,12 @@ Pour les groupes avec beaucoup de dépenses :
 - Ses dépenses restent dans l'historique
 - Elle n'apparaît plus dans les nouvelles répartitions
 
-### Modification rétroactive des coefficients
+### Modification des coefficients
 
-- Les dépenses passées ne sont pas recalculées
-- Seules les nouvelles dépenses utilisent les nouveaux coefficients
-- Option de recalcul global disponible pour les admins
+Les soldes sont **toujours recalculés** avec les coefficients actuels. Cela signifie :
+- Quand une personne modifie son revenu, toutes les dépenses sont recalculées
+- Les soldes reflètent toujours la situation actuelle du groupe
+- Approche plus simple et plus juste pour un MVP
 
 ### Dépenses supprimées
 

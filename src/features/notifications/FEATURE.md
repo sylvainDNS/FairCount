@@ -2,7 +2,7 @@
 
 ## Description
 
-Système de notifications push dans le navigateur pour informer les personnes utilisatrices des événements importants : nouvelles dépenses, demandes de remboursement, invitations, etc.
+Système de notifications push dans le navigateur pour informer les personnes utilisatrices des événements importants : nouvelles dépenses, invitations, etc.
 
 ## User Stories
 
@@ -28,17 +28,7 @@ Système de notifications push dans le navigateur pour informer les personnes ut
 - [ ] Clic menant vers la dépense
 - [ ] Option de désactiver ce type de notification
 
-### US-NOT-03: Recevoir une notification de remboursement
-**En tant que** personne recevant un remboursement
-**Je veux** être notifié·e de la demande
-**Afin de** confirmer la réception
-
-#### Critères d'acceptation
-- [ ] Notification avec montant et expéditeur
-- [ ] Action rapide "Confirmer" depuis la notification
-- [ ] Clic menant vers les remboursements
-
-### US-NOT-04: Recevoir une notification d'invitation
+### US-NOT-03: Recevoir une notification d'invitation
 **En tant que** personne invitée
 **Je veux** être notifié·e de l'invitation
 **Afin de** rejoindre le groupe rapidement
@@ -48,7 +38,7 @@ Système de notifications push dans le navigateur pour informer les personnes ut
 - [ ] Clic menant vers la page d'invitation
 - [ ] Envoyée uniquement si déjà inscrit·e
 
-### US-NOT-05: Gérer mes préférences de notifications
+### US-NOT-04: Gérer mes préférences de notifications
 **En tant que** personne utilisatrice
 **Je veux** personnaliser mes notifications
 **Afin de** ne recevoir que celles qui m'intéressent
@@ -59,7 +49,7 @@ Système de notifications push dans le navigateur pour informer les personnes ut
 - [ ] Toggle global (tout activer/désactiver)
 - [ ] Gestion par groupe (optionnel)
 
-### US-NOT-06: Voir l'historique des notifications
+### US-NOT-05: Voir l'historique des notifications
 **En tant que** personne utilisatrice
 **Je veux** voir mes notifications passées
 **Afin de** ne rien manquer
@@ -115,23 +105,19 @@ interface Notification {
 }
 
 type NotificationType =
-  | 'expense_added'      // Nouvelle dépense
+  | 'expense_added'      // Nouvelle dépense (inclut les remboursements)
   | 'expense_updated'    // Dépense modifiée
   | 'expense_deleted'    // Dépense supprimée
-  | 'settlement_request' // Demande de remboursement
-  | 'settlement_confirm' // Confirmation de remboursement
   | 'group_invitation'   // Invitation à un groupe
   | 'member_joined'      // Nouvelle personne dans le groupe
   | 'member_left'        // Personne ayant quitté le groupe
-  | 'reminder';          // Rappel de remboursement
+  | 'reminder';          // Rappel de solde négatif
 
 interface NotificationPreferences {
-  userId: string;
-  enabled: boolean; // Global toggle
-  byType: Record<NotificationType, boolean>;
-  byGroup: Record<string, boolean>; // groupId -> enabled
-  quietHoursStart: string | null; // "22:00"
-  quietHoursEnd: string | null;   // "08:00"
+  readonly userId: string;
+  readonly enabled: boolean; // Global toggle
+  readonly byType: Readonly<Record<NotificationType, boolean>>;
+  readonly byGroup: Readonly<Record<string, boolean>>; // groupId -> enabled
 }
 ```
 
@@ -150,42 +136,45 @@ interface Env {
 
 #### Envoi de notification
 
+Approche fonctionnelle avec immutabilité :
+
 ```typescript
 import webpush from 'web-push';
 
-async function sendPushNotification(
+const createNotificationPayload = (notification: Notification) => ({
+  title: notification.title,
+  body: notification.body,
+  icon: '/icons/icon-192.png',
+  badge: '/icons/badge-72.png',
+  data: {
+    notificationId: notification.id,
+    type: notification.type,
+    url: getNotificationUrl(notification),
+    ...notification.data,
+  },
+});
+
+const sendPushNotification = async (
   subscription: PushSubscription,
   notification: Notification,
   env: Env
-): Promise<void> {
+): Promise<void> => {
   webpush.setVapidDetails(
     env.VAPID_SUBJECT,
     env.VAPID_PUBLIC_KEY,
     env.VAPID_PRIVATE_KEY
   );
 
-  const payload = JSON.stringify({
-    title: notification.title,
-    body: notification.body,
-    icon: '/icons/icon-192.png',
-    badge: '/icons/badge-72.png',
-    data: {
-      notificationId: notification.id,
-      type: notification.type,
-      url: getNotificationUrl(notification),
-      ...notification.data
-    },
-    actions: getNotificationActions(notification.type)
-  });
+  const payload = JSON.stringify(createNotificationPayload(notification));
 
   await webpush.sendNotification(
     {
       endpoint: subscription.endpoint,
-      keys: subscription.keys
+      keys: subscription.keys,
     },
     payload
   );
-}
+};
 ```
 
 ### Service Worker
@@ -202,9 +191,8 @@ self.addEventListener('push', (event) => {
       icon: data.icon,
       badge: data.badge,
       data: data.data,
-      actions: data.actions,
       tag: data.data?.notificationId, // Évite les doublons
-      renotify: true
+      renotify: true,
     })
   );
 });
@@ -214,15 +202,7 @@ self.addEventListener('notificationclick', (event) => {
 
   const url = event.notification.data?.url || '/';
 
-  // Gérer les actions
-  if (event.action === 'confirm') {
-    // Confirmer le remboursement via API
-    confirmSettlement(event.notification.data.settlementId);
-  }
-
-  event.waitUntil(
-    clients.openWindow(url)
-  );
+  event.waitUntil(clients.openWindow(url));
 });
 ```
 
@@ -239,23 +219,6 @@ self.addEventListener('notificationclick', (event) => {
   "data": {
     "groupId": "...",
     "expenseId": "..."
-  }
-}
-```
-
-### Demande de remboursement (`settlement_request`)
-
-```json
-{
-  "title": "Remboursement reçu",
-  "body": "[Nom] vous a envoyé XX,XX €. Confirmez la réception.",
-  "actions": [
-    { "action": "confirm", "title": "Confirmer" },
-    { "action": "view", "title": "Voir" }
-  ],
-  "data": {
-    "groupId": "...",
-    "settlementId": "..."
   }
 }
 ```
@@ -296,7 +259,6 @@ self.addEventListener('notificationclick', (event) => {
 ### `NotificationSettings`
 - Toggle global
 - Liste des types avec toggles
-- Configuration des heures calmes
 - Gestion par groupe (accordéon)
 
 ### `PushPermissionPrompt`
@@ -311,9 +273,9 @@ self.addEventListener('notificationclick', (event) => {
 ### `useNotifications`
 ```typescript
 interface UseNotifications {
-  notifications: Notification[];
-  unreadCount: number;
-  isLoading: boolean;
+  readonly notifications: readonly Notification[];
+  readonly unreadCount: number;
+  readonly isLoading: boolean;
   markAsRead: (id: string) => Promise<void>;
   markAllAsRead: () => Promise<void>;
   deleteNotification: (id: string) => Promise<void>;
@@ -323,9 +285,9 @@ interface UseNotifications {
 ### `usePushSubscription`
 ```typescript
 interface UsePushSubscription {
-  isSupported: boolean;
-  isSubscribed: boolean;
-  permission: NotificationPermission;
+  readonly isSupported: boolean;
+  readonly isSubscribed: boolean;
+  readonly permission: NotificationPermission;
   subscribe: () => Promise<void>;
   unsubscribe: () => Promise<void>;
 }
@@ -334,8 +296,8 @@ interface UsePushSubscription {
 ### `useNotificationPreferences`
 ```typescript
 interface UseNotificationPreferences {
-  preferences: NotificationPreferences | null;
-  isLoading: boolean;
+  readonly preferences: NotificationPreferences | null;
+  readonly isLoading: boolean;
   updatePreferences: (data: Partial<NotificationPreferences>) => Promise<void>;
 }
 ```
@@ -347,13 +309,10 @@ interface UseNotificationPreferences {
 ### Vérification de la compatibilité
 
 ```typescript
-function isPushSupported(): boolean {
-  return (
-    'serviceWorker' in navigator &&
-    'PushManager' in window &&
-    'Notification' in window
-  );
-}
+const isPushSupported = (): boolean =>
+  'serviceWorker' in navigator &&
+  'PushManager' in window &&
+  'Notification' in window;
 ```
 
 ### États de permission
@@ -373,37 +332,6 @@ function isPushSupported(): boolean {
 
 ---
 
-## Heures Calmes
-
-Fonctionnalité permettant de ne pas recevoir de notifications pendant certaines heures :
-
-```typescript
-function shouldSendNotification(
-  preferences: NotificationPreferences
-): boolean {
-  if (!preferences.enabled) return false;
-
-  if (preferences.quietHoursStart && preferences.quietHoursEnd) {
-    const now = new Date();
-    const currentTime = `${now.getHours()}:${now.getMinutes()}`;
-
-    if (isTimeBetween(
-      currentTime,
-      preferences.quietHoursStart,
-      preferences.quietHoursEnd
-    )) {
-      return false;
-    }
-  }
-
-  return true;
-}
-```
-
-Les notifications envoyées pendant les heures calmes sont stockées et envoyées au réveil (batch).
-
----
-
 ## Événements Déclencheurs
 
 | Événement | Notification | Destinataires |
@@ -411,8 +339,8 @@ Les notifications envoyées pendant les heures calmes sont stockées et envoyée
 | Dépense ajoutée | `expense_added` | Tous les membres sauf le créateur |
 | Dépense modifiée | `expense_updated` | Tous les membres concernés |
 | Dépense supprimée | `expense_deleted` | Tous les membres concernés |
-| Remboursement créé | `settlement_request` | Personne qui reçoit |
-| Remboursement confirmé | `settlement_confirm` | Personne qui a payé |
 | Invitation envoyée | `group_invitation` | Personne invitée (si inscrite) |
 | Personne rejoint | `member_joined` | Tous les membres |
 | Rappel hebdomadaire | `reminder` | Personnes avec solde négatif |
+
+Note : Les remboursements sont des dépenses négatives et génèrent donc une notification `expense_added`.

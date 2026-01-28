@@ -67,8 +67,8 @@ Pour garantir un vocabulaire inclusif et accessible :
 
 ### 6. Remboursements (`settlements`)
 - Suggestions de remboursements optimisés
-- Marquage des remboursements effectués
-- Historique des remboursements
+- Remboursements = dépenses négatives (simplicité)
+- Historique unifié avec les dépenses
 
 ### 7. Notifications (`notifications`)
 - Notifications push dans le navigateur
@@ -201,7 +201,6 @@ group_members
 ├── email
 ├── income (visible par tous)
 ├── coefficient (calculé automatiquement)
-├── role (admin, member)
 ├── joined_at
 └── left_at
 
@@ -209,26 +208,18 @@ expenses
 ├── id (uuid)
 ├── group_id (fk: groups)
 ├── paid_by (fk: group_members)
-├── amount
+├── amount (positif = dépense, négatif = remboursement)
 ├── description
 ├── date
 ├── created_at
-└── updated_at
+├── updated_at
+└── deleted_at (soft delete)
 
 expense_participants
 ├── id (uuid)
 ├── expense_id (fk: expenses)
 ├── member_id (fk: group_members)
 └── custom_amount (nullable, pour exceptions)
-
-settlements
-├── id (uuid)
-├── group_id (fk: groups)
-├── from_member (fk: group_members)
-├── to_member (fk: group_members)
-├── amount
-├── completed_at
-└── created_at
 ```
 
 ---
@@ -255,9 +246,9 @@ Pour une dépense de 120€ :
 - Sam devrait payer : 40€
 - Charlie devrait payer : 20€
 
-### Mode coefficient manuel
+### Transparence totale
 
-Les personnes peuvent choisir de ne pas révéler leurs revenus et simplement définir des coefficients manuels (ex: 3-2-1).
+Tous les revenus sont visibles par les membres du groupe. Les coefficients sont calculés automatiquement. Cette transparence est essentielle pour garantir l'équité et la confiance.
 
 ---
 
@@ -319,11 +310,11 @@ Préparation pour :
 
 ### v1.0 - MVP
 - [ ] Authentification magic link
-- [ ] Création et gestion de groupes
-- [ ] Ajout de personnes membres avec coefficients
+- [ ] Création et gestion de groupes (horizontalité, pas d'admin)
+- [ ] Ajout de personnes membres avec revenus (transparence)
 - [ ] Ajout de dépenses
-- [ ] Calcul des soldes
-- [ ] Remboursements simples
+- [ ] Calcul des soldes (recalcul automatique)
+- [ ] Remboursements (dépenses négatives)
 
 ### v1.1 - Améliorations
 - [ ] Notifications push

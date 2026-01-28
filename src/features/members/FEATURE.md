@@ -15,8 +15,7 @@ Gestion des personnes membres d'un groupe, incluant leurs informations de revenu
 
 #### Critères d'acceptation
 - [ ] Liste avec nom et photo/avatar de chaque personne
-- [ ] Affichage du coefficient de chaque personne
-- [ ] Indication du rôle (admin ou membre)
+- [ ] Affichage du revenu et coefficient de chaque personne
 - [ ] Badge pour les personnes non inscrites
 
 ### US-MBR-02: Définir mes revenus
@@ -31,8 +30,8 @@ Gestion des personnes membres d'un groupe, incluant leurs informations de revenu
 - [ ] Possibilité de modifier à tout moment
 - [ ] Notification aux autres membres en cas de modification
 
-### US-MBR-04: Ajouter une personne non inscrite
-**En tant qu'** admin d'un groupe
+### US-MBR-03: Ajouter une personne non inscrite
+**En tant que** membre d'un groupe
 **Je veux** ajouter une personne qui n'a pas de compte
 **Afin qu'** elle soit incluse dans les calculs
 
@@ -42,8 +41,8 @@ Gestion des personnes membres d'un groupe, incluant leurs informations de revenu
 - [ ] Possibilité d'envoyer une invitation ultérieurement
 - [ ] Liaison automatique si la personne s'inscrit avec le même email
 
-### US-MBR-05: Retirer une personne
-**En tant qu'** admin d'un groupe
+### US-MBR-04: Retirer une personne
+**En tant que** membre d'un groupe
 **Je veux** retirer une personne du groupe
 **Afin de** gérer les départs
 
@@ -52,16 +51,6 @@ Gestion des personnes membres d'un groupe, incluant leurs informations de revenu
 - [ ] Avertissement si la personne a un solde non nul
 - [ ] Option de réattribuer les dépenses
 - [ ] Historique conservé
-
-### US-MBR-06: Promouvoir en admin
-**En tant qu'** admin d'un groupe
-**Je veux** promouvoir une personne en admin
-**Afin de** partager la gestion du groupe
-
-#### Critères d'acceptation
-- [ ] Bouton de promotion accessible aux admins
-- [ ] Confirmation avant promotion
-- [ ] Notification à la personne promue
 
 ---
 
@@ -76,23 +65,21 @@ Gestion des personnes membres d'un groupe, incluant leurs informations de revenu
 | GET | `/api/groups/:id/members/:memberId` | Détails d'une personne |
 | PATCH | `/api/groups/:id/members/:memberId` | Modifier une personne |
 | DELETE | `/api/groups/:id/members/:memberId` | Retirer une personne |
-| PATCH | `/api/groups/:id/members/me` | Modifier mes infos (revenus/coefficient) |
-| POST | `/api/groups/:id/members/:memberId/promote` | Promouvoir en admin |
+| PATCH | `/api/groups/:id/members/me` | Modifier mes infos (revenus) |
 
 ### Schéma de données
 
 ```typescript
 interface GroupMember {
-  id: string;
-  groupId: string;
-  userId: string | null; // null si personne non inscrite
-  name: string;
-  email: string | null;
-  income: number; // revenu mensuel, visible par tous les membres
-  coefficient: number; // calculé automatiquement
-  role: 'admin' | 'member';
-  joinedAt: Date;
-  leftAt: Date | null;
+  readonly id: string;
+  readonly groupId: string;
+  readonly userId: string | null; // null si personne non inscrite
+  readonly name: string;
+  readonly email: string | null;
+  readonly income: number; // revenu mensuel, visible par tous les membres
+  readonly coefficient: number; // calculé automatiquement
+  readonly joinedAt: Date;
+  readonly leftAt: Date | null;
 }
 ```
 
@@ -100,26 +87,30 @@ interface GroupMember {
 
 Les coefficients sont calculés automatiquement à partir des revenus déclarés.
 
+Approche fonctionnelle avec immutabilité :
+
 ```typescript
-function calculateCoefficients(members: GroupMember[]): Map<string, number> {
-  const activeMembers = members.filter(m => m.leftAt === null);
+const calculateCoefficients = (
+  members: readonly GroupMember[]
+): ReadonlyMap<string, number> => {
+  const activeMembers = members.filter((m) => m.leftAt === null);
   const totalIncome = activeMembers.reduce((sum, m) => sum + m.income, 0);
 
-  const coefficients = new Map<string, number>();
-
-  for (const member of activeMembers) {
-    // Coefficient = part du revenu total
-    coefficients.set(member.id, member.income / totalIncome);
+  // Éviter la division par zéro
+  if (totalIncome === 0) {
+    return new Map(activeMembers.map((m) => [m.id, 1 / activeMembers.length]));
   }
 
-  return coefficients;
-}
+  return new Map(
+    activeMembers.map((m) => [m.id, m.income / totalIncome])
+  );
+};
 ```
 
 ### Règles métier
 
 1. **Transparence totale** : Les revenus et coefficients sont visibles par toutes les personnes du groupe
-2. **Minimum une personne admin** : Impossible de retirer la dernière personne admin
+2. **Horizontalité** : Toutes les personnes membres ont les mêmes droits
 3. **Liaison automatique** : Une personne non inscrite est liée automatiquement si elle s'inscrit avec le même email
 4. **Revenu obligatoire** : Chaque personne doit déclarer un revenu pour participer aux calculs
 
@@ -138,8 +129,7 @@ function calculateCoefficients(members: GroupMember[]): Map<string, number> {
 - Nom
 - Revenu affiché
 - Coefficient affiché en pourcentage
-- Rôle
-- Menu d'actions (pour les admins)
+- Menu d'actions
 
 ### `IncomeForm`
 - Champ de saisie du revenu
@@ -160,20 +150,19 @@ function calculateCoefficients(members: GroupMember[]): Map<string, number> {
 ### `useMembers`
 ```typescript
 interface UseMembers {
-  members: GroupMember[];
-  isLoading: boolean;
-  myMembership: GroupMember | null;
+  readonly members: readonly GroupMember[];
+  readonly isLoading: boolean;
+  readonly myMembership: GroupMember | null;
   addMember: (data: AddMemberInput) => Promise<void>;
   removeMember: (memberId: string) => Promise<void>;
-  promoteMember: (memberId: string) => Promise<void>;
 }
 ```
 
 ### `useMyMembership`
 ```typescript
 interface UseMyMembership {
-  membership: GroupMember | null;
-  isLoading: boolean;
+  readonly membership: GroupMember | null;
+  readonly isLoading: boolean;
   updateIncome: (income: number) => Promise<void>;
 }
 ```
