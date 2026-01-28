@@ -41,25 +41,25 @@ Permet aux personnes utilisatrices de créer et gérer des groupes de partage de
 
 ### US-GRP-04: Inviter des personnes
 **En tant qu'** admin d'un groupe
-**Je veux** inviter des personnes au groupe
+**Je veux** inviter des personnes par email
 **Afin qu'** elles puissent participer au partage
 
 #### Critères d'acceptation
-- [ ] Invitation par email (envoi d'un lien)
-- [ ] Génération d'un lien d'invitation partageable
-- [ ] Le lien peut avoir une date d'expiration optionnelle
-- [ ] Possibilité de révoquer un lien d'invitation
+- [ ] Formulaire avec adresse email de la personne à inviter
+- [ ] Envoi d'un email d'invitation avec lien unique
+- [ ] Liste des invitations en attente
+- [ ] Possibilité de renvoyer ou annuler une invitation
 
 ### US-GRP-05: Rejoindre un groupe
-**En tant que** personne invitée
-**Je veux** rejoindre un groupe via un lien d'invitation
+**En tant que** personne invitée par email
+**Je veux** accepter l'invitation
 **Afin de** participer au partage de frais
 
 #### Critères d'acceptation
+- [ ] Email reçu avec lien d'acceptation
 - [ ] Page d'aperçu du groupe avant de rejoindre
 - [ ] Création de compte si non inscrit·e
 - [ ] Ajout automatique au groupe après connexion
-- [ ] Message de bienvenue
 
 ### US-GRP-06: Quitter un groupe
 **En tant que** membre d'un groupe
@@ -96,9 +96,12 @@ Permet aux personnes utilisatrices de créer et gérer des groupes de partage de
 | PATCH | `/api/groups/:id` | Modifier un groupe |
 | DELETE | `/api/groups/:id` | Supprimer un groupe (si vide) |
 | POST | `/api/groups/:id/archive` | Archiver/désarchiver |
-| POST | `/api/groups/:id/invite` | Générer une invitation |
-| GET | `/api/groups/join/:token` | Aperçu invitation |
-| POST | `/api/groups/join/:token` | Rejoindre via invitation |
+| POST | `/api/groups/:id/invite` | Envoyer une invitation par email |
+| GET | `/api/groups/:id/invitations` | Liste des invitations en attente |
+| DELETE | `/api/groups/:id/invitations/:invitationId` | Annuler une invitation |
+| POST | `/api/groups/:id/invitations/:invitationId/resend` | Renvoyer une invitation |
+| GET | `/api/invitations/:token` | Aperçu invitation |
+| POST | `/api/invitations/:token/accept` | Accepter l'invitation |
 | POST | `/api/groups/:id/leave` | Quitter le groupe |
 
 ### Schéma de données
@@ -117,11 +120,11 @@ interface Group {
 interface GroupInvitation {
   id: string;
   groupId: string;
+  email: string;
   token: string;
   createdBy: string;
-  expiresAt: Date | null;
-  maxUses: number | null;
-  usedCount: number;
+  expiresAt: Date;
+  acceptedAt: Date | null;
   createdAt: Date;
 }
 ```
@@ -157,13 +160,22 @@ interface GroupInvitation {
 
 ### `GroupSettings`
 - Modification nom/description
-- Gestion des invitations
 - Archivage
 - Zone danger (quitter/supprimer)
 
+### `InviteForm`
+- Champ email
+- Bouton d'envoi
+- Message de confirmation
+
+### `PendingInvitations`
+- Liste des invitations en attente
+- Date d'envoi
+- Actions : renvoyer, annuler
+
 ### `InvitePage`
-- Aperçu du groupe (nom, nombre de personnes)
-- Bouton rejoindre
+- Aperçu du groupe (nom, description)
+- Bouton accepter l'invitation
 - Formulaire de connexion/inscription si non connecté·e
 
 ---
@@ -193,12 +205,24 @@ interface UseGroup {
 }
 ```
 
-### `useInvitation`
+### `useInvitations`
 ```typescript
-interface UseInvitation {
-  createInvitation: (groupId: string) => Promise<string>;
-  revokeInvitation: (invitationId: string) => Promise<void>;
-  joinGroup: (token: string) => Promise<void>;
+interface UseInvitations {
+  invitations: GroupInvitation[];
+  isLoading: boolean;
+  sendInvitation: (email: string) => Promise<void>;
+  resendInvitation: (invitationId: string) => Promise<void>;
+  cancelInvitation: (invitationId: string) => Promise<void>;
+}
+```
+
+### `useAcceptInvitation`
+```typescript
+interface UseAcceptInvitation {
+  invitation: GroupInvitation | null;
+  group: Group | null;
+  isLoading: boolean;
+  accept: () => Promise<void>;
 }
 ```
 
@@ -207,11 +231,12 @@ interface UseInvitation {
 ## Navigation
 
 ```
-/groups              → Liste des groupes
-/groups/new          → Créer un groupe
-/groups/:id          → Détail d'un groupe (dépenses)
-/groups/:id/settings → Paramètres du groupe
-/join/:token         → Page d'invitation
+/groups                     → Liste des groupes
+/groups/new                 → Créer un groupe
+/groups/:id                 → Détail d'un groupe (dépenses)
+/groups/:id/settings        → Paramètres du groupe
+/groups/:id/invite          → Inviter des personnes
+/invitations/:token         → Page d'acceptation d'invitation
 ```
 
 ---

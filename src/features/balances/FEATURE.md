@@ -46,7 +46,6 @@ Calcule et affiche les soldes de chaque personne du groupe en temps réel. Le so
 
 #### Critères d'acceptation
 - [ ] Total des dépenses par période
-- [ ] Répartition par catégorie (graphique)
 - [ ] Contribution de chaque personne
 - [ ] Évolution dans le temps (optionnel)
 
@@ -86,16 +85,8 @@ interface GroupStats {
   totalExpenses: number;
   expenseCount: number;
   averageExpense: number;
-  byCategory: CategoryStats[];
   byMember: MemberStats[];
   byMonth: MonthlyStats[];
-}
-
-interface CategoryStats {
-  category: string;
-  total: number;
-  count: number;
-  percentage: number;
 }
 
 interface MemberStats {
@@ -217,7 +208,6 @@ function verifyBalanceIntegrity(balances: Balance[]): boolean {
 
 ### `StatsPage`
 - Sélecteur de période
-- Graphique par catégorie
 - Graphique par personne
 - Évolution temporelle
 

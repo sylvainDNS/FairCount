@@ -4,6 +4,8 @@
 
 Gestion des personnes membres d'un groupe, incluant leurs informations de revenus et coefficients de contribution. Cette feature est au cœur du calcul équitable des parts.
 
+**Philosophie de transparence** : Les revenus de chaque personne sont visibles par tous les membres du groupe. Cette transparence est essentielle pour garantir l'équité et la confiance au sein du groupe.
+
 ## User Stories
 
 ### US-MBR-01: Voir les personnes membres
@@ -24,20 +26,10 @@ Gestion des personnes membres d'un groupe, incluant leurs informations de revenu
 
 #### Critères d'acceptation
 - [ ] Champ de saisie du revenu mensuel
-- [ ] Le revenu est privé (non visible par les autres)
+- [ ] Les revenus sont visibles par toutes les personnes du groupe (transparence)
 - [ ] Calcul automatique du coefficient
 - [ ] Possibilité de modifier à tout moment
-
-### US-MBR-03: Définir un coefficient manuel
-**En tant que** membre d'un groupe
-**Je veux** définir un coefficient sans révéler mes revenus
-**Afin de** préserver ma vie privée
-
-#### Critères d'acceptation
-- [ ] Option de basculer en mode "coefficient manuel"
-- [ ] Saisie d'un coefficient relatif (ex: 2, 1.5, 1)
-- [ ] Le coefficient est visible par tout le groupe
-- [ ] Explication du fonctionnement
+- [ ] Notification aux autres membres en cas de modification
 
 ### US-MBR-04: Ajouter une personne non inscrite
 **En tant qu'** admin d'un groupe
@@ -96,9 +88,8 @@ interface GroupMember {
   userId: string | null; // null si personne non inscrite
   name: string;
   email: string | null;
-  income: number | null; // chiffré en BDD, null si coefficient manuel
-  coefficient: number; // calculé ou défini manuellement
-  coefficientMode: 'auto' | 'manual';
+  income: number; // revenu mensuel, visible par tous les membres
+  coefficient: number; // calculé automatiquement
   role: 'admin' | 'member';
   joinedAt: Date;
   leftAt: Date | null;
@@ -107,45 +98,30 @@ interface GroupMember {
 
 ### Calcul des Coefficients
 
-#### Mode automatique (basé sur les revenus)
+Les coefficients sont calculés automatiquement à partir des revenus déclarés.
 
 ```typescript
 function calculateCoefficients(members: GroupMember[]): Map<string, number> {
-  const totalIncome = members
-    .filter(m => m.income !== null && m.leftAt === null)
-    .reduce((sum, m) => sum + m.income!, 0);
+  const activeMembers = members.filter(m => m.leftAt === null);
+  const totalIncome = activeMembers.reduce((sum, m) => sum + m.income, 0);
 
   const coefficients = new Map<string, number>();
 
-  for (const member of members) {
-    if (member.leftAt !== null) continue;
-
-    if (member.income !== null) {
-      coefficients.set(member.id, member.income / totalIncome);
-    } else {
-      // Coefficient manuel : normalisé par rapport au total
-      coefficients.set(member.id, member.coefficient);
-    }
+  for (const member of activeMembers) {
+    // Coefficient = part du revenu total
+    coefficients.set(member.id, member.income / totalIncome);
   }
 
-  return normalizeCoefficients(coefficients);
+  return coefficients;
 }
 ```
 
-#### Mode mixte (revenus + coefficients manuels)
-
-Quand certaines personnes utilisent les revenus et d'autres des coefficients manuels :
-
-1. Les revenus sont convertis en coefficients
-2. Les coefficients manuels sont normalisés
-3. Tous les coefficients sont re-normalisés pour que la somme = 1
-
 ### Règles métier
 
-1. **Revenus privés** : Seule la personne concernée voit ses revenus
-2. **Coefficients publics** : Tous les coefficients sont visibles
-3. **Minimum une personne admin** : Impossible de retirer la dernière personne admin
-4. **Liaison automatique** : Une personne non inscrite est liée automatiquement si elle s'inscrit avec le même email
+1. **Transparence totale** : Les revenus et coefficients sont visibles par toutes les personnes du groupe
+2. **Minimum une personne admin** : Impossible de retirer la dernière personne admin
+3. **Liaison automatique** : Une personne non inscrite est liée automatiquement si elle s'inscrit avec le même email
+4. **Revenu obligatoire** : Chaque personne doit déclarer un revenu pour participer aux calculs
 
 ---
 
@@ -160,20 +136,16 @@ Quand certaines personnes utilisent les revenus et d'autres des coefficients man
 ### `MemberCard`
 - Avatar (initiales si pas de photo)
 - Nom
+- Revenu affiché
 - Coefficient affiché en pourcentage
 - Rôle
 - Menu d'actions (pour les admins)
 
 ### `IncomeForm`
 - Champ de saisie du revenu
-- Indicateur de confidentialité
+- Explication de la transparence
 - Aperçu du coefficient calculé
-- Switch pour passer en mode manuel
-
-### `CoefficientForm`
-- Champ de saisie du coefficient
-- Explication du système
-- Exemples d'utilisation
+- Impact sur les parts du groupe
 
 ### `AddMemberForm`
 - Champ nom (obligatoire)
@@ -203,35 +175,28 @@ interface UseMyMembership {
   membership: GroupMember | null;
   isLoading: boolean;
   updateIncome: (income: number) => Promise<void>;
-  updateCoefficient: (coefficient: number) => Promise<void>;
-  switchToManualMode: () => Promise<void>;
-  switchToAutoMode: (income: number) => Promise<void>;
 }
 ```
 
 ---
 
-## Confidentialité des Revenus
+## Transparence des Revenus
 
-### Chiffrement en base de données
+### Affichage dans le groupe
 
-Les revenus sont chiffrés avec une clé de chiffrement stockée dans les secrets Cloudflare :
+Toutes les personnes du groupe voient :
+- Le revenu de chaque personne
+- Le coefficient calculé de chaque personne
+- Le total des revenus du groupe
 
-```typescript
-// Chiffrement AES-256-GCM
-const encryptedIncome = await encrypt(income, ENCRYPTION_KEY);
-```
+| Personne | Revenu | Coefficient |
+|----------|--------|-------------|
+| Alex | 3 000 € | 50% |
+| Sam | 2 000 € | 33% |
+| Charlie | 1 000 € | 17% |
+| **Total** | **6 000 €** | **100%** |
 
-### Affichage des coefficients
-
-| Ce que je vois | Ce que les autres voient |
-|----------------|--------------------------|
-| Mon revenu : 3000€ | - |
-| Mon coefficient : 50% | Coefficient de [Nom] : 50% |
-
-### Mode "revenus masqués" du groupe
-
-Option de groupe où seuls les coefficients sont affichés, jamais les revenus, même pour soi-même après validation.
+Cette transparence est fondamentale pour l'équité : chaque personne peut vérifier que les calculs sont justes.
 
 ---
 
@@ -241,12 +206,12 @@ Option de groupe où seuls les coefficients sont affichés, jamais les revenus, 
 - Alex : 3000€ → 60%
 - Sam : 2000€ → 40%
 
-### Scénario 2 : Colocation avec coefficients manuels
-- Personne 1 : coefficient 2 → 40%
-- Personne 2 : coefficient 2 → 40%
-- Personne 3 : coefficient 1 → 20%
+### Scénario 2 : Colocation à trois
+- Personne 1 : 2500€ → 42%
+- Personne 2 : 2000€ → 33%
+- Personne 3 : 1500€ → 25%
 
-### Scénario 3 : Groupe mixte
-- Personne inscrite avec revenu : 4000€
-- Personne inscrite avec coefficient : 2
-- Personne non inscrite avec coefficient : 1
+### Scénario 3 : Famille avec enfant majeur
+- Parent 1 : 4000€ → 53%
+- Parent 2 : 2500€ → 33%
+- Enfant (job étudiant) : 1000€ → 14%

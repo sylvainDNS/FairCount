@@ -45,22 +45,20 @@ Pour garantir un vocabulaire inclusif et accessible :
 
 ### 2. Gestion des Groupes (`groups`)
 - Création de groupes avec nom et description
-- Invitation de personnes par email ou lien
+- Invitation de personnes par email
 - Gestion des personnes membres
 - Archivage de groupes
 
 ### 3. Gestion des Personnes Membres (`members`)
 - Ajout de personnes au groupe
-- Définition des revenus ou coefficients personnalisés
-- Mode "revenus masqués" (seuls les coefficients sont visibles)
+- Définition des revenus (transparence totale)
+- Coefficients calculés automatiquement
 - Personnes invitées ou non-inscrites
 
 ### 4. Gestion des Dépenses (`expenses`)
 - Ajout de dépenses avec montant, description, date
 - Qui a payé
 - Pour qui (tout le groupe ou personnes spécifiques)
-- Catégorisation optionnelle
-- Pièces jointes (photos de tickets)
 
 ### 5. Calcul des Soldes (`balances`)
 - Vue en temps réel des soldes de chaque personne
@@ -98,7 +96,7 @@ Pour garantir un vocabulaire inclusif et accessible :
 | **Cloudflare Workers** | Runtime serverless |
 | **Cloudflare Pages** | Hébergement frontend |
 | **Cloudflare D1** | Base de données SQLite |
-| **Cloudflare R2** | Stockage de fichiers (tickets) |
+| **Cloudflare R2** | Stockage de fichiers (avatars, exports) |
 | **Drizzle ORM** | Gestion de la base de données |
 | **better-auth** | Authentification magic link |
 | **Proton Mail SMTP** | Envoi d'emails |
@@ -201,8 +199,8 @@ group_members
 ├── user_id (fk: users, nullable)
 ├── name (pour personnes non inscrites)
 ├── email
-├── income (nullable, chiffré)
-├── coefficient (calculé ou manuel)
+├── income (visible par tous)
+├── coefficient (calculé automatiquement)
 ├── role (admin, member)
 ├── joined_at
 └── left_at
@@ -213,9 +211,7 @@ expenses
 ├── paid_by (fk: group_members)
 ├── amount
 ├── description
-├── category
 ├── date
-├── receipt_url (nullable)
 ├── created_at
 └── updated_at
 
@@ -270,7 +266,6 @@ Les personnes peuvent choisir de ne pas révéler leurs revenus et simplement d�
 L'application est conçue pour une utilisation principalement sur mobile :
 
 - Navigation par onglets en bas d'écran
-- Gestes tactiles (swipe pour supprimer/modifier)
 - Formulaires optimisés pour le tactile
 - Mode sombre supporté
 - Installation en PWA
@@ -332,8 +327,6 @@ Préparation pour :
 
 ### v1.1 - Améliorations
 - [ ] Notifications push
-- [ ] Catégories de dépenses
-- [ ] Photos de tickets (R2)
 - [ ] Export des données
 
 ### v2.0 - Fonctionnalités avancées

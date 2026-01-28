@@ -15,7 +15,6 @@ Permet d'enregistrer et gérer les dépenses du groupe. Chaque dépense est rép
 - [ ] Formulaire avec montant, description, date
 - [ ] Sélection de qui a payé
 - [ ] Sélection des personnes concernées (toutes par défaut)
-- [ ] Catégorie optionnelle
 - [ ] Validation des champs obligatoires
 - [ ] Confirmation après ajout
 
@@ -28,7 +27,7 @@ Permet d'enregistrer et gérer les dépenses du groupe. Chaque dépense est rép
 - [ ] Liste chronologique (plus récentes en premier)
 - [ ] Affichage : description, montant, qui a payé, date
 - [ ] Ma part équitable affichée pour chaque dépense
-- [ ] Filtres par période, catégorie, personne
+- [ ] Filtres par période, personne
 - [ ] Recherche par description
 
 ### US-EXP-03: Voir le détail d'une dépense
@@ -39,7 +38,6 @@ Permet d'enregistrer et gérer les dépenses du groupe. Chaque dépense est rép
 #### Critères d'acceptation
 - [ ] Toutes les informations de la dépense
 - [ ] Répartition par personne avec montant dû
-- [ ] Photo du ticket si disponible
 - [ ] Historique des modifications
 
 ### US-EXP-04: Modifier une dépense
@@ -63,19 +61,7 @@ Permet d'enregistrer et gérer les dépenses du groupe. Chaque dépense est rép
 - [ ] Recalcul automatique des soldes
 - [ ] Soft delete (archivage, pas de suppression physique)
 
-### US-EXP-06: Ajouter une photo de ticket
-**En tant que** membre ajoutant une dépense
-**Je veux** joindre une photo du ticket
-**Afin de** garder une preuve de la dépense
-
-#### Critères d'acceptation
-- [ ] Upload depuis la galerie ou prise de photo
-- [ ] Compression automatique
-- [ ] Stockage sur Cloudflare R2
-- [ ] Affichage en miniature dans la liste
-- [ ] Zoom sur la photo en plein écran
-
-### US-EXP-07: Dépense avec montants personnalisés
+### US-EXP-06: Dépense avec montants personnalisés
 **En tant que** membre ajoutant une dépense
 **Je veux** définir des montants spécifiques par personne
 **Afin de** gérer les cas particuliers
@@ -99,8 +85,6 @@ Permet d'enregistrer et gérer les dépenses du groupe. Chaque dépense est rép
 | GET | `/api/groups/:id/expenses/:expenseId` | Détail d'une dépense |
 | PATCH | `/api/groups/:id/expenses/:expenseId` | Modifier une dépense |
 | DELETE | `/api/groups/:id/expenses/:expenseId` | Supprimer une dépense |
-| POST | `/api/groups/:id/expenses/:expenseId/receipt` | Upload ticket |
-| DELETE | `/api/groups/:id/expenses/:expenseId/receipt` | Supprimer ticket |
 
 ### Schéma de données
 
@@ -111,9 +95,7 @@ interface Expense {
   paidBy: string; // memberId
   amount: number; // en centimes pour éviter les erreurs de float
   description: string;
-  category: string | null;
   date: Date;
-  receiptUrl: string | null;
   createdBy: string; // memberId
   createdAt: Date;
   updatedAt: Date;
@@ -126,17 +108,6 @@ interface ExpenseParticipant {
   memberId: string;
   customAmount: number | null; // null = calcul équitable
 }
-
-// Catégories prédéfinies
-type ExpenseCategory =
-  | 'food'        // Alimentation
-  | 'housing'     // Logement
-  | 'transport'   // Transport
-  | 'leisure'     // Loisirs
-  | 'health'      // Santé
-  | 'shopping'    // Achats
-  | 'utilities'   // Factures
-  | 'other';      // Autre
 ```
 
 ### Calcul de la Part Équitable
@@ -218,8 +189,7 @@ function adjustForRounding(shares: ExpenseShare[], totalAmount: number): void {
 - Qui a payé (avatar + nom)
 - Ma part en surbrillance
 - Date
-- Miniature du ticket si présent
-- Swipe pour modifier/supprimer (mobile)
+- Boutons modifier/supprimer accessibles via menu contextuel
 
 ### `ExpenseForm`
 - Champ montant avec clavier numérique
@@ -227,27 +197,17 @@ function adjustForRounding(shares: ExpenseShare[], totalAmount: number): void {
 - Sélecteur de date (aujourd'hui par défaut)
 - Sélecteur "Payé par" (moi par défaut)
 - Sélecteur des personnes concernées
-- Sélecteur de catégorie (optionnel)
-- Bouton d'ajout de photo
 - Bouton de validation
 
 ### `ExpenseDetail`
 - Toutes les informations
 - Tableau de répartition
-- Photo du ticket (zoomable)
 - Boutons modifier/supprimer
 
 ### `ExpenseFilters`
 - Filtre par période (semaine, mois, année, personnalisé)
-- Filtre par catégorie
 - Filtre par personne
 - Barre de recherche
-
-### `ReceiptUploader`
-- Bouton d'upload/capture
-- Aperçu de l'image
-- Option de suppression
-- Indicateur de chargement
 
 ---
 
@@ -276,57 +236,6 @@ interface UseExpense {
   deleteExpense: () => Promise<void>;
 }
 ```
-
-### `useReceipt`
-```typescript
-interface UseReceipt {
-  uploadReceipt: (expenseId: string, file: File) => Promise<string>;
-  deleteReceipt: (expenseId: string) => Promise<void>;
-  isUploading: boolean;
-}
-```
-
----
-
-## Upload de Tickets (Cloudflare R2)
-
-### Configuration R2
-
-```typescript
-// Bucket R2 pour les tickets
-const RECEIPTS_BUCKET = 'faircount-receipts';
-
-// Structure des clés
-// {groupId}/{expenseId}/{filename}
-```
-
-### Compression des Images
-
-Avant upload :
-- Redimensionnement max 1920px de large
-- Compression JPEG qualité 80%
-- Conversion des formats exotiques en JPEG
-
-### Sécurité
-
-- URLs signées avec expiration
-- Accès limité aux personnes membres du groupe
-- Suppression automatique si dépense supprimée
-
----
-
-## Catégories de Dépenses
-
-| Clé | Label FR | Icône |
-|-----|----------|-------|
-| `food` | Alimentation | 🍽️ |
-| `housing` | Logement | 🏠 |
-| `transport` | Transport | 🚗 |
-| `leisure` | Loisirs | 🎬 |
-| `health` | Santé | 💊 |
-| `shopping` | Achats | 🛒 |
-| `utilities` | Factures | 📄 |
-| `other` | Autre | 📦 |
 
 ---
 
