@@ -29,10 +29,10 @@ Ce document liste toutes les tâches de développement pour le MVP de FairCount,
 Initialiser le monorepo avec pnpm, configurer TypeScript, Biome, Tailwind et Vite.
 
 **Critères de validation :**
-- [ ] `pnpm install` fonctionne
-- [ ] `pnpm dev` lance le serveur de développement
-- [ ] Biome lint et format fonctionnent
-- [ ] Tailwind compile les styles
+- [x] `pnpm install` fonctionne
+- [x] `pnpm dev` lance le serveur de développement
+- [x] Biome lint et format fonctionnent
+- [x] Tailwind compile les styles
 
 ---
 
@@ -46,9 +46,9 @@ Initialiser le monorepo avec pnpm, configurer TypeScript, Biome, Tailwind et Vit
 Configurer Wrangler pour Cloudflare Workers, Pages, D1 et R2.
 
 **Critères de validation :**
-- [ ] `wrangler dev` fonctionne
-- [ ] Connexion à D1 locale établie
-- [ ] Variables d'environnement configurées
+- [x] `wrangler dev` fonctionne
+- [x] Connexion à D1 locale établie
+- [x] Variables d'environnement configurées
 
 ---
 
@@ -67,9 +67,9 @@ Configurer Wrangler pour Cloudflare Workers, Pages, D1 et R2.
 Définir le schéma Drizzle ORM pour toutes les tables : users, groups, group_members, expenses, expense_participants, settlements.
 
 **Critères de validation :**
-- [ ] Schéma TypeScript complet
-- [ ] Relations définies correctement
-- [ ] Migration générée et appliquée sur D1
+- [x] Schéma TypeScript complet
+- [x] Relations définies correctement
+- [x] Migration générée et appliquée sur D1
 
 ---
 
@@ -85,9 +85,9 @@ Définir le schéma Drizzle ORM pour toutes les tables : users, groups, group_me
 Mettre en place le routing (React Router ou TanStack Router) et les layouts principaux mobile-first.
 
 **Critères de validation :**
-- [ ] Navigation entre pages fonctionne
-- [ ] Layout mobile avec navigation bottom
-- [ ] Layout desktop responsive
+- [x] Navigation entre pages fonctionne
+- [x] Layout mobile avec navigation bottom
+- [x] Layout desktop responsive
 
 ---
 
