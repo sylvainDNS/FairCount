@@ -1,11 +1,24 @@
 # Copy this file to .dev.vars and fill in the values
 
-# Proton Mail SMTP for sending emails
-SMTP_HOST=smtp.protonmail.ch
-SMTP_PORT=587
-SMTP_USER=your-email@protonmail.com
-SMTP_PASS=your-smtp-password
-SMTP_FROM=noreply@faircount.app
+# ===========================================
+# Development Mail Server (docker-compose up)
+# ===========================================
+SMTP_HOST=localhost
+SMTP_PORT=1025
+SMTP_USER=
+SMTP_PASS=
+SMTP_FROM=noreply@faircount.dev
+
+# Web UI: http://localhost:8025
+
+# ===========================================
+# Production (Proton Mail SMTP)
+# ===========================================
+# SMTP_HOST=smtp.protonmail.ch
+# SMTP_PORT=587
+# SMTP_USER=your-email@protonmail.com
+# SMTP_PASS=your-smtp-password
+# SMTP_FROM=noreply@faircount.app
 
 # Better Auth secret (generate with: openssl rand -base64 32)
 AUTH_SECRET=your-auth-secret-here
