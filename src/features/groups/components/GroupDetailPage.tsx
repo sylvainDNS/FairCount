@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { BalanceList, BalanceSummary, useBalances } from '@/features/balances';
 import { ExpenseList } from '@/features/expenses';
 import { MemberList } from '@/features/members';
 import { useGroup } from '../hooks/useGroup';
@@ -9,7 +10,15 @@ import { PendingInvitations } from './PendingInvitations';
 export const GroupDetailPage = () => {
   const { id = '' } = useParams<{ id: string }>();
   const { group, isLoading, error } = useGroup(id);
+  const {
+    balances,
+    myBalance,
+    totalExpenses,
+    isLoading: balancesLoading,
+    isValid,
+  } = useBalances(id);
   const [membersKey, setMembersKey] = useState(0);
+  const [showAllBalances, setShowAllBalances] = useState(false);
 
   const refreshMembers = useCallback(() => {
     setMembersKey((k) => k + 1);
@@ -65,6 +74,29 @@ export const GroupDetailPage = () => {
           </Link>
         </div>
       </div>
+
+      {/* Balance summary section */}
+      <section className="mb-6">
+        <BalanceSummary
+          balance={myBalance}
+          currency={group.currency}
+          isLoading={balancesLoading}
+          onViewDetail={() => setShowAllBalances((v) => !v)}
+        />
+      </section>
+
+      {/* All balances section (collapsible) */}
+      {showAllBalances && (
+        <section className="mb-6">
+          <BalanceList
+            balances={balances}
+            totalExpenses={totalExpenses}
+            currency={group.currency}
+            isLoading={balancesLoading}
+            isValid={isValid}
+          />
+        </section>
+      )}
 
       {/* Expenses section */}
       <section className="mb-6">

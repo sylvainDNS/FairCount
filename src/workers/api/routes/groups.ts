@@ -5,6 +5,7 @@ import type { Auth } from '../../../lib/auth';
 import { isValidEmail, isValidUUID } from '../../../lib/validation';
 import type { Env } from '../../types';
 import { sendInvitationEmail } from '../utils/email';
+import * as balanceHandlers from './balances-handlers';
 import * as expenseHandlers from './expenses-handlers';
 import * as memberHandlers from './members-handlers';
 
@@ -42,9 +43,59 @@ async function parseJsonBody<T>(request: Request): Promise<T | null> {
   }
 }
 
+// Calculate fair shares based on coefficients
+function calculateShares(
+  amount: number,
+  participants: Array<{ memberId: string; customAmount: number | null }>,
+  memberCoefficients: Map<string, number>,
+): Map<string, number> {
+  const shares = new Map<string, number>();
+  let remainingAmount = amount;
+  const fairShareParticipants: string[] = [];
+
+  for (const p of participants) {
+    if (p.customAmount !== null) {
+      shares.set(p.memberId, p.customAmount);
+      remainingAmount -= p.customAmount;
+    } else {
+      fairShareParticipants.push(p.memberId);
+    }
+  }
+
+  if (fairShareParticipants.length > 0 && remainingAmount > 0) {
+    const totalCoeff = fairShareParticipants.reduce(
+      (sum, id) => sum + (memberCoefficients.get(id) ?? 0),
+      0,
+    );
+    let allocated = 0;
+
+    for (let i = 0; i < fairShareParticipants.length; i++) {
+      const memberId = fairShareParticipants[i] as string;
+      const coeff = memberCoefficients.get(memberId) ?? 0;
+      let share: number;
+
+      if (i === fairShareParticipants.length - 1) {
+        share = remainingAmount - allocated;
+      } else if (totalCoeff > 0) {
+        share = Math.round((coeff / totalCoeff) * remainingAmount);
+      } else {
+        share = Math.round(remainingAmount / fairShareParticipants.length);
+      }
+      shares.set(memberId, share);
+      allocated += share;
+    }
+  } else if (fairShareParticipants.length > 0) {
+    for (const memberId of fairShareParticipants) {
+      shares.set(memberId, 0);
+    }
+  }
+
+  return shares;
+}
+
 // List user's groups
 async function listGroups(ctx: RouteContext, userId: string): Promise<Response> {
-  // Get user's groups
+  // Get user's groups with their memberId
   const userGroups = await ctx.db
     .select({
       id: schema.groups.id,
@@ -53,6 +104,7 @@ async function listGroups(ctx: RouteContext, userId: string): Promise<Response> 
       currency: schema.groups.currency,
       archivedAt: schema.groups.archivedAt,
       createdAt: schema.groups.createdAt,
+      memberId: schema.groupMembers.id,
     })
     .from(schema.groups)
     .innerJoin(schema.groupMembers, eq(schema.groups.id, schema.groupMembers.groupId))
@@ -62,8 +114,10 @@ async function listGroups(ctx: RouteContext, userId: string): Promise<Response> 
     return Response.json([]);
   }
 
-  // Get member counts for all groups in a single query
   const groupIds = userGroups.map((g) => g.id);
+  const memberIdByGroup = new Map(userGroups.map((g) => [g.id, g.memberId]));
+
+  // Get member counts for all groups in a single query
   const memberCounts = await ctx.db
     .select({
       groupId: schema.groupMembers.groupId,
@@ -75,13 +129,98 @@ async function listGroups(ctx: RouteContext, userId: string): Promise<Response> 
 
   const countMap = new Map(memberCounts.map((mc) => [mc.groupId, mc.count]));
 
+  // Get all members for coefficient calculation
+  const allMembers = await ctx.db
+    .select({
+      id: schema.groupMembers.id,
+      groupId: schema.groupMembers.groupId,
+      coefficient: schema.groupMembers.coefficient,
+    })
+    .from(schema.groupMembers)
+    .where(and(inArray(schema.groupMembers.groupId, groupIds), isNull(schema.groupMembers.leftAt)));
+
+  const membersByGroup = new Map<string, Map<string, number>>();
+  for (const m of allMembers) {
+    const groupMap = membersByGroup.get(m.groupId) ?? new Map();
+    groupMap.set(m.id, m.coefficient);
+    membersByGroup.set(m.groupId, groupMap);
+  }
+
+  // Get all expenses for these groups
+  const allExpenses = await ctx.db
+    .select()
+    .from(schema.expenses)
+    .where(and(inArray(schema.expenses.groupId, groupIds), isNull(schema.expenses.deletedAt)));
+
+  // Get all participants
+  const expenseIds = allExpenses.map((e) => e.id);
+  const allParticipants =
+    expenseIds.length > 0
+      ? await ctx.db
+          .select()
+          .from(schema.expenseParticipants)
+          .where(inArray(schema.expenseParticipants.expenseId, expenseIds))
+      : [];
+
+  const participantsByExpense = new Map<
+    string,
+    Array<{ memberId: string; customAmount: number | null }>
+  >();
+  for (const p of allParticipants) {
+    const list = participantsByExpense.get(p.expenseId) ?? [];
+    list.push({ memberId: p.memberId, customAmount: p.customAmount });
+    participantsByExpense.set(p.expenseId, list);
+  }
+
+  // Get all settlements
+  const allSettlements = await ctx.db
+    .select()
+    .from(schema.settlements)
+    .where(inArray(schema.settlements.groupId, groupIds));
+
+  // Calculate balance for each group
+  const balanceByGroup = new Map<string, number>();
+  for (const groupId of groupIds) {
+    const myMemberId = memberIdByGroup.get(groupId);
+    if (!myMemberId) continue;
+
+    const memberCoeffs = membersByGroup.get(groupId) ?? new Map();
+    let totalPaid = 0;
+    let totalOwed = 0;
+    let settlementsPaid = 0;
+    let settlementsReceived = 0;
+
+    // Process expenses
+    for (const expense of allExpenses.filter((e) => e.groupId === groupId)) {
+      if (expense.paidBy === myMemberId) {
+        totalPaid += expense.amount;
+      }
+      const participants = participantsByExpense.get(expense.id) ?? [];
+      const shares = calculateShares(expense.amount, participants, memberCoeffs);
+      totalOwed += shares.get(myMemberId) ?? 0;
+    }
+
+    // Process settlements
+    for (const settlement of allSettlements.filter((s) => s.groupId === groupId)) {
+      if (settlement.fromMember === myMemberId) {
+        settlementsPaid += settlement.amount;
+      }
+      if (settlement.toMember === myMemberId) {
+        settlementsReceived += settlement.amount;
+      }
+    }
+
+    const netBalance = totalPaid - totalOwed - settlementsPaid + settlementsReceived;
+    balanceByGroup.set(groupId, netBalance);
+  }
+
   const groupsWithMeta = userGroups.map((group) => ({
     id: group.id,
     name: group.name,
     description: group.description,
     currency: group.currency,
     memberCount: countMap.get(group.id) ?? 0,
-    myBalance: 0, // Placeholder - will be calculated in Phase 5
+    myBalance: balanceByGroup.get(group.id) ?? 0,
     isArchived: group.archivedAt !== null,
     createdAt: group.createdAt,
   }));
@@ -698,6 +837,38 @@ export async function handleGroupsRoutes(request: Request, ctx: RouteContext): P
     if (method === 'DELETE' && subId && isValidUUID(subId)) {
       return expenseHandlers.deleteExpense(expenseCtx, subId);
     }
+  }
+
+  // Balances routes: /api/groups/:id/balances/*
+  if (action === 'balances') {
+    const balanceCtx = {
+      db: ctx.db,
+      groupId,
+      userId: user.id,
+      currentMemberId: membership.id,
+    };
+
+    // GET /api/groups/:id/balances/me - Get my balance detail
+    if (method === 'GET' && subId === 'me') {
+      return balanceHandlers.getMyBalance(balanceCtx);
+    }
+
+    // GET /api/groups/:id/balances - List all balances
+    if (method === 'GET' && !subId) {
+      return balanceHandlers.listBalances(balanceCtx);
+    }
+  }
+
+  // Stats route: /api/groups/:id/stats
+  if (action === 'stats' && method === 'GET') {
+    const balanceCtx = {
+      db: ctx.db,
+      groupId,
+      userId: user.id,
+      currentMemberId: membership.id,
+    };
+    const period = url.searchParams.get('period') ?? undefined;
+    return balanceHandlers.getGroupStats(balanceCtx, period);
   }
 
   return Response.json({ error: 'Not found' }, { status: 404 });

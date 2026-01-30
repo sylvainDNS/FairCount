@@ -549,9 +549,9 @@ Filtres pour les dépenses : période, personne, recherche.
 Implémenter les endpoints : GET `/api/groups/:id/balances`, GET `/api/groups/:id/balances/me`, GET `/api/groups/:id/stats`.
 
 **Critères de validation :**
-- [ ] Calcul des soldes correct
-- [ ] Détail du solde personnel
-- [ ] Statistiques du groupe
+- [x]Calcul des soldes correct
+- [x]Détail du solde personnel
+- [x]Statistiques du groupe
 
 ---
 
@@ -565,9 +565,9 @@ Implémenter les endpoints : GET `/api/groups/:id/balances`, GET `/api/groups/:i
 Hook pour les soldes du groupe avec vérification d'intégrité.
 
 **Critères de validation :**
-- [ ] Liste des soldes
-- [ ] Mon solde mis en évidence
-- [ ] Vérification somme = 0
+- [x]Liste des soldes
+- [x]Mon solde mis en évidence
+- [x]Vérification somme = 0
 
 ---
 
@@ -581,8 +581,8 @@ Hook pour les soldes du groupe avec vérification d'intégrité.
 Hooks pour le détail du solde personnel et les statistiques du groupe.
 
 **Critères de validation :**
-- [ ] Décomposition du solde
-- [ ] Statistiques par période
+- [x]Décomposition du solde
+- [x]Statistiques par période
 
 ---
 
@@ -595,9 +595,9 @@ Hooks pour le détail du solde personnel et les statistiques du groupe.
 Affichage du solde personnel en grand avec couleur et message contextuel.
 
 **Critères de validation :**
-- [ ] Solde coloré (vert/rouge/gris)
-- [ ] Message contextuel
-- [ ] Action rapide
+- [x]Solde coloré (vert/rouge/gris)
+- [x]Message contextuel
+- [x]Action rapide
 
 ---
 
@@ -610,9 +610,9 @@ Affichage du solde personnel en grand avec couleur et message contextuel.
 Liste de tous les soldes du groupe avec indicateurs visuels.
 
 **Critères de validation :**
-- [ ] Tous les soldes affichés
-- [ ] Tri par montant
-- [ ] Total des dépenses
+- [x]Tous les soldes affichés
+- [x]Tri par montant
+- [x]Total des dépenses
 
 ---
 
@@ -625,9 +625,9 @@ Liste de tous les soldes du groupe avec indicateurs visuels.
 Décomposition du solde : ce que j'ai payé, ce que je dois, remboursements.
 
 **Critères de validation :**
-- [ ] Sections distinctes
-- [ ] Liste des dépenses concernées
-- [ ] Historique des remboursements
+- [x]Sections distinctes
+- [x]Liste des dépenses concernées
+- [x]Historique des remboursements
 
 ---
 
