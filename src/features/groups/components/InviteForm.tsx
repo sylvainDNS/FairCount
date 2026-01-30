@@ -1,0 +1,104 @@
+import { useCallback, useState } from 'react';
+import { isValidEmail } from '@/lib/validation';
+import { useInvitations } from '../hooks/useInvitations';
+import { GROUP_ERROR_MESSAGES, type GroupError } from '../types';
+
+interface InviteFormProps {
+  readonly groupId: string;
+}
+
+type FormState = 'idle' | 'loading' | 'success' | 'error';
+
+export const InviteForm = ({ groupId }: InviteFormProps) => {
+  const { sendInvitation } = useInvitations(groupId);
+
+  const [email, setEmail] = useState('');
+  const [formState, setFormState] = useState<FormState>('idle');
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const handleSubmit = useCallback(
+    async (e: React.SubmitEvent) => {
+      e.preventDefault();
+
+      if (!isValidEmail(email)) {
+        setFormState('error');
+        setErrorMessage('Adresse email invalide');
+        return;
+      }
+
+      setFormState('loading');
+      setErrorMessage('');
+
+      const result = await sendInvitation(email);
+
+      if (result.success) {
+        setFormState('success');
+        setEmail('');
+        setTimeout(() => setFormState('idle'), 3000);
+      } else {
+        setFormState('error');
+        setErrorMessage(
+          GROUP_ERROR_MESSAGES[result.error as GroupError] || GROUP_ERROR_MESSAGES.UNKNOWN_ERROR,
+        );
+      }
+    },
+    [email, sendInvitation],
+  );
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label
+          htmlFor="invite-email"
+          className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+        >
+          Adresse email
+        </label>
+        <input
+          id="invite-email"
+          type="email"
+          value={email}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            if (formState !== 'idle') {
+              setFormState('idle');
+              setErrorMessage('');
+            }
+          }}
+          placeholder="email@exemple.com"
+          required
+          disabled={formState === 'loading'}
+          aria-describedby={
+            formState === 'error'
+              ? 'invite-error'
+              : formState === 'success'
+                ? 'invite-success'
+                : undefined
+          }
+          aria-invalid={formState === 'error'}
+          className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
+        />
+      </div>
+
+      {formState === 'error' && errorMessage && (
+        <div id="invite-error" role="alert" className="text-red-600 dark:text-red-400 text-sm">
+          {errorMessage}
+        </div>
+      )}
+
+      {formState === 'success' && (
+        <output id="invite-success" className="text-green-600 dark:text-green-400 text-sm">
+          Invitation envoyée avec succès
+        </output>
+      )}
+
+      <button
+        type="submit"
+        disabled={formState === 'loading' || !email}
+        className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed"
+      >
+        {formState === 'loading' ? 'Envoi en cours...' : "Envoyer l'invitation"}
+      </button>
+    </form>
+  );
+};

@@ -1,0 +1,122 @@
+// Re-export DB types
+export type {
+  Group,
+  GroupInvitation,
+  GroupMember,
+  NewGroup,
+  NewGroupInvitation,
+  NewGroupMember,
+} from '@/db/schema';
+
+// Supported currencies
+export const CURRENCIES = [
+  { code: 'EUR', label: 'Euro (EUR)' },
+  { code: 'USD', label: 'Dollar ($)' },
+  { code: 'GBP', label: 'Livre (GBP)' },
+  { code: 'CHF', label: 'Franc suisse (CHF)' },
+] as const;
+
+export type CurrencyCode = (typeof CURRENCIES)[number]['code'];
+
+// Form data types
+export interface CreateGroupFormData {
+  readonly name: string;
+  readonly description?: string | undefined;
+  readonly currency?: string | undefined;
+}
+
+export interface UpdateGroupFormData {
+  readonly name?: string | undefined;
+  readonly description?: string | undefined;
+}
+
+export interface InviteFormData {
+  readonly email: string;
+}
+
+// API response types
+export interface GroupListItem {
+  readonly id: string;
+  readonly name: string;
+  readonly description: string | null;
+  readonly currency: string;
+  readonly memberCount: number;
+  readonly myBalance: number;
+  readonly isArchived: boolean;
+  readonly createdAt: Date;
+}
+
+export interface GroupWithMembers {
+  readonly id: string;
+  readonly name: string;
+  readonly description: string | null;
+  readonly currency: string;
+  readonly createdBy: string;
+  readonly createdAt: Date;
+  readonly archivedAt: Date | null;
+  readonly members: GroupMemberInfo[];
+  readonly memberCount: number;
+  readonly myMemberId: string;
+}
+
+export interface GroupMemberInfo {
+  readonly id: string;
+  readonly name: string;
+  readonly email: string | null;
+  readonly userId: string | null;
+  readonly income: number;
+  readonly coefficient: number;
+  readonly joinedAt: Date;
+}
+
+export interface InvitationInfo {
+  readonly id: string;
+  readonly email: string;
+  readonly createdAt: Date;
+  readonly expiresAt: Date;
+  readonly createdByName: string;
+}
+
+export interface InvitationDetails {
+  readonly group: {
+    readonly id: string;
+    readonly name: string;
+  };
+  readonly inviterName: string;
+  readonly expiresAt: Date;
+}
+
+// Error types
+export type GroupError =
+  | 'GROUP_NOT_FOUND'
+  | 'NOT_A_MEMBER'
+  | 'NOT_AUTHORIZED'
+  | 'INVALID_NAME'
+  | 'INVALID_EMAIL'
+  | 'ALREADY_INVITED'
+  | 'ALREADY_MEMBER'
+  | 'INVITATION_NOT_FOUND'
+  | 'INVITATION_EXPIRED'
+  | 'CANNOT_LEAVE_ALONE'
+  | 'UNKNOWN_ERROR';
+
+export const GROUP_ERROR_MESSAGES = {
+  GROUP_NOT_FOUND: 'Groupe introuvable',
+  NOT_A_MEMBER: "Vous n'êtes pas membre de ce groupe",
+  NOT_AUTHORIZED: "Vous n'avez pas les droits pour cette action",
+  INVALID_NAME: 'Le nom du groupe est invalide',
+  INVALID_EMAIL: 'Adresse email invalide',
+  ALREADY_INVITED: 'Cette personne a déjà été invitée',
+  ALREADY_MEMBER: 'Cette personne est déjà membre du groupe',
+  INVITATION_NOT_FOUND: 'Invitation introuvable',
+  INVITATION_EXPIRED: 'Cette invitation a expiré',
+  CANNOT_LEAVE_ALONE: 'Vous ne pouvez pas quitter un groupe dont vous êtes le seul membre',
+  UNKNOWN_ERROR: 'Une erreur est survenue',
+} as const satisfies Record<GroupError, string>;
+
+// API result types
+export interface GroupResult<T = void> {
+  readonly success: boolean;
+  readonly error?: GroupError;
+  readonly data?: T;
+}

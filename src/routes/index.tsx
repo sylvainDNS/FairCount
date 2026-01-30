@@ -1,6 +1,13 @@
 import type { RouteObject } from 'react-router-dom';
 import { LoginPage, ProfilePage } from '@/features/auth';
-import { Layout } from '@/shared/components';
+import {
+  CreateGroupPage,
+  GroupDetailPage,
+  GroupSettingsPage,
+  GroupsPage,
+  InvitePage,
+} from '@/features/groups';
+import { Layout } from '@/shared/components/Layout';
 
 const HomePage = () => {
   return (
@@ -24,29 +31,6 @@ const HomePage = () => {
   );
 };
 
-const GroupsPage = () => {
-  return (
-    <div className="space-y-6">
-      <header className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Mes groupes</h1>
-        <button
-          type="button"
-          className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium transition-colors"
-        >
-          Nouveau groupe
-        </button>
-      </header>
-
-      <div className="text-center py-12">
-        <p className="text-slate-500 dark:text-slate-400">Aucun groupe pour le moment</p>
-        <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
-          Créez votre premier groupe pour commencer
-        </p>
-      </div>
-    </div>
-  );
-};
-
 const NotFoundPage = () => {
   return (
     <div className="text-center py-12">
@@ -62,11 +46,18 @@ export const routes: readonly RouteObject[] = [
     element: <LoginPage />,
   },
   {
+    path: '/invite/:token',
+    element: <InvitePage />,
+  },
+  {
     path: '/',
     element: <Layout />,
     children: [
       { index: true, element: <HomePage /> },
       { path: 'groups', element: <GroupsPage /> },
+      { path: 'groups/new', element: <CreateGroupPage /> },
+      { path: 'groups/:id', element: <GroupDetailPage /> },
+      { path: 'groups/:id/settings', element: <GroupSettingsPage /> },
       { path: 'profile', element: <ProfilePage /> },
       { path: '*', element: <NotFoundPage /> },
     ],

@@ -200,9 +200,9 @@ Page de profil permettant de modifier le nom, afficher l'email (lecture seule) e
 Implémenter les endpoints : GET/POST `/api/groups`, GET/PATCH/DELETE `/api/groups/:id`, POST `/api/groups/:id/archive`, POST `/api/groups/:id/leave`.
 
 **Critères de validation :**
-- [ ] CRUD groupes fonctionnel
-- [ ] Archivage/désarchivage
-- [ ] Quitter un groupe
+- [x] CRUD groupes fonctionnel
+- [x] Archivage/désarchivage
+- [x] Quitter un groupe
 
 ---
 
@@ -216,10 +216,10 @@ Implémenter les endpoints : GET/POST `/api/groups`, GET/PATCH/DELETE `/api/grou
 Implémenter les endpoints d'invitation : POST `/api/groups/:id/invite`, GET `/api/groups/:id/invitations`, DELETE/POST resend, GET/POST `/api/invitations/:token`.
 
 **Critères de validation :**
-- [ ] Envoi d'invitation par email
-- [ ] Liste des invitations en attente
-- [ ] Acceptation d'invitation
-- [ ] Annulation/renvoi d'invitation
+- [x] Envoi d'invitation par email
+- [x] Liste des invitations en attente
+- [x] Acceptation d'invitation
+- [x] Annulation/renvoi d'invitation
 
 ---
 
@@ -233,9 +233,9 @@ Implémenter les endpoints d'invitation : POST `/api/groups/:id/invite`, GET `/a
 Hook pour lister les groupes de l'utilisateur et créer un nouveau groupe.
 
 **Critères de validation :**
-- [ ] Liste des groupes chargée
-- [ ] Création de groupe fonctionnelle
-- [ ] Rafraîchissement après mutation
+- [x] Liste des groupes chargée
+- [x] Création de groupe fonctionnelle
+- [x] Rafraîchissement après mutation
 
 ---
 
@@ -248,9 +248,9 @@ Hook pour lister les groupes de l'utilisateur et créer un nouveau groupe.
 Hook pour un groupe spécifique : détails, membres, modification, archivage, quitter.
 
 **Critères de validation :**
-- [ ] Détails du groupe chargés
-- [ ] Liste des membres incluse
-- [ ] Mutations fonctionnelles
+- [x] Détails du groupe chargés
+- [x] Liste des membres incluse
+- [x] Mutations fonctionnelles
 
 ---
 
@@ -264,9 +264,9 @@ Hook pour un groupe spécifique : détails, membres, modification, archivage, qu
 Hooks pour gérer les invitations : envoyer, lister, annuler, renvoyer, accepter.
 
 **Critères de validation :**
-- [ ] Envoi d'invitation
-- [ ] Liste des invitations en attente
-- [ ] Acceptation d'invitation
+- [x] Envoi d'invitation
+- [x] Liste des invitations en attente
+- [x] Acceptation d'invitation
 
 ---
 
@@ -280,9 +280,9 @@ Hooks pour gérer les invitations : envoyer, lister, annuler, renvoyer, accepter
 Liste des groupes avec cards affichant nom, nombre de membres, solde personnel et dernière activité.
 
 **Critères de validation :**
-- [ ] Affichage des groupes
-- [ ] Badge pour groupes archivés
-- [ ] Solde coloré (vert/rouge)
+- [x] Affichage des groupes
+- [x] Badge pour groupes archivés
+- [x] Solde coloré (vert/rouge)
 
 ---
 
@@ -295,9 +295,9 @@ Liste des groupes avec cards affichant nom, nombre de membres, solde personnel e
 Formulaire de création de groupe : nom (obligatoire), description (optionnel), devise.
 
 **Critères de validation :**
-- [ ] Validation des champs
-- [ ] Sélecteur de devise
-- [ ] Redirection après création
+- [x] Validation des champs
+- [x] Sélecteur de devise
+- [x] Redirection après création
 
 ---
 
@@ -312,9 +312,9 @@ Formulaire de création de groupe : nom (obligatoire), description (optionnel), 
 Composants pour inviter des personnes, voir les invitations en attente, et page d'acceptation.
 
 **Critères de validation :**
-- [ ] Formulaire d'invitation par email
-- [ ] Liste des invitations avec actions
-- [ ] Page d'acceptation fonctionnelle
+- [x] Formulaire d'invitation par email
+- [x] Liste des invitations avec actions
+- [x] Page d'acceptation fonctionnelle
 
 ---
 
@@ -327,9 +327,9 @@ Composants pour inviter des personnes, voir les invitations en attente, et page 
 Page de paramètres du groupe : modification nom/description, archivage, zone danger (quitter/supprimer).
 
 **Critères de validation :**
-- [ ] Modification des infos
-- [ ] Archivage/désarchivage
-- [ ] Quitter le groupe avec confirmation
+- [x] Modification des infos
+- [x] Archivage/désarchivage
+- [x] Quitter le groupe avec confirmation
 
 ---
 

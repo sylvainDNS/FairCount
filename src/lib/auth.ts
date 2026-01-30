@@ -4,7 +4,7 @@ import { magicLink } from 'better-auth/plugins';
 import { WorkerMailer } from 'worker-mailer';
 import type { Database } from '../db';
 import * as schema from '../db/schema';
-import type { Env } from '../workers';
+import type { Env } from '../workers/types';
 
 interface CreateAuthOptions {
   readonly db: Database;
@@ -65,7 +65,7 @@ ${url}
 
 Ce lien expire dans 15 minutes.
 
-Si vous n'avez pas demande ce lien, ignorez cet email.
+Si vous n'avez pas demandé ce lien, ignorez cet email.
 
 L'équipe ${env.APP_NAME}`,
             html: `<!DOCTYPE html>
@@ -82,7 +82,7 @@ L'équipe ${env.APP_NAME}`,
     <a href="${url}" style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: 500;">Se connecter</a>
   </p>
   <p style="color: #666; font-size: 14px;">Ce lien expire dans 15 minutes.</p>
-  <p style="color: #666; font-size: 14px;">Si vous n'avez pas demande ce lien, ignorez cet email.</p>
+  <p style="color: #666; font-size: 14px;">Si vous n'avez pas demandé ce lien, ignorez cet email.</p>
   <hr style="border: none; border-top: 1px solid #eee; margin: 32px 0;">
   <p style="color: #999; font-size: 12px;">L'équipe ${env.APP_NAME}</p>
 </body>

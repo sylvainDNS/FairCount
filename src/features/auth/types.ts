@@ -21,7 +21,7 @@ export type AuthError =
 export const AUTH_ERROR_MESSAGES = {
   INVALID_EMAIL: 'Adresse email invalide',
   EMAIL_SEND_FAILED: "Impossible d'envoyer l'email",
-  LINK_EXPIRED: 'Ce lien a expire',
+  LINK_EXPIRED: 'Ce lien a expiré',
   LINK_INVALID: "Ce lien n'est pas valide",
   UNKNOWN_ERROR: 'Une erreur est survenue',
 } as const satisfies Record<AuthError, string>;

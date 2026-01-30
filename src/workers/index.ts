@@ -1,23 +1,8 @@
-import type { D1Database, R2Bucket } from '@cloudflare/workers-types';
 import { createDb } from '../db';
 import { createAuth } from '../lib/auth';
-
-export interface Env {
-  // D1 Database
-  DB: D1Database;
-  // R2 Storage
-  STORAGE: R2Bucket;
-  // Environment variables
-  APP_URL: string;
-  APP_NAME: string;
-  // Secrets
-  SMTP_HOST: string;
-  SMTP_PORT: string;
-  SMTP_USER: string;
-  SMTP_PASS: string;
-  SMTP_FROM: string;
-  AUTH_SECRET: string;
-}
+import { handleGroupsRoutes } from './api/routes/groups';
+import { handleInvitationsRoutes } from './api/routes/invitations';
+import type { Env } from './types';
 
 const getAllowedOrigin = (request: Request, env: Env): string => {
   const origin = request.headers.get('Origin');
@@ -61,34 +46,59 @@ export default {
     const corsResponse = handleCors(request, env);
     if (corsResponse) return corsResponse;
 
-    const url = new URL(request.url);
+    try {
+      const url = new URL(request.url);
 
-    // Health check
-    if (url.pathname === '/api/health') {
+      // Health check
+      if (url.pathname === '/api/health') {
+        return addCorsHeaders(
+          Response.json({
+            status: 'ok',
+            app: env.APP_NAME,
+            timestamp: new Date().toISOString(),
+          }),
+          request,
+          env,
+        );
+      }
+
+      // Auth routes - handled by better-auth
+      if (url.pathname.startsWith('/api/auth')) {
+        const db = createDb(env.DB);
+        const auth = createAuth({ db, env });
+        const response = await auth.handler(request);
+        return addCorsHeaders(response, request, env);
+      }
+
+      // Groups routes
+      if (url.pathname.startsWith('/api/groups')) {
+        const db = createDb(env.DB);
+        const auth = createAuth({ db, env });
+        const response = await handleGroupsRoutes(request, { db, auth, env });
+        return addCorsHeaders(response, request, env);
+      }
+
+      // Invitations routes (public endpoint for invitation details)
+      if (url.pathname.startsWith('/api/invitations')) {
+        const db = createDb(env.DB);
+        const auth = createAuth({ db, env });
+        const response = await handleInvitationsRoutes(request, { db, auth, env });
+        return addCorsHeaders(response, request, env);
+      }
+
+      // API routes - 404 for unknown routes
+      if (url.pathname.startsWith('/api/')) {
+        return addCorsHeaders(Response.json({ error: 'Not found' }, { status: 404 }), request, env);
+      }
+
+      return addCorsHeaders(Response.json({ error: 'Not found' }, { status: 404 }), request, env);
+    } catch (error) {
+      console.error('Worker error:', error);
       return addCorsHeaders(
-        Response.json({
-          status: 'ok',
-          app: env.APP_NAME,
-          timestamp: new Date().toISOString(),
-        }),
+        Response.json({ error: 'Internal server error' }, { status: 500 }),
         request,
         env,
       );
     }
-
-    // Auth routes - handled by better-auth
-    if (url.pathname.startsWith('/api/auth')) {
-      const db = createDb(env.DB);
-      const auth = createAuth({ db, env });
-      const response = await auth.handler(request);
-      return addCorsHeaders(response, request, env);
-    }
-
-    // API routes will be added here
-    if (url.pathname.startsWith('/api/')) {
-      return addCorsHeaders(Response.json({ error: 'Not found' }, { status: 404 }), request, env);
-    }
-
-    return addCorsHeaders(Response.json({ error: 'Not found' }, { status: 404 }), request, env);
   },
 };

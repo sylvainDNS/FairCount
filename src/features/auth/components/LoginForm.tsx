@@ -16,7 +16,7 @@ export const LoginForm = () => {
   }, []);
 
   const handleSubmit = useCallback(
-    async (e: React.FormEvent) => {
+    async (e: React.SubmitEvent) => {
       e.preventDefault();
 
       if (!isValidEmail(email)) {
@@ -60,9 +60,9 @@ export const LoginForm = () => {
             <polyline points="20 6 9 17 4 12" />
           </svg>
         </div>
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">Email envoye</h2>
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">Email envoyé</h2>
         <p className="text-slate-500 dark:text-slate-400 text-sm">
-          Consultez votre boite de réception et cliquez sur le lien pour vous connecter.
+          Consultez votre boîte de réception et cliquez sur le lien pour vous connecter.
         </p>
       </div>
     );
