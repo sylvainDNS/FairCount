@@ -12,6 +12,7 @@ port = 8787
 binding = "DB"
 database_name = "faircount-db"
 database_id = "local" # Will be replaced with actual ID in production
+migrations_dir = "drizzle/migrations"
 
 # R2 Storage (for avatars, exports)
 [[r2_buckets]]

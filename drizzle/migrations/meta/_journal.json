@@ -8,6 +8,13 @@
       "when": 1769644800747,
       "tag": "0000_pale_longshot",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1769729264065,
+      "tag": "0001_square_paper_doll",
+      "breakpoints": true
     }
   ]
 }

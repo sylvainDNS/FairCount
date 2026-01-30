@@ -103,9 +103,9 @@ Mettre en place le routing (React Router ou TanStack Router) et les layouts prin
 Configurer better-auth avec le provider magic link et l'envoi d'emails via Proton Mail SMTP.
 
 **Critères de validation :**
-- [ ] Configuration better-auth complète
-- [ ] Envoi d'email magic link fonctionne
-- [ ] Session créée après vérification du token
+- [x] Configuration better-auth complète
+- [x] Envoi d'email magic link fonctionne
+- [x] Session créée après vérification du token
 
 ---
 
@@ -119,10 +119,10 @@ Configurer better-auth avec le provider magic link et l'envoi d'emails via Proto
 Implémenter les endpoints : POST `/api/auth/magic-link`, GET `/api/auth/verify`, POST `/api/auth/logout`, GET `/api/auth/me`, PATCH `/api/auth/profile`.
 
 **Critères de validation :**
-- [ ] Magic link envoyé par email
-- [ ] Token vérifié et session créée
-- [ ] Déconnexion supprime la session
-- [ ] Profil récupéré et modifiable
+- [x] Magic link envoyé par email
+- [x] Token vérifié et session créée
+- [x] Déconnexion supprime la session
+- [x] Profil récupéré et modifiable
 
 ---
 
@@ -136,9 +136,9 @@ Implémenter les endpoints : POST `/api/auth/magic-link`, GET `/api/auth/verify`
 Créer le hook useAuth pour gérer l'état d'authentification : user, isLoading, isAuthenticated, login, logout, updateProfile.
 
 **Critères de validation :**
-- [ ] État utilisateur synchronisé
-- [ ] Fonctions login/logout fonctionnelles
-- [ ] Mise à jour du profil
+- [x] État utilisateur synchronisé
+- [x] Fonctions login/logout fonctionnelles
+- [x] Mise à jour du profil
 
 ---
 
@@ -151,10 +151,10 @@ Créer le hook useAuth pour gérer l'état d'authentification : user, isLoading,
 Formulaire de connexion avec champ email, validation, état de chargement et messages de succès/erreur.
 
 **Critères de validation :**
-- [ ] Validation email côté client
-- [ ] État de chargement pendant l'envoi
-- [ ] Message de confirmation après envoi
-- [ ] Gestion des erreurs
+- [x] Validation email côté client
+- [x] État de chargement pendant l'envoi
+- [x] Message de confirmation après envoi
+- [x] Gestion des erreurs
 
 ---
 
@@ -167,9 +167,9 @@ Formulaire de connexion avec champ email, validation, état de chargement et mes
 Layout centré pour les pages d'authentification avec logo FairCount.
 
 **Critères de validation :**
-- [ ] Layout centré responsive
-- [ ] Logo affiché
-- [ ] Fond sobre
+- [x] Layout centré responsive
+- [x] Logo affiché
+- [x] Fond sobre
 
 ---
 
@@ -182,9 +182,9 @@ Layout centré pour les pages d'authentification avec logo FairCount.
 Page de profil permettant de modifier le nom, afficher l'email (lecture seule) et se déconnecter.
 
 **Critères de validation :**
-- [ ] Nom modifiable
-- [ ] Email affiché en lecture seule
-- [ ] Bouton de déconnexion
+- [x] Nom modifiable
+- [x] Email affiché en lecture seule
+- [x] Bouton de déconnexion
 
 ---
 

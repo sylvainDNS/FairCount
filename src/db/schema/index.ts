@@ -12,5 +12,5 @@ export { groupMembers } from './members';
 export type { NewSettlement, Settlement } from './settlements';
 // Settlements
 export { settlements } from './settlements';
-export type { NewUser, User } from './users';
-export { users } from './users';
+export type { Account, NewUser, Session, User, Verification } from './users';
+export { accounts, sessions, users, verifications } from './users';

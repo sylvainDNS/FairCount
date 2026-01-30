@@ -1,4 +1,5 @@
 import type { RouteObject } from 'react-router-dom';
+import { LoginPage, ProfilePage } from '@/features/auth';
 import { Layout } from '@/shared/components';
 
 const HomePage = () => {
@@ -46,20 +47,6 @@ const GroupsPage = () => {
   );
 };
 
-const ProfilePage = () => {
-  return (
-    <div className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Mon profil</h1>
-      </header>
-
-      <section className="bg-white dark:bg-slate-900 rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-800">
-        <p className="text-slate-600 dark:text-slate-400">Connectez-vous pour voir votre profil</p>
-      </section>
-    </div>
-  );
-};
-
 const NotFoundPage = () => {
   return (
     <div className="text-center py-12">
@@ -70,6 +57,10 @@ const NotFoundPage = () => {
 };
 
 export const routes: readonly RouteObject[] = [
+  {
+    path: '/login',
+    element: <LoginPage />,
+  },
   {
     path: '/',
     element: <Layout />,
