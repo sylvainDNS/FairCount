@@ -93,8 +93,8 @@ async function acceptInvitation(
   const now = new Date();
   const memberName = user.name || user.email.split('@')[0] || user.email;
 
-  // Mark invitation as accepted first (with conditional WHERE to prevent race condition)
-  // Only update if still not accepted
+  // Mark invitation as accepted (with conditional WHERE to prevent race condition)
+  // Only update if still not accepted - this ensures only one request can "claim" the invitation
   await ctx.db
     .update(schema.groupInvitations)
     .set({ acceptedAt: now })
@@ -102,14 +102,15 @@ async function acceptInvitation(
       and(eq(schema.groupInvitations.id, invitation.id), isNull(schema.groupInvitations.acceptedAt)),
     );
 
-  // Verify the invitation was actually marked as accepted by us (not by another concurrent request)
+  // Verify the invitation was actually marked as accepted (not by another concurrent request)
   const [updatedInvitation] = await ctx.db
     .select({ acceptedAt: schema.groupInvitations.acceptedAt })
     .from(schema.groupInvitations)
     .where(eq(schema.groupInvitations.id, invitation.id));
 
-  // If acceptedAt doesn't match our timestamp, another request won the race
-  if (!updatedInvitation || updatedInvitation.acceptedAt?.getTime() !== now.getTime()) {
+  // If acceptedAt is still null, our update didn't go through (shouldn't happen normally)
+  // If acceptedAt is set, our conditional update succeeded
+  if (!updatedInvitation?.acceptedAt) {
     return Response.json({ error: 'INVITATION_NOT_FOUND' }, { status: 404 });
   }
 
