@@ -17,15 +17,19 @@
   /* Couleurs sémantiques */
   --color-positive-50: #f0fdf4;
   --color-positive-100: #dcfce7;
+  --color-positive-400: #4ade80;
   --color-positive-500: #22c55e;
   --color-positive-600: #16a34a;
   --color-positive-700: #15803d;
+  --color-positive-900: #14532d;
 
   --color-negative-50: #fef2f2;
   --color-negative-100: #fee2e2;
+  --color-negative-400: #f87171;
   --color-negative-500: #ef4444;
   --color-negative-600: #dc2626;
   --color-negative-700: #b91c1c;
+  --color-negative-900: #7f1d1d;
 
   /* Font families */
   --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,

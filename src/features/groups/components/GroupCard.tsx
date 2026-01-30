@@ -1,3 +1,4 @@
+import { Badge } from '@/shared/components/Badge';
 import type { GroupListItem } from '../types';
 
 interface GroupCardProps {
@@ -29,11 +30,7 @@ export const GroupCard = ({ group }: GroupCardProps) => {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <h3 className="font-semibold text-slate-900 dark:text-white truncate">{group.name}</h3>
-            {group.isArchived && (
-              <span className="px-2 py-0.5 text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded">
-                Archivé
-              </span>
-            )}
+            {group.isArchived && <Badge size="sm">Archivé</Badge>}
           </div>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             {group.memberCount} membre{group.memberCount > 1 ? 's' : ''}

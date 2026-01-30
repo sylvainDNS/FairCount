@@ -1,4 +1,5 @@
 import { Tooltip } from '@ark-ui/react/tooltip';
+import { Badge } from '@/shared/components/Badge';
 import { formatCurrency } from '@/shared/utils/format';
 import type { Balance } from '../types';
 import { BalanceCard } from './BalanceCard';
@@ -61,7 +62,7 @@ export const BalanceList = ({
         {!isValid && (
           <Tooltip.Root openDelay={200} closeDelay={100}>
             <Tooltip.Trigger asChild>
-              <span className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded cursor-help flex items-center gap-1">
+              <Badge variant="warning" size="sm" className="cursor-help gap-1">
                 Écart d'arrondi
                 <svg
                   className="w-3.5 h-3.5"
@@ -77,7 +78,7 @@ export const BalanceList = ({
                     d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                   />
                 </svg>
-              </span>
+              </Badge>
             </Tooltip.Trigger>
             <Tooltip.Positioner>
               <Tooltip.Content className="w-64 p-3 bg-slate-900 dark:bg-slate-700 text-white text-xs rounded-lg shadow-lg z-50">

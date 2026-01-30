@@ -1,4 +1,5 @@
 import { Collapsible } from '@ark-ui/react/collapsible';
+import { Badge } from '@/shared/components/Badge';
 import { Button } from '@/shared/components/Button';
 import { formatCurrency } from '@/shared/utils/format';
 import type { MemberWithCoefficient } from '../types';
@@ -27,9 +28,9 @@ export const MemberCard = ({ member, currency, onUpdateIncome, onRemove }: Membe
                 <span className="text-xs text-blue-600 dark:text-blue-400 shrink-0">(vous)</span>
               )}
               {!member.userId && (
-                <span className="text-xs px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded shrink-0">
+                <Badge variant="warning" size="sm" className="shrink-0">
                   non inscrit·e
-                </span>
+                </Badge>
               )}
             </p>
             {member.email && (
