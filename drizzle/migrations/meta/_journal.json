@@ -15,6 +15,20 @@
       "when": 1769729264065,
       "tag": "0001_square_paper_doll",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1769773514546,
+      "tag": "0002_sad_screwball",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1769773623098,
+      "tag": "0003_nice_sway",
+      "breakpoints": true
     }
   ]
 }

@@ -1,5 +1,4 @@
-import { sql } from 'drizzle-orm';
-import { sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import { users } from './users';
 
 export const groups = sqliteTable('groups', {
@@ -10,8 +9,8 @@ export const groups = sqliteTable('groups', {
   createdBy: text('created_by')
     .notNull()
     .references(() => users.id),
-  createdAt: text('created_at').notNull().default(sql`(current_timestamp)`),
-  archivedAt: text('archived_at'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  archivedAt: integer('archived_at', { mode: 'timestamp' }),
 });
 
 export const groupInvitations = sqliteTable('group_invitations', {
@@ -24,9 +23,9 @@ export const groupInvitations = sqliteTable('group_invitations', {
   createdBy: text('created_by')
     .notNull()
     .references(() => users.id),
-  expiresAt: text('expires_at').notNull(),
-  acceptedAt: text('accepted_at'),
-  createdAt: text('created_at').notNull().default(sql`(current_timestamp)`),
+  expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+  acceptedAt: integer('accepted_at', { mode: 'timestamp' }),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 });
 
 export type Group = typeof groups.$inferSelect;

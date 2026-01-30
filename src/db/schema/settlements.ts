@@ -1,4 +1,3 @@
-import { sql } from 'drizzle-orm';
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import { groups } from './groups';
 import { groupMembers } from './members';
@@ -15,8 +14,8 @@ export const settlements = sqliteTable('settlements', {
     .notNull()
     .references(() => groupMembers.id),
   amount: integer('amount').notNull(), // montant en centimes (toujours positif)
-  date: text('date').notNull(), // ISO date string
-  createdAt: text('created_at').notNull().default(sql`(current_timestamp)`),
+  date: text('date').notNull(), // ISO date string (YYYY-MM-DD) - date metier choisie par l'utilisateur
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 });
 
 export type Settlement = typeof settlements.$inferSelect;

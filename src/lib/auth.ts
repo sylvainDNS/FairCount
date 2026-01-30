@@ -3,6 +3,7 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { magicLink } from 'better-auth/plugins';
 import { WorkerMailer } from 'worker-mailer';
 import type { Database } from '../db';
+import * as schema from '../db/schema';
 import type { Env } from '../workers';
 
 interface CreateAuthOptions {
@@ -14,6 +15,12 @@ export const createAuth = ({ db, env }: CreateAuthOptions) => {
   return betterAuth({
     database: drizzleAdapter(db, {
       provider: 'sqlite',
+      schema: {
+        user: schema.users,
+        session: schema.sessions,
+        account: schema.accounts,
+        verification: schema.verifications,
+      },
     }),
     baseURL: env.APP_URL,
     secret: env.AUTH_SECRET,
@@ -32,9 +39,11 @@ export const createAuth = ({ db, env }: CreateAuthOptions) => {
       magicLink({
         expiresIn: 60 * 15, // 15 minutes
         sendMagicLink: async ({ email, url }) => {
+          const port = parseInt(env.SMTP_PORT, 10) || 1025;
+
           const mailer = await WorkerMailer.connect({
-            host: env.SMTP_HOST,
-            port: Number(env.SMTP_PORT),
+            host: env.SMTP_HOST || 'localhost',
+            port,
             secure: false,
             startTls: true,
             credentials: {

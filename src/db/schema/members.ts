@@ -1,4 +1,3 @@
-import { sql } from 'drizzle-orm';
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import { groups } from './groups';
 import { users } from './users';
@@ -12,9 +11,9 @@ export const groupMembers = sqliteTable('group_members', {
   name: text('name').notNull(),
   email: text('email'),
   income: integer('income').notNull().default(0), // revenu mensuel en centimes
-  coefficient: integer('coefficient').notNull().default(0), // coefficient * 10000 pour précision
-  joinedAt: text('joined_at').notNull().default(sql`(current_timestamp)`),
-  leftAt: text('left_at'),
+  coefficient: integer('coefficient').notNull().default(0), // coefficient * 10000 pour precision
+  joinedAt: integer('joined_at', { mode: 'timestamp' }).notNull(),
+  leftAt: integer('left_at', { mode: 'timestamp' }),
 });
 
 export type GroupMember = typeof groupMembers.$inferSelect;
