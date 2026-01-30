@@ -5,6 +5,7 @@ import type { Auth } from '../../../lib/auth';
 import { isValidEmail, isValidUUID } from '../../../lib/validation';
 import type { Env } from '../../types';
 import { sendInvitationEmail } from '../utils/email';
+import * as memberHandlers from './members-handlers';
 
 interface RouteContext {
   readonly db: Database;
@@ -251,15 +252,31 @@ async function sendInvitation(
   ctx: RouteContext,
   groupId: string,
   inviter: { id: string; name?: string | null; email: string },
-  data: { email?: string },
+  data: { email?: string; name?: string },
 ): Promise<Response> {
   const email = data.email?.trim().toLowerCase();
   if (!email || !isValidEmail(email)) {
     return Response.json({ error: 'INVALID_EMAIL' }, { status: 400 });
   }
 
-  // Check if already a member
-  const existingMember = await ctx.db
+  // Check if already a member (by email in groupMembers or via linked user)
+  const existingMemberByEmail = await ctx.db
+    .select()
+    .from(schema.groupMembers)
+    .where(
+      and(
+        eq(schema.groupMembers.groupId, groupId),
+        eq(schema.groupMembers.email, email),
+        isNull(schema.groupMembers.leftAt),
+      ),
+    );
+
+  if (existingMemberByEmail.length > 0) {
+    return Response.json({ error: 'ALREADY_MEMBER' }, { status: 400 });
+  }
+
+  // Also check if already a member via linked user account
+  const existingMemberByUser = await ctx.db
     .select()
     .from(schema.groupMembers)
     .innerJoin(schema.users, eq(schema.groupMembers.userId, schema.users.id))
@@ -271,7 +288,7 @@ async function sendInvitation(
       ),
     );
 
-  if (existingMember.length > 0) {
+  if (existingMemberByUser.length > 0) {
     return Response.json({ error: 'ALREADY_MEMBER' }, { status: 400 });
   }
 
@@ -302,21 +319,40 @@ async function sendInvitation(
     return Response.json({ error: 'GROUP_NOT_FOUND' }, { status: 404 });
   }
 
-  // Create invitation
+  // Create invitation AND member in batch
   const invitationId = crypto.randomUUID();
+  const memberId = crypto.randomUUID();
   const token = crypto.randomUUID();
   const now = new Date();
   const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
-  await ctx.db.insert(schema.groupInvitations).values({
-    id: invitationId,
-    groupId,
-    email,
-    token,
-    createdBy: inviter.id,
-    expiresAt,
-    createdAt: now,
-  });
+  // Use name from data or derive from email
+  const memberName = data.name?.trim() || email.split('@')[0] || email;
+
+  await ctx.db.batch([
+    ctx.db.insert(schema.groupInvitations).values({
+      id: invitationId,
+      groupId,
+      email,
+      token,
+      createdBy: inviter.id,
+      expiresAt,
+      createdAt: now,
+    }),
+    ctx.db.insert(schema.groupMembers).values({
+      id: memberId,
+      groupId,
+      userId: null, // Not linked yet - will be linked when invitation is accepted
+      name: memberName,
+      email,
+      income: 0,
+      coefficient: 0,
+      joinedAt: now,
+    }),
+  ]);
+
+  // Recalculate coefficients for the group
+  await memberHandlers.recalculateCoefficients(ctx.db, groupId);
 
   // Send invitation email
   await sendInvitationEmail(ctx.env, {
@@ -326,7 +362,7 @@ async function sendInvitation(
     inviteUrl: `${ctx.env.APP_URL}/invite/${token}`,
   });
 
-  return Response.json({ id: invitationId }, { status: 201 });
+  return Response.json({ id: invitationId, memberId }, { status: 201 });
 }
 
 // List pending invitations
@@ -362,14 +398,45 @@ async function cancelInvitation(
   groupId: string,
   invitationId: string,
 ): Promise<Response> {
-  await ctx.db
-    .delete(schema.groupInvitations)
+  // Get invitation email before deleting
+  const [invitation] = await ctx.db
+    .select({ email: schema.groupInvitations.email })
+    .from(schema.groupInvitations)
     .where(
       and(
         eq(schema.groupInvitations.id, invitationId),
         eq(schema.groupInvitations.groupId, groupId),
       ),
     );
+
+  if (!invitation) {
+    return Response.json({ error: 'INVITATION_NOT_FOUND' }, { status: 404 });
+  }
+
+  // Delete invitation and associated pending member in batch
+  await ctx.db.batch([
+    ctx.db
+      .delete(schema.groupInvitations)
+      .where(
+        and(
+          eq(schema.groupInvitations.id, invitationId),
+          eq(schema.groupInvitations.groupId, groupId),
+        ),
+      ),
+    // Remove the pending member (only if not linked to a user account)
+    ctx.db
+      .delete(schema.groupMembers)
+      .where(
+        and(
+          eq(schema.groupMembers.groupId, groupId),
+          eq(schema.groupMembers.email, invitation.email),
+          isNull(schema.groupMembers.userId),
+        ),
+      ),
+  ]);
+
+  // Recalculate coefficients
+  await memberHandlers.recalculateCoefficients(ctx.db, groupId);
 
   return Response.json({ success: true });
 }
@@ -527,6 +594,44 @@ export async function handleGroupsRoutes(request: Request, ctx: RouteContext): P
       return Response.json({ error: 'INVITATION_NOT_FOUND' }, { status: 404 });
     }
     return resendInvitation(ctx, groupId, subId, user);
+  }
+
+  // Members routes: /api/groups/:id/members/*
+  if (action === 'members') {
+    const memberCtx = { db: ctx.db, groupId, userId: user.id };
+
+    // GET /api/groups/:id/members - List members
+    if (method === 'GET' && !subId) {
+      return memberHandlers.listMembers(memberCtx);
+    }
+
+    // PATCH /api/groups/:id/members/me - Update own membership
+    if (method === 'PATCH' && subId === 'me') {
+      const body = await parseJsonBody<{ name?: string; income?: number }>(request);
+      if (!body) {
+        return Response.json({ error: 'INVALID_REQUEST' }, { status: 400 });
+      }
+      return memberHandlers.updateMyMembership(memberCtx, body);
+    }
+
+    // GET /api/groups/:id/members/:memberId - Get member
+    if (method === 'GET' && subId && isValidUUID(subId)) {
+      return memberHandlers.getMember(memberCtx, subId);
+    }
+
+    // PATCH /api/groups/:id/members/:memberId - Update member
+    if (method === 'PATCH' && subId && isValidUUID(subId)) {
+      const body = await parseJsonBody<{ name?: string; income?: number }>(request);
+      if (!body) {
+        return Response.json({ error: 'INVALID_REQUEST' }, { status: 400 });
+      }
+      return memberHandlers.updateMember(memberCtx, subId, body);
+    }
+
+    // DELETE /api/groups/:id/members/:memberId - Remove member
+    if (method === 'DELETE' && subId && isValidUUID(subId)) {
+      return memberHandlers.removeMember(memberCtx, subId);
+    }
   }
 
   return Response.json({ error: 'Not found' }, { status: 404 });

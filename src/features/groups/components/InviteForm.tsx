@@ -5,11 +5,12 @@ import { GROUP_ERROR_MESSAGES, type GroupError } from '../types';
 
 interface InviteFormProps {
   readonly groupId: string;
+  readonly onSuccess?: (() => void) | undefined;
 }
 
 type FormState = 'idle' | 'loading' | 'success' | 'error';
 
-export const InviteForm = ({ groupId }: InviteFormProps) => {
+export const InviteForm = ({ groupId, onSuccess }: InviteFormProps) => {
   const { sendInvitation } = useInvitations(groupId);
 
   const [email, setEmail] = useState('');
@@ -34,6 +35,7 @@ export const InviteForm = ({ groupId }: InviteFormProps) => {
       if (result.success) {
         setFormState('success');
         setEmail('');
+        onSuccess?.();
         setTimeout(() => setFormState('idle'), 3000);
       } else {
         setFormState('error');
@@ -42,7 +44,7 @@ export const InviteForm = ({ groupId }: InviteFormProps) => {
         );
       }
     },
-    [email, sendInvitation],
+    [email, sendInvitation, onSuccess],
   );
 
   return (

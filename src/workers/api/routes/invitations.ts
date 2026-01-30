@@ -73,8 +73,8 @@ async function acceptInvitation(
     return Response.json({ error: 'INVITATION_EXPIRED' }, { status: 400 });
   }
 
-  // Check if already a member
-  const [existingMember] = await ctx.db
+  // Check if user is already a member (by userId)
+  const [existingMemberByUser] = await ctx.db
     .select()
     .from(schema.groupMembers)
     .where(
@@ -85,46 +85,70 @@ async function acceptInvitation(
       ),
     );
 
-  if (existingMember) {
+  if (existingMemberByUser) {
     return Response.json({ error: 'ALREADY_MEMBER' }, { status: 400 });
   }
 
-  const memberId = crypto.randomUUID();
   const now = new Date();
   const memberName = user.name || user.email.split('@')[0] || user.email;
 
   // Mark invitation as accepted (with conditional WHERE to prevent race condition)
-  // Only update if still not accepted - this ensures only one request can "claim" the invitation
   await ctx.db
     .update(schema.groupInvitations)
     .set({ acceptedAt: now })
     .where(
-      and(eq(schema.groupInvitations.id, invitation.id), isNull(schema.groupInvitations.acceptedAt)),
+      and(
+        eq(schema.groupInvitations.id, invitation.id),
+        isNull(schema.groupInvitations.acceptedAt),
+      ),
     );
 
-  // Verify the invitation was actually marked as accepted (not by another concurrent request)
+  // Verify the invitation was actually marked as accepted
   const [updatedInvitation] = await ctx.db
     .select({ acceptedAt: schema.groupInvitations.acceptedAt })
     .from(schema.groupInvitations)
     .where(eq(schema.groupInvitations.id, invitation.id));
 
-  // If acceptedAt is still null, our update didn't go through (shouldn't happen normally)
-  // If acceptedAt is set, our conditional update succeeded
   if (!updatedInvitation?.acceptedAt) {
     return Response.json({ error: 'INVITATION_NOT_FOUND' }, { status: 404 });
   }
 
-  // Now safely add the member
-  await ctx.db.insert(schema.groupMembers).values({
-    id: memberId,
-    groupId: invitation.groupId,
-    userId: user.id,
-    name: memberName,
-    email: user.email,
-    income: 0,
-    coefficient: 0,
-    joinedAt: now,
-  });
+  // Find existing member created when invitation was sent (by email)
+  const [pendingMember] = await ctx.db
+    .select()
+    .from(schema.groupMembers)
+    .where(
+      and(
+        eq(schema.groupMembers.groupId, invitation.groupId),
+        eq(schema.groupMembers.email, invitation.email),
+        isNull(schema.groupMembers.userId),
+        isNull(schema.groupMembers.leftAt),
+      ),
+    );
+
+  if (pendingMember) {
+    // Link existing member to user account and update name
+    await ctx.db
+      .update(schema.groupMembers)
+      .set({
+        userId: user.id,
+        name: memberName,
+      })
+      .where(eq(schema.groupMembers.id, pendingMember.id));
+  } else {
+    // Fallback: create new member if not found (for backward compatibility with old invitations)
+    const memberId = crypto.randomUUID();
+    await ctx.db.insert(schema.groupMembers).values({
+      id: memberId,
+      groupId: invitation.groupId,
+      userId: user.id,
+      name: memberName,
+      email: user.email,
+      income: 0,
+      coefficient: 0,
+      joinedAt: now,
+    });
+  }
 
   return Response.json({ groupId: invitation.groupId });
 }

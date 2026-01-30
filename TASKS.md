@@ -345,10 +345,10 @@ Page de paramètres du groupe : modification nom/description, archivage, zone da
 Implémenter les endpoints : GET/POST `/api/groups/:id/members`, GET/PATCH/DELETE `/api/groups/:id/members/:memberId`, PATCH `/api/groups/:id/members/me`.
 
 **Critères de validation :**
-- [ ] Liste des membres
-- [ ] Ajout de membre non inscrit
-- [ ] Modification des revenus
-- [ ] Retrait de membre
+- [x] Liste des membres
+- [x] Ajout de membre non inscrit
+- [x] Modification des revenus
+- [x] Retrait de membre
 
 ---
 
@@ -362,9 +362,9 @@ Implémenter les endpoints : GET/POST `/api/groups/:id/members`, GET/PATCH/DELET
 Hook pour gérer les membres : liste, ajout, suppression.
 
 **Critères de validation :**
-- [ ] Liste des membres avec coefficients
-- [ ] Ajout de membre
-- [ ] Suppression de membre
+- [x] Liste des membres avec coefficients
+- [x] Ajout de membre
+- [x] Suppression de membre
 
 ---
 
@@ -377,8 +377,8 @@ Hook pour gérer les membres : liste, ajout, suppression.
 Hook pour gérer son propre membership : revenus, coefficient.
 
 **Critères de validation :**
-- [ ] Récupération de mon membership
-- [ ] Mise à jour des revenus
+- [x] Récupération de mon membership
+- [x] Mise à jour des revenus
 
 ---
 
@@ -392,9 +392,9 @@ Hook pour gérer son propre membership : revenus, coefficient.
 Liste des membres avec avatar, nom, revenu, coefficient et menu d'actions.
 
 **Critères de validation :**
-- [ ] Affichage des membres
-- [ ] Badge "non inscrit·e"
-- [ ] Menu d'actions contextuel
+- [x] Affichage des membres
+- [x] Badge "non inscrit·e"
+- [x] Menu d'actions contextuel
 
 ---
 
@@ -407,9 +407,9 @@ Liste des membres avec avatar, nom, revenu, coefficient et menu d'actions.
 Formulaire pour renseigner ses revenus avec explication de la transparence et aperçu du coefficient.
 
 **Critères de validation :**
-- [ ] Saisie du revenu
-- [ ] Aperçu du coefficient calculé
-- [ ] Explication de la transparence
+- [x] Saisie du revenu
+- [x] Aperçu du coefficient calculé
+- [x] Explication de la transparence
 
 ---
 
@@ -422,9 +422,9 @@ Formulaire pour renseigner ses revenus avec explication de la transparence et ap
 Formulaire pour ajouter une personne non inscrite : nom, email optionnel, revenu.
 
 **Critères de validation :**
-- [ ] Validation des champs
-- [ ] Option d'envoi d'invitation
-- [ ] Ajout du membre
+- [x] Validation des champs
+- [x] Option d'envoi d'invitation
+- [x] Ajout du membre
 
 ---
 

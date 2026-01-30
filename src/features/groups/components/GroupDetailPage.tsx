@@ -1,4 +1,6 @@
+import { useCallback, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { MemberList } from '@/features/members';
 import { useGroup } from '../hooks/useGroup';
 import { InviteForm } from './InviteForm';
 import { PendingInvitations } from './PendingInvitations';
@@ -6,6 +8,11 @@ import { PendingInvitations } from './PendingInvitations';
 export const GroupDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const { group, isLoading, error } = useGroup(id || '');
+  const [membersKey, setMembersKey] = useState(0);
+
+  const refreshMembers = useCallback(() => {
+    setMembersKey((k) => k + 1);
+  }, []);
 
   if (isLoading) {
     return (
@@ -60,31 +67,8 @@ export const GroupDetailPage = () => {
 
       {/* Members section */}
       <section className="mb-6">
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-          Membres ({group.memberCount})
-        </h2>
-        <ul className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 divide-y divide-slate-200 dark:divide-slate-800">
-          {group.members.map((member) => (
-            <li key={member.id} className="p-4 flex items-center justify-between">
-              <div>
-                <p className="font-medium text-slate-900 dark:text-white">
-                  {member.name}
-                  {member.id === group.myMemberId && (
-                    <span className="ml-2 text-xs text-blue-600 dark:text-blue-400">(vous)</span>
-                  )}
-                </p>
-                {member.email && (
-                  <p className="text-sm text-slate-500 dark:text-slate-400">{member.email}</p>
-                )}
-              </div>
-              {!member.userId && (
-                <span className="px-2 py-0.5 text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded">
-                  Non inscrit
-                </span>
-              )}
-            </li>
-          ))}
-        </ul>
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Membres</h2>
+        <MemberList key={membersKey} groupId={id || ''} currency={group.currency} />
       </section>
 
       {/* Invite section */}
@@ -93,7 +77,7 @@ export const GroupDetailPage = () => {
           Inviter une personne
         </h2>
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4">
-          <InviteForm groupId={id || ''} />
+          <InviteForm groupId={id || ''} onSuccess={refreshMembers} />
         </div>
       </section>
 
