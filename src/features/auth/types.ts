@@ -1,20 +1,7 @@
-export interface AuthUser {
-  readonly id: string;
-  readonly email: string;
-  readonly name: string | null;
-  readonly image: string | null;
-  readonly emailVerified: boolean;
-  readonly createdAt: Date;
-  readonly updatedAt: Date;
-}
+// Re-export DB types
+export type { Session, User } from '@/db/schema';
 
-export interface AuthSession {
-  readonly id: string;
-  readonly userId: string;
-  readonly token: string;
-  readonly expiresAt: Date;
-}
-
+// Form data types
 export interface LoginFormData {
   readonly email: string;
 }
@@ -23,6 +10,7 @@ export interface ProfileFormData {
   readonly name: string;
 }
 
+// Error types
 export type AuthError =
   | 'INVALID_EMAIL'
   | 'EMAIL_SEND_FAILED'

@@ -1,11 +1,11 @@
 import { useCallback, useMemo } from 'react';
 import { authClient, useSession } from '../../../lib/auth-client';
-import type { AuthError, AuthUser, ProfileFormData } from '../types';
+import type { AuthError, ProfileFormData, User } from '../types';
 
 type AuthResult = { success: boolean; error?: AuthError };
 
 interface UseAuthResult {
-  readonly user: AuthUser | null;
+  readonly user: User | null;
   readonly isLoading: boolean;
   readonly isAuthenticated: boolean;
   readonly login: (email: string) => Promise<AuthResult>;
@@ -16,7 +16,7 @@ interface UseAuthResult {
 export const useAuth = (): UseAuthResult => {
   const { data: session, isPending } = useSession();
 
-  const user = useMemo((): AuthUser | null => {
+  const user = useMemo((): User | null => {
     if (!session?.user) return null;
     return {
       id: session.user.id,
