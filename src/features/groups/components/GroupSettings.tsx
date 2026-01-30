@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '@/shared/components/Button';
 import { useGroup } from '../hooks/useGroup';
 import { GROUP_ERROR_MESSAGES, type GroupError } from '../types';
 
@@ -121,14 +122,15 @@ export const GroupSettings = ({ groupId }: GroupSettingsProps) => {
 
         {errorMessage && <p className="text-red-600 dark:text-red-400 text-sm">{errorMessage}</p>}
 
-        <button
+        <Button
           type="button"
           onClick={handleSave}
-          disabled={saving || !hasChanges}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white disabled:text-slate-500 font-medium rounded-lg transition-colors disabled:cursor-not-allowed"
+          disabled={!hasChanges}
+          loading={saving}
+          loadingText="Enregistrement..."
         >
-          {saving ? 'Enregistrement...' : 'Enregistrer'}
-        </button>
+          Enregistrer
+        </Button>
       </div>
 
       {/* Archive section */}
@@ -139,13 +141,9 @@ export const GroupSettings = ({ groupId }: GroupSettingsProps) => {
             ? 'Ce groupe est archivé. Désarchivez-le pour pouvoir ajouter des dépenses.'
             : 'Archiver ce groupe pour le masquer de la liste principale.'}
         </p>
-        <button
-          type="button"
-          onClick={handleArchive}
-          className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white font-medium rounded-lg transition-colors"
-        >
+        <Button type="button" variant="secondary" onClick={handleArchive}>
           {group.archivedAt ? 'Désarchiver' : 'Archiver'}
-        </button>
+        </Button>
       </div>
 
       {/* Danger zone */}
@@ -164,29 +162,22 @@ export const GroupSettings = ({ groupId }: GroupSettingsProps) => {
           </div>
           {showLeaveConfirm ? (
             <div className="flex gap-2">
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="sm"
                 onClick={() => setShowLeaveConfirm(false)}
-                className="px-3 py-1 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded"
               >
                 Annuler
-              </button>
-              <button
-                type="button"
-                onClick={handleLeave}
-                className="px-3 py-1 text-sm text-white bg-red-600 hover:bg-red-700 rounded"
-              >
+              </Button>
+              <Button type="button" variant="danger" size="sm" onClick={handleLeave}>
                 Confirmer
-              </button>
+              </Button>
             </div>
           ) : (
-            <button
-              type="button"
-              onClick={() => setShowLeaveConfirm(true)}
-              className="px-4 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 font-medium rounded-lg transition-colors"
-            >
+            <Button type="button" variant="ghost-danger" onClick={() => setShowLeaveConfirm(true)}>
               Quitter
-            </button>
+            </Button>
           )}
         </div>
       </div>

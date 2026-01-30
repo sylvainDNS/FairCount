@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { Button } from '@/shared/components/Button';
 import { useAuth } from '../hooks/useAuth';
 import { AUTH_ERROR_MESSAGES, type AuthError } from '../types';
 
@@ -99,40 +100,15 @@ export const LoginForm = () => {
         <div className="text-red-600 dark:text-red-400 text-sm">{errorMessage}</div>
       )}
 
-      <button
+      <Button
         type="submit"
-        disabled={formState === 'loading' || !email}
-        className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed"
+        fullWidth
+        disabled={!email}
+        loading={formState === 'loading'}
+        loadingText="Envoi en cours..."
       >
-        {formState === 'loading' ? (
-          <span className="flex items-center justify-center gap-2">
-            <svg
-              className="animate-spin h-4 w-4"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              />
-            </svg>
-            Envoi en cours...
-          </span>
-        ) : (
-          'Recevoir le lien de connexion'
-        )}
-      </button>
+        Recevoir le lien de connexion
+      </Button>
 
       <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
         Un lien de connexion vous sera envoyé par email. Aucun mot de passe requis.

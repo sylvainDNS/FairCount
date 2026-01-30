@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { isValidEmail } from '@/lib/validation';
+import { Button } from '@/shared/components/Button';
 import { useInvitations } from '../hooks/useInvitations';
 import { GROUP_ERROR_MESSAGES, type GroupError } from '../types';
 
@@ -94,13 +95,15 @@ export const InviteForm = ({ groupId, onSuccess }: InviteFormProps) => {
         </output>
       )}
 
-      <button
+      <Button
         type="submit"
-        disabled={formState === 'loading' || !email}
-        className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed"
+        fullWidth
+        disabled={!email}
+        loading={formState === 'loading'}
+        loadingText="Envoi en cours..."
       >
-        {formState === 'loading' ? 'Envoi en cours...' : "Envoyer l'invitation"}
-      </button>
+        Envoyer l'invitation
+      </Button>
     </form>
   );
 };

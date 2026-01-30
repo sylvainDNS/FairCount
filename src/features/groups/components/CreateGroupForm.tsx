@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '@/shared/components/Button';
 import { useGroups } from '../hooks/useGroups';
 import { CURRENCIES, GROUP_ERROR_MESSAGES, type GroupError } from '../types';
 
@@ -121,13 +122,15 @@ export const CreateGroupForm = () => {
         </div>
       )}
 
-      <button
+      <Button
         type="submit"
-        disabled={formState === 'loading' || !name.trim()}
-        className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed"
+        fullWidth
+        disabled={!name.trim()}
+        loading={formState === 'loading'}
+        loadingText="Création en cours..."
       >
-        {formState === 'loading' ? 'Création en cours...' : 'Créer le groupe'}
-      </button>
+        Créer le groupe
+      </Button>
     </form>
   );
 };

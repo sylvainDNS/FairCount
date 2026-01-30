@@ -2,6 +2,7 @@ import { Dialog } from '@ark-ui/react/dialog';
 import { Portal } from '@ark-ui/react/portal';
 import { useCallback, useEffect, useState } from 'react';
 import { useMembers } from '@/features/members/hooks/useMembers';
+import { Button } from '@/shared/components/Button';
 import { useExpense } from '../hooks/useExpense';
 import type { CreateExpenseFormData, ExpenseDetail, UpdateExpenseFormData } from '../types';
 import { EXPENSE_ERROR_MESSAGES } from '../types';
@@ -345,7 +346,7 @@ export const ExpenseForm = ({
                           <button
                             type="button"
                             onClick={() => handleCustomAmountToggle(p.memberId)}
-                            className={`text-xs px-2 py-1 rounded ${
+                            className={`text-xs px-2 py-1 rounded transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 disabled:opacity-50 ${
                               p.useCustomAmount
                                 ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
                                 : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
@@ -381,20 +382,24 @@ export const ExpenseForm = ({
               )}
 
               <div className="flex gap-3 pt-2">
-                <Dialog.CloseTrigger
-                  type="button"
-                  disabled={isSubmitting}
-                  className="flex-1 px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 transition-colors"
-                >
-                  Annuler
+                <Dialog.CloseTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={isSubmitting}
+                    className="flex-1"
+                  >
+                    Annuler
+                  </Button>
                 </Dialog.CloseTrigger>
-                <button
+                <Button
                   type="submit"
-                  disabled={isSubmitting}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                  loading={isSubmitting}
+                  loadingText="Enregistrement..."
+                  className="flex-1"
                 >
-                  {isSubmitting ? 'Enregistrement...' : expense ? 'Modifier' : 'Ajouter'}
-                </button>
+                  {expense ? 'Modifier' : 'Ajouter'}
+                </Button>
               </div>
             </form>
           </Dialog.Content>

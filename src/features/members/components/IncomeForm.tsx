@@ -1,6 +1,7 @@
 import { Dialog } from '@ark-ui/react/dialog';
 import { Portal } from '@ark-ui/react/portal';
 import { useCallback, useState } from 'react';
+import { Button } from '@/shared/components/Button';
 
 interface IncomeFormProps {
   readonly memberName: string;
@@ -88,20 +89,24 @@ export const IncomeForm = ({
               )}
 
               <div className="flex gap-3">
-                <Dialog.CloseTrigger
-                  type="button"
-                  disabled={isSubmitting}
-                  className="flex-1 px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 transition-colors"
-                >
-                  Annuler
+                <Dialog.CloseTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={isSubmitting}
+                    className="flex-1"
+                  >
+                    Annuler
+                  </Button>
                 </Dialog.CloseTrigger>
-                <button
+                <Button
                   type="submit"
-                  disabled={isSubmitting}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                  loading={isSubmitting}
+                  loadingText="Enregistrement..."
+                  className="flex-1"
                 >
-                  {isSubmitting ? 'Enregistrement...' : 'Enregistrer'}
-                </button>
+                  Enregistrer
+                </Button>
               </div>
             </form>
           </Dialog.Content>

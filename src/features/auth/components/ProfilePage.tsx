@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '@/shared/components/Button';
 import { useAuth } from '../hooks/useAuth';
 import { AUTH_ERROR_MESSAGES, type AuthError } from '../types';
 
@@ -93,18 +94,15 @@ export const ProfilePage = () => {
               disabled={saveState === 'saving'}
               className="flex-1 px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
             />
-            <button
+            <Button
               type="button"
               onClick={handleSave}
-              disabled={saveState === 'saving' || !name.trim() || name === user.name}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white disabled:text-slate-500 dark:disabled:text-slate-400 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed"
+              disabled={!name.trim() || name === user.name}
+              loading={saveState === 'saving'}
+              loadingText="Enregistrement..."
             >
-              {saveState === 'saving'
-                ? 'Enregistrement...'
-                : saveState === 'saved'
-                  ? 'Enregistre'
-                  : 'Enregistrer'}
-            </button>
+              {saveState === 'saved' ? 'Enregistré' : 'Enregistrer'}
+            </Button>
           </div>
           {saveState === 'error' && errorMessage && (
             <p className="text-red-600 dark:text-red-400 text-sm mt-2">{errorMessage}</p>
@@ -130,13 +128,9 @@ export const ProfilePage = () => {
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
             Actions irréversibles sur votre compte
           </p>
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-          >
+          <Button type="button" variant="danger" onClick={handleLogout}>
             Se déconnecter
-          </button>
+          </Button>
         </div>
       </div>
     </div>

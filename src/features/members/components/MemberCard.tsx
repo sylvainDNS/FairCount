@@ -1,4 +1,5 @@
 import { Collapsible } from '@ark-ui/react/collapsible';
+import { Button } from '@/shared/components/Button';
 import { formatCurrency } from '@/shared/utils/format';
 import type { MemberWithCoefficient } from '../types';
 
@@ -52,13 +53,9 @@ export const MemberCard = ({ member, currency, onUpdateIncome, onRemove }: Membe
             Revenu mensuel : {formatCurrency(member.income, currency)}
           </span>
           {onUpdateIncome && (
-            <button
-              type="button"
-              onClick={onUpdateIncome}
-              className="text-blue-600 dark:text-blue-400 hover:underline"
-            >
+            <Button type="button" variant="ghost" size="sm" onClick={onUpdateIncome}>
               Modifier
-            </button>
+            </Button>
           )}
         </div>
 
@@ -73,13 +70,9 @@ export const MemberCard = ({ member, currency, onUpdateIncome, onRemove }: Membe
         )}
 
         {onRemove && !member.isCurrentUser && (
-          <button
-            type="button"
-            onClick={onRemove}
-            className="text-sm text-red-600 dark:text-red-400 hover:underline"
-          >
+          <Button type="button" variant="ghost-danger" size="sm" onClick={onRemove}>
             Retirer du groupe
-          </button>
+          </Button>
         )}
       </Collapsible.Content>
     </Collapsible.Root>

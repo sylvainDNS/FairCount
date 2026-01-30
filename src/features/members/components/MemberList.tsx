@@ -112,6 +112,7 @@ export const MemberList = ({ groupId, currency }: MemberListProps) => {
         title="Retirer un membre"
         description={`Voulez-vous vraiment retirer ${memberToRemove?.name ?? ''} du groupe ?`}
         confirmLabel="Retirer"
+        loadingText="Retrait en cours..."
         onConfirm={handleRemoveConfirm}
         onCancel={() => setMemberToRemove(null)}
         isLoading={isRemoving}

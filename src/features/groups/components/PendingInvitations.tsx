@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { Button } from '@/shared/components/Button';
 import { useInvitations } from '../hooks/useInvitations';
 import type { InvitationInfo } from '../types';
 
@@ -85,24 +86,26 @@ const InvitationRow = ({ invitation, isLoading, onCancel, onResend }: Invitation
         </p>
       </div>
       <div className="flex gap-2">
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="sm"
           onClick={onResend}
           disabled={isLoading}
           aria-label={`Renvoyer l'invitation à ${invitation.email}`}
-          className="px-3 py-1 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded disabled:opacity-50"
         >
           Renvoyer
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          variant="ghost-danger"
+          size="sm"
           onClick={onCancel}
           disabled={isLoading}
           aria-label={`Annuler l'invitation à ${invitation.email}`}
-          className="px-3 py-1 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded disabled:opacity-50"
         >
           Annuler
-        </button>
+        </Button>
       </div>
     </li>
   );

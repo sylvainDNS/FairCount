@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { Button } from '@/shared/components/Button';
 import { ConfirmDialog } from '@/shared/components/ConfirmDialog';
 import { useInfiniteLoad } from '@/shared/hooks/useInfiniteLoad';
 import { expensesApi } from '../api';
@@ -111,13 +112,9 @@ export const ExpenseList = ({ groupId, currency }: ExpenseListProps) => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Dépenses</h2>
-        <button
-          type="button"
-          onClick={() => setShowCreateForm(true)}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
-        >
+        <Button type="button" size="sm" onClick={() => setShowCreateForm(true)}>
           + Ajouter
-        </button>
+        </Button>
       </div>
 
       {/* Filters */}
@@ -132,13 +129,14 @@ export const ExpenseList = ({ groupId, currency }: ExpenseListProps) => {
               : 'Aucune dépense dans ce groupe'}
           </p>
           {Object.keys(filters).length === 0 && (
-            <button
+            <Button
               type="button"
+              variant="ghost"
               onClick={() => setShowCreateForm(true)}
-              className="mt-4 text-blue-600 dark:text-blue-400 hover:underline"
+              className="mt-4"
             >
               Ajouter la première dépense
-            </button>
+            </Button>
           )}
         </div>
       ) : (
@@ -161,13 +159,9 @@ export const ExpenseList = ({ groupId, currency }: ExpenseListProps) => {
               {isLoadingMore ? (
                 <span className="text-sm text-slate-500 dark:text-slate-400">Chargement...</span>
               ) : (
-                <button
-                  type="button"
-                  onClick={loadMore}
-                  className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
-                >
+                <Button type="button" variant="ghost" size="sm" onClick={loadMore}>
                   Charger plus
-                </button>
+                </Button>
               )}
             </div>
           )}
@@ -206,6 +200,7 @@ export const ExpenseList = ({ groupId, currency }: ExpenseListProps) => {
             : 'Voulez-vous vraiment supprimer cette dépense ? Cette action est irréversible.'
         }
         confirmLabel="Supprimer"
+        loadingText="Suppression..."
         onConfirm={handleDeleteConfirm}
         onCancel={() => {
           setExpenseToDelete(null);

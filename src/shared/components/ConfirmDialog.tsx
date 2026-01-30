@@ -1,5 +1,6 @@
 import { Dialog } from '@ark-ui/react/dialog';
 import { Portal } from '@ark-ui/react/portal';
+import { Button } from './Button';
 
 interface ConfirmDialogProps {
   readonly open: boolean;
@@ -7,6 +8,7 @@ interface ConfirmDialogProps {
   readonly description: string;
   readonly confirmLabel?: string | undefined;
   readonly cancelLabel?: string | undefined;
+  readonly loadingText?: string | undefined;
   readonly onConfirm: () => void;
   readonly onCancel: () => void;
   readonly isLoading?: boolean | undefined;
@@ -18,6 +20,7 @@ export const ConfirmDialog = ({
   description,
   confirmLabel = 'Confirmer',
   cancelLabel = 'Annuler',
+  loadingText = 'Chargement...',
   onConfirm,
   onCancel,
   isLoading = false,
@@ -37,21 +40,21 @@ export const ConfirmDialog = ({
             </Dialog.Description>
 
             <div className="flex gap-3">
-              <Dialog.CloseTrigger
-                type="button"
-                disabled={isLoading}
-                className="flex-1 px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 transition-colors"
-              >
-                {cancelLabel}
+              <Dialog.CloseTrigger asChild>
+                <Button type="button" variant="outline" disabled={isLoading} className="flex-1">
+                  {cancelLabel}
+                </Button>
               </Dialog.CloseTrigger>
-              <button
+              <Button
                 type="button"
+                variant="danger"
                 onClick={onConfirm}
-                disabled={isLoading}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
+                loading={isLoading}
+                loadingText={loadingText}
+                className="flex-1"
               >
-                {isLoading ? 'Suppression...' : confirmLabel}
-              </button>
+                {confirmLabel}
+              </Button>
             </div>
           </Dialog.Content>
         </Dialog.Positioner>
