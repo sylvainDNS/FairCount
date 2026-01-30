@@ -5,6 +5,7 @@ import type { Auth } from '../../../lib/auth';
 import { isValidEmail, isValidUUID } from '../../../lib/validation';
 import type { Env } from '../../types';
 import { sendInvitationEmail } from '../utils/email';
+import * as expenseHandlers from './expenses-handlers';
 import * as memberHandlers from './members-handlers';
 
 interface RouteContext {
@@ -631,6 +632,71 @@ export async function handleGroupsRoutes(request: Request, ctx: RouteContext): P
     // DELETE /api/groups/:id/members/:memberId - Remove member
     if (method === 'DELETE' && subId && isValidUUID(subId)) {
       return memberHandlers.removeMember(memberCtx, subId);
+    }
+  }
+
+  // Expenses routes: /api/groups/:id/expenses/*
+  if (action === 'expenses') {
+    const expenseCtx = {
+      db: ctx.db,
+      groupId,
+      userId: user.id,
+      currentMemberId: membership.id,
+    };
+
+    // GET /api/groups/:id/expenses - List expenses
+    if (method === 'GET' && !subId) {
+      return expenseHandlers.listExpenses(expenseCtx, {
+        cursor: url.searchParams.get('cursor') ?? undefined,
+        limit: url.searchParams.get('limit')
+          ? Number.parseInt(url.searchParams.get('limit') as string, 10)
+          : undefined,
+        startDate: url.searchParams.get('startDate') ?? undefined,
+        endDate: url.searchParams.get('endDate') ?? undefined,
+        paidBy: url.searchParams.get('paidBy') ?? undefined,
+        participantId: url.searchParams.get('participantId') ?? undefined,
+        search: url.searchParams.get('search') ?? undefined,
+      });
+    }
+
+    // POST /api/groups/:id/expenses - Create expense
+    if (method === 'POST' && !subId) {
+      const body = await parseJsonBody<{
+        amount: number;
+        description: string;
+        date: string;
+        paidBy: string;
+        participants: Array<{ memberId: string; customAmount?: number | null }>;
+      }>(request);
+      if (!body) {
+        return Response.json({ error: 'INVALID_REQUEST' }, { status: 400 });
+      }
+      return expenseHandlers.createExpense(expenseCtx, body);
+    }
+
+    // GET /api/groups/:id/expenses/:expenseId - Get expense
+    if (method === 'GET' && subId && isValidUUID(subId)) {
+      return expenseHandlers.getExpense(expenseCtx, subId);
+    }
+
+    // PATCH /api/groups/:id/expenses/:expenseId - Update expense
+    if (method === 'PATCH' && subId && isValidUUID(subId)) {
+      const body = await parseJsonBody<{
+        amount?: number;
+        description?: string;
+        date?: string;
+        paidBy?: string;
+        participants?: Array<{ memberId: string; customAmount?: number | null }>;
+      }>(request);
+      if (!body) {
+        return Response.json({ error: 'INVALID_REQUEST' }, { status: 400 });
+      }
+      return expenseHandlers.updateExpense(expenseCtx, subId, body);
+    }
+
+    // DELETE /api/groups/:id/expenses/:expenseId - Delete expense
+    if (method === 'DELETE' && subId && isValidUUID(subId)) {
+      return expenseHandlers.deleteExpense(expenseCtx, subId);
     }
   }
 

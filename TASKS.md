@@ -440,9 +440,9 @@ Formulaire pour ajouter une personne non inscrite : nom, email optionnel, revenu
 Implémenter les endpoints : GET/POST `/api/groups/:id/expenses`, GET/PATCH/DELETE `/api/groups/:id/expenses/:expenseId`.
 
 **Critères de validation :**
-- [ ] CRUD dépenses
-- [ ] Soft delete
-- [ ] Gestion des participants
+- [x] CRUD dépenses
+- [x] Soft delete
+- [x] Gestion des participants
 
 ---
 
@@ -456,9 +456,9 @@ Implémenter les endpoints : GET/POST `/api/groups/:id/expenses`, GET/PATCH/DELE
 Hook pour lister les dépenses avec filtres, pagination et recherche.
 
 **Critères de validation :**
-- [ ] Liste paginée
-- [ ] Filtres par période/personne
-- [ ] Recherche par description
+- [x] Liste paginée
+- [x] Filtres par période/personne
+- [x] Recherche par description
 
 ---
 
@@ -471,8 +471,8 @@ Hook pour lister les dépenses avec filtres, pagination et recherche.
 Hook pour une dépense spécifique : détails, création, modification, suppression.
 
 **Critères de validation :**
-- [ ] Détails avec répartition
-- [ ] Mutations fonctionnelles
+- [x] Détails avec répartition
+- [x] Mutations fonctionnelles
 
 ---
 
@@ -486,9 +486,9 @@ Hook pour une dépense spécifique : détails, création, modification, suppress
 Liste scrollable des dépenses avec pull-to-refresh et pagination infinie.
 
 **Critères de validation :**
-- [ ] Affichage des dépenses
-- [ ] Ma part mise en évidence
-- [ ] Chargement infini
+- [x] Affichage des dépenses
+- [x] Ma part mise en évidence
+- [x] Chargement infini
 
 ---
 
@@ -501,9 +501,9 @@ Liste scrollable des dépenses avec pull-to-refresh et pagination infinie.
 Formulaire d'ajout/modification de dépense : montant, description, date, payeur, participants.
 
 **Critères de validation :**
-- [ ] Validation des champs
-- [ ] Sélection des participants
-- [ ] Mode montants personnalisés
+- [x] Validation des champs
+- [x] Sélection des participants
+- [x] Mode montants personnalisés
 
 ---
 
@@ -516,9 +516,9 @@ Formulaire d'ajout/modification de dépense : montant, description, date, payeur
 Détail d'une dépense avec tableau de répartition et actions modifier/supprimer.
 
 **Critères de validation :**
-- [ ] Toutes les informations affichées
-- [ ] Tableau de répartition
-- [ ] Actions contextuelles
+- [x] Toutes les informations affichées
+- [x] Tableau de répartition
+- [x] Actions contextuelles
 
 ---
 
@@ -531,9 +531,9 @@ Détail d'une dépense avec tableau de répartition et actions modifier/supprime
 Filtres pour les dépenses : période, personne, recherche.
 
 **Critères de validation :**
-- [ ] Filtre par période
-- [ ] Filtre par personne
-- [ ] Recherche par description
+- [x] Filtre par période
+- [x] Filtre par personne
+- [x] Recherche par description
 
 ---
 

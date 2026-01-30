@@ -1,13 +1,14 @@
 import { useCallback, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { ExpenseList } from '@/features/expenses';
 import { MemberList } from '@/features/members';
 import { useGroup } from '../hooks/useGroup';
 import { InviteForm } from './InviteForm';
 import { PendingInvitations } from './PendingInvitations';
 
 export const GroupDetailPage = () => {
-  const { id } = useParams<{ id: string }>();
-  const { group, isLoading, error } = useGroup(id || '');
+  const { id = '' } = useParams<{ id: string }>();
+  const { group, isLoading, error } = useGroup(id);
   const [membersKey, setMembersKey] = useState(0);
 
   const refreshMembers = useCallback(() => {
@@ -65,10 +66,15 @@ export const GroupDetailPage = () => {
         </div>
       </div>
 
+      {/* Expenses section */}
+      <section className="mb-6">
+        <ExpenseList groupId={id} currency={group.currency} />
+      </section>
+
       {/* Members section */}
       <section className="mb-6">
         <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Membres</h2>
-        <MemberList key={membersKey} groupId={id || ''} currency={group.currency} />
+        <MemberList key={membersKey} groupId={id} currency={group.currency} />
       </section>
 
       {/* Invite section */}
@@ -77,7 +83,7 @@ export const GroupDetailPage = () => {
           Inviter une personne
         </h2>
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4">
-          <InviteForm groupId={id || ''} onSuccess={refreshMembers} />
+          <InviteForm groupId={id} onSuccess={refreshMembers} />
         </div>
       </section>
 
@@ -87,7 +93,7 @@ export const GroupDetailPage = () => {
           Invitations en attente
         </h2>
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4">
-          <PendingInvitations groupId={id || ''} />
+          <PendingInvitations groupId={id} />
         </div>
       </section>
     </div>
