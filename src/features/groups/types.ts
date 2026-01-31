@@ -1,3 +1,4 @@
+import { COMMON_ERROR_MESSAGES, type CommonError } from '@/shared/constants';
 import type { Result } from '@/shared/types';
 
 // Re-export DB types
@@ -90,8 +91,8 @@ export interface InvitationDetails {
 
 // Error types
 export type GroupError =
+  | CommonError
   | 'GROUP_NOT_FOUND'
-  | 'NOT_A_MEMBER'
   | 'NOT_AUTHORIZED'
   | 'INVALID_NAME'
   | 'INVALID_EMAIL'
@@ -99,12 +100,11 @@ export type GroupError =
   | 'ALREADY_MEMBER'
   | 'INVITATION_NOT_FOUND'
   | 'INVITATION_EXPIRED'
-  | 'CANNOT_LEAVE_ALONE'
-  | 'UNKNOWN_ERROR';
+  | 'CANNOT_LEAVE_ALONE';
 
 export const GROUP_ERROR_MESSAGES = {
+  ...COMMON_ERROR_MESSAGES,
   GROUP_NOT_FOUND: 'Groupe introuvable',
-  NOT_A_MEMBER: "Vous n'êtes pas membre de ce groupe",
   NOT_AUTHORIZED: "Vous n'avez pas les droits pour cette action",
   INVALID_NAME: 'Le nom du groupe est invalide',
   INVALID_EMAIL: 'Adresse email invalide',
@@ -113,7 +113,6 @@ export const GROUP_ERROR_MESSAGES = {
   INVITATION_NOT_FOUND: 'Invitation introuvable',
   INVITATION_EXPIRED: 'Cette invitation a expiré',
   CANNOT_LEAVE_ALONE: 'Vous ne pouvez pas quitter un groupe dont vous êtes le seul membre',
-  UNKNOWN_ERROR: 'Une erreur est survenue',
 } as const satisfies Record<GroupError, string>;
 
 // API result type alias

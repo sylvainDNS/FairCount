@@ -1,3 +1,4 @@
+import { COMMON_ERROR_MESSAGES, type CommonError } from '@/shared/constants';
 import type { Result } from '@/shared/types';
 
 // Re-export DB types
@@ -24,22 +25,20 @@ export interface MemberWithCoefficient {
 
 // Error types
 export type MemberError =
+  | CommonError
   | 'MEMBER_NOT_FOUND'
-  | 'NOT_A_MEMBER'
   | 'INVALID_NAME'
   | 'INVALID_INCOME'
   | 'CANNOT_REMOVE_SELF'
-  | 'CANNOT_REMOVE_LAST_MEMBER'
-  | 'UNKNOWN_ERROR';
+  | 'CANNOT_REMOVE_LAST_MEMBER';
 
 export const MEMBER_ERROR_MESSAGES = {
+  ...COMMON_ERROR_MESSAGES,
   MEMBER_NOT_FOUND: 'Membre introuvable',
-  NOT_A_MEMBER: "Vous n'êtes pas membre de ce groupe",
   INVALID_NAME: 'Le nom est invalide',
   INVALID_INCOME: 'Le revenu doit être un nombre positif',
   CANNOT_REMOVE_SELF: 'Utilisez "Quitter le groupe" pour vous retirer',
   CANNOT_REMOVE_LAST_MEMBER: 'Impossible de retirer le dernier membre',
-  UNKNOWN_ERROR: 'Une erreur est survenue',
 } as const satisfies Record<MemberError, string>;
 
 // API result type alias

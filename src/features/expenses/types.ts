@@ -1,3 +1,4 @@
+import { COMMON_ERROR_MESSAGES, type CommonError } from '@/shared/constants';
 import type { Result } from '@/shared/types';
 
 // Re-export DB types
@@ -103,8 +104,8 @@ export interface ExpensesPage {
 
 // Error types
 export type ExpenseError =
+  | CommonError
   | 'EXPENSE_NOT_FOUND'
-  | 'NOT_A_MEMBER'
   | 'NOT_CREATOR'
   | 'INVALID_AMOUNT'
   | 'INVALID_DESCRIPTION'
@@ -112,12 +113,11 @@ export type ExpenseError =
   | 'INVALID_PAYER'
   | 'NO_PARTICIPANTS'
   | 'INVALID_PARTICIPANT'
-  | 'CUSTOM_AMOUNTS_EXCEED_TOTAL'
-  | 'UNKNOWN_ERROR';
+  | 'CUSTOM_AMOUNTS_EXCEED_TOTAL';
 
 export const EXPENSE_ERROR_MESSAGES = {
+  ...COMMON_ERROR_MESSAGES,
   EXPENSE_NOT_FOUND: 'Dépense introuvable',
-  NOT_A_MEMBER: "Vous n'êtes pas membre de ce groupe",
   NOT_CREATOR: 'Seul le créateur peut modifier cette dépense',
   INVALID_AMOUNT: 'Le montant doit être positif',
   INVALID_DESCRIPTION: 'La description est requise',
@@ -126,7 +126,6 @@ export const EXPENSE_ERROR_MESSAGES = {
   NO_PARTICIPANTS: 'Au moins un participant est requis',
   INVALID_PARTICIPANT: 'Un participant est invalide',
   CUSTOM_AMOUNTS_EXCEED_TOTAL: 'Les montants personnalisés dépassent le total',
-  UNKNOWN_ERROR: 'Une erreur est survenue',
 } as const satisfies Record<ExpenseError, string>;
 
 // API result type alias

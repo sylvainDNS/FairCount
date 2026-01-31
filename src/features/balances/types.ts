@@ -1,3 +1,5 @@
+import { COMMON_ERROR_MESSAGES, type CommonError } from '@/shared/constants';
+
 // Balance pour un membre
 export interface Balance {
   readonly memberId: string;
@@ -80,15 +82,10 @@ export interface BalancesResponse {
 export type StatsPeriod = 'week' | 'month' | 'year' | 'all';
 
 // Types d'erreur
-export type BalanceError =
-  | 'NOT_A_MEMBER'
-  | 'GROUP_NOT_FOUND'
-  | 'MEMBER_NOT_FOUND'
-  | 'UNKNOWN_ERROR';
+export type BalanceError = CommonError | 'GROUP_NOT_FOUND' | 'MEMBER_NOT_FOUND';
 
 export const BALANCE_ERROR_MESSAGES = {
-  NOT_A_MEMBER: "Vous n'êtes pas membre de ce groupe",
+  ...COMMON_ERROR_MESSAGES,
   GROUP_NOT_FOUND: 'Groupe introuvable',
   MEMBER_NOT_FOUND: 'Membre introuvable',
-  UNKNOWN_ERROR: 'Une erreur est survenue',
 } as const satisfies Record<BalanceError, string>;

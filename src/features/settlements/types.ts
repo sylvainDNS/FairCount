@@ -1,3 +1,4 @@
+import { COMMON_ERROR_MESSAGES, type CommonError } from '@/shared/constants';
 import type { Result } from '@/shared/types';
 
 // Form data for creating a settlement
@@ -53,24 +54,22 @@ export interface SettlementSuggestion {
 
 // Error types
 export type SettlementError =
+  | CommonError
   | 'SETTLEMENT_NOT_FOUND'
-  | 'NOT_A_MEMBER'
   | 'NOT_CREATOR'
   | 'INVALID_AMOUNT'
   | 'INVALID_RECIPIENT'
   | 'INVALID_DATE'
-  | 'SAME_MEMBER'
-  | 'UNKNOWN_ERROR';
+  | 'SAME_MEMBER';
 
 export const SETTLEMENT_ERROR_MESSAGES = {
+  ...COMMON_ERROR_MESSAGES,
   SETTLEMENT_NOT_FOUND: 'Remboursement introuvable',
-  NOT_A_MEMBER: "Vous n'êtes pas membre de ce groupe",
   NOT_CREATOR: 'Vous ne pouvez supprimer que vos propres remboursements',
   INVALID_AMOUNT: 'Le montant doit être positif',
   INVALID_RECIPIENT: 'Destinataire invalide',
   INVALID_DATE: 'La date est invalide',
   SAME_MEMBER: 'Le payeur et le bénéficiaire doivent être différents',
-  UNKNOWN_ERROR: 'Une erreur est survenue',
 } as const satisfies Record<SettlementError, string>;
 
 // API result type alias
