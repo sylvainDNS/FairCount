@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { BalanceList, BalanceSummary, useBalances } from '@/features/balances';
 import { ExpenseList } from '@/features/expenses';
 import { MemberList } from '@/features/members';
+import { SettlementHistory, SettlementSuggestions } from '@/features/settlements';
 import { useGroup } from '../hooks/useGroup';
 import { InviteForm } from './InviteForm';
 import { PendingInvitations } from './PendingInvitations';
@@ -19,9 +20,15 @@ export const GroupDetailPage = () => {
   } = useBalances(id);
   const [membersKey, setMembersKey] = useState(0);
   const [showAllBalances, setShowAllBalances] = useState(false);
+  const [showSettlementHistory, setShowSettlementHistory] = useState(false);
+  const [settlementsKey, setSettlementsKey] = useState(0);
 
   const refreshMembers = useCallback(() => {
     setMembersKey((k) => k + 1);
+  }, []);
+
+  const refreshSettlements = useCallback(() => {
+    setSettlementsKey((k) => k + 1);
   }, []);
 
   if (isLoading) {
@@ -97,6 +104,31 @@ export const GroupDetailPage = () => {
           />
         </section>
       )}
+
+      {/* Settlements section */}
+      <section className="mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Remboursements</h2>
+          <button
+            type="button"
+            onClick={() => setShowSettlementHistory((v) => !v)}
+            className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+          >
+            {showSettlementHistory ? "Masquer l'historique" : "Voir l'historique"}
+          </button>
+        </div>
+
+        {showSettlementHistory ? (
+          <SettlementHistory key={settlementsKey} groupId={id} currency={group.currency} />
+        ) : (
+          <SettlementSuggestions
+            key={settlementsKey}
+            groupId={id}
+            currency={group.currency}
+            onSettlementCreated={refreshSettlements}
+          />
+        )}
+      </section>
 
       {/* Expenses section */}
       <section className="mb-6">

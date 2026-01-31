@@ -643,9 +643,9 @@ Décomposition du solde : ce que j'ai payé, ce que je dois, remboursements.
 Implémenter les endpoints : GET `/api/groups/:id/settlements`, GET `/api/groups/:id/settlements/suggested`, POST/DELETE settlements.
 
 **Critères de validation :**
-- [ ] Historique des remboursements
-- [ ] Suggestions optimisées
-- [ ] Enregistrement/annulation
+- [x] Historique des remboursements
+- [x] Suggestions optimisées
+- [x] Enregistrement/annulation
 
 ---
 
@@ -658,9 +658,9 @@ Implémenter les endpoints : GET `/api/groups/:id/settlements`, GET `/api/groups
 Implémenter l'algorithme glouton pour minimiser le nombre de transactions.
 
 **Critères de validation :**
-- [ ] Optimisation fonctionnelle
-- [ ] Tests unitaires
-- [ ] Gestion des cas limites
+- [x] Optimisation fonctionnelle
+- [x] Tests unitaires
+- [x] Gestion des cas limites
 
 ---
 
@@ -674,9 +674,9 @@ Implémenter l'algorithme glouton pour minimiser le nombre de transactions.
 Hook pour les remboursements : historique, suggestions, enregistrement.
 
 **Critères de validation :**
-- [ ] Liste des remboursements
-- [ ] Suggestions calculées
-- [ ] Mutations fonctionnelles
+- [x] Liste des remboursements
+- [x] Suggestions calculées
+- [x] Mutations fonctionnelles
 
 ---
 
@@ -690,9 +690,9 @@ Hook pour les remboursements : historique, suggestions, enregistrement.
 Liste des remboursements suggérés avec boutons d'action.
 
 **Critères de validation :**
-- [ ] Suggestions affichées
-- [ ] Mes remboursements mis en évidence
-- [ ] Bouton enregistrer
+- [x] Suggestions affichées
+- [x] Mes remboursements mis en évidence
+- [x] Bouton enregistrer
 
 ---
 
@@ -705,9 +705,9 @@ Liste des remboursements suggérés avec boutons d'action.
 Formulaire d'enregistrement de remboursement : montant, destinataire.
 
 **Critères de validation :**
-- [ ] Montant pré-rempli modifiable
-- [ ] Sélection unique destinataire
-- [ ] Aperçu impact sur soldes
+- [x] Montant pré-rempli modifiable
+- [x] Sélection unique destinataire
+- [x] Aperçu impact sur soldes
 
 ---
 
@@ -720,9 +720,9 @@ Formulaire d'enregistrement de remboursement : montant, destinataire.
 Historique des remboursements avec filtres.
 
 **Critères de validation :**
-- [ ] Liste chronologique
-- [ ] Filtres envoyés/reçus
-- [ ] Direction claire (de → à)
+- [x] Liste chronologique
+- [x] Filtres envoyés/reçus
+- [x] Direction claire (de → à)
 
 ---
 

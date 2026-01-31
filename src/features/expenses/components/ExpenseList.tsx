@@ -26,7 +26,7 @@ export const ExpenseList = ({ groupId, currency }: ExpenseListProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  const sentinelRef = useInfiniteLoad({
+  const sentinelRef = useInfiniteLoad<HTMLDivElement>({
     hasMore,
     isLoading: isLoadingMore,
     onLoadMore: loadMore,

@@ -1,6 +1,7 @@
 import { and, desc, eq, exists, gte, isNull, like, lt, lte, sql } from 'drizzle-orm';
 import type { Database } from '../../../db';
 import * as schema from '../../../db/schema';
+import { calculateShares } from '../utils/share-calculation';
 
 interface ExpenseContext {
   readonly db: Database;
@@ -72,70 +73,6 @@ function validateParticipants(
   }
 
   return { valid: true, customAmountsTotal };
-}
-
-// Calculate fair shares based on coefficients
-function calculateShares(
-  amount: number,
-  participants: Array<{ memberId: string; customAmount: number | null }>,
-  memberCoefficients: Map<string, number>,
-): Map<string, number> {
-  const shares = new Map<string, number>();
-
-  // First, allocate custom amounts
-  let remainingAmount = amount;
-  const fairShareParticipants: string[] = [];
-
-  for (const p of participants) {
-    if (p.customAmount !== null) {
-      shares.set(p.memberId, p.customAmount);
-      remainingAmount -= p.customAmount;
-    } else {
-      fairShareParticipants.push(p.memberId);
-    }
-  }
-
-  // Then distribute remaining by coefficient
-  if (fairShareParticipants.length > 0 && remainingAmount > 0) {
-    const totalCoeff = fairShareParticipants.reduce(
-      (sum, id) => sum + (memberCoefficients.get(id) ?? 0),
-      0,
-    );
-
-    // Handle rounding to ensure sum equals remainingAmount
-    let allocated = 0;
-    const fairShares: Array<{ memberId: string; share: number }> = [];
-
-    for (let i = 0; i < fairShareParticipants.length; i++) {
-      const memberId = fairShareParticipants[i] as string;
-      const coeff = memberCoefficients.get(memberId) ?? 0;
-
-      let share: number;
-      if (i === fairShareParticipants.length - 1) {
-        // Last participant gets the remainder to avoid rounding errors
-        share = remainingAmount - allocated;
-      } else if (totalCoeff > 0) {
-        share = Math.round((coeff / totalCoeff) * remainingAmount);
-      } else {
-        // Equal split when no coefficients
-        share = Math.round(remainingAmount / fairShareParticipants.length);
-      }
-
-      fairShares.push({ memberId, share });
-      allocated += share;
-    }
-
-    for (const { memberId, share } of fairShares) {
-      shares.set(memberId, share);
-    }
-  } else if (fairShareParticipants.length > 0 && remainingAmount <= 0) {
-    // All amount used by custom amounts, fair share participants get 0
-    for (const memberId of fairShareParticipants) {
-      shares.set(memberId, 0);
-    }
-  }
-
-  return shares;
 }
 
 // List expenses with pagination and filters

@@ -18,7 +18,7 @@ interface UseInfiniteScrollOptions {
  * @example
  * ```tsx
  * const { expenses, hasMore, isLoadingMore, loadMore } = useExpenses(groupId);
- * const sentinelRef = useInfiniteLoad({
+ * const sentinelRef = useInfiniteLoad<HTMLDivElement>({
  *   hasMore,
  *   isLoading: isLoadingMore,
  *   onLoadMore: loadMore,
@@ -32,13 +32,13 @@ interface UseInfiniteScrollOptions {
  * );
  * ```
  */
-export function useInfiniteLoad({
+export function useInfiniteLoad<T extends HTMLElement = HTMLElement>({
   hasMore,
   isLoading,
   onLoadMore,
   threshold = 0.1,
 }: UseInfiniteScrollOptions) {
-  const sentinelRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<T | null>(null);
 
   // Refs to access current values without re-creating the observer
   const hasMoreRef = useRef(hasMore);

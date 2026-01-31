@@ -8,6 +8,7 @@ import { sendInvitationEmail } from '../utils/email';
 import * as balanceHandlers from './balances-handlers';
 import * as expenseHandlers from './expenses-handlers';
 import * as memberHandlers from './members-handlers';
+import * as settlementHandlers from './settlements-handlers';
 
 interface RouteContext {
   readonly db: Database;
@@ -869,6 +870,50 @@ export async function handleGroupsRoutes(request: Request, ctx: RouteContext): P
     };
     const period = url.searchParams.get('period') ?? undefined;
     return balanceHandlers.getGroupStats(balanceCtx, period);
+  }
+
+  // Settlements routes: /api/groups/:id/settlements/*
+  if (action === 'settlements') {
+    const settlementCtx = {
+      db: ctx.db,
+      groupId,
+      userId: user.id,
+      currentMemberId: membership.id,
+    };
+
+    // GET /api/groups/:id/settlements/suggested - Get optimized suggestions
+    if (method === 'GET' && subId === 'suggested') {
+      return settlementHandlers.getSuggestedSettlements(settlementCtx);
+    }
+
+    // GET /api/groups/:id/settlements - List settlements
+    if (method === 'GET' && !subId) {
+      return settlementHandlers.listSettlements(settlementCtx, {
+        filter: url.searchParams.get('filter') ?? undefined,
+        cursor: url.searchParams.get('cursor') ?? undefined,
+        limit: url.searchParams.get('limit')
+          ? Number.parseInt(url.searchParams.get('limit') as string, 10)
+          : undefined,
+      });
+    }
+
+    // POST /api/groups/:id/settlements - Create settlement
+    if (method === 'POST' && !subId) {
+      const body = await parseJsonBody<{
+        toMember: string;
+        amount: number;
+        date: string;
+      }>(request);
+      if (!body) {
+        return Response.json({ error: 'INVALID_REQUEST' }, { status: 400 });
+      }
+      return settlementHandlers.createSettlement(settlementCtx, body);
+    }
+
+    // DELETE /api/groups/:id/settlements/:settlementId - Delete settlement
+    if (method === 'DELETE' && subId && isValidUUID(subId)) {
+      return settlementHandlers.deleteSettlement(settlementCtx, subId);
+    }
   }
 
   return Response.json({ error: 'Not found' }, { status: 404 });
