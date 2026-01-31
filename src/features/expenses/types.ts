@@ -1,3 +1,5 @@
+import type { Result } from '@/shared/types';
+
 // Re-export DB types
 export type {
   Expense,
@@ -127,7 +129,5 @@ export const EXPENSE_ERROR_MESSAGES = {
   UNKNOWN_ERROR: 'Une erreur est survenue',
 } as const satisfies Record<ExpenseError, string>;
 
-// Result wrapper type (discriminated union)
-export type ExpenseResult<T = void> =
-  | { readonly success: true; readonly data?: T }
-  | { readonly success: false; readonly error: ExpenseError };
+// API result type alias
+export type ExpenseResult<T = void> = Result<T, ExpenseError>;

@@ -1,4 +1,4 @@
-// Types for settlements feature
+import type { Result } from '@/shared/types';
 
 // Form data for creating a settlement
 export interface CreateSettlementFormData {
@@ -62,7 +62,7 @@ export type SettlementError =
   | 'SAME_MEMBER'
   | 'UNKNOWN_ERROR';
 
-export const SETTLEMENT_ERROR_MESSAGES: Record<SettlementError, string> = {
+export const SETTLEMENT_ERROR_MESSAGES = {
   SETTLEMENT_NOT_FOUND: 'Remboursement introuvable',
   NOT_A_MEMBER: "Vous n'êtes pas membre de ce groupe",
   NOT_CREATOR: 'Vous ne pouvez supprimer que vos propres remboursements',
@@ -71,9 +71,7 @@ export const SETTLEMENT_ERROR_MESSAGES: Record<SettlementError, string> = {
   INVALID_DATE: 'La date est invalide',
   SAME_MEMBER: 'Le payeur et le bénéficiaire doivent être différents',
   UNKNOWN_ERROR: 'Une erreur est survenue',
-};
+} as const satisfies Record<SettlementError, string>;
 
-// Result with discriminated union
-export type SettlementResult<T = void> =
-  | { readonly success: true; readonly data?: T }
-  | { readonly success: false; readonly error: SettlementError };
+// API result type alias
+export type SettlementResult<T = void> = Result<T, SettlementError>;

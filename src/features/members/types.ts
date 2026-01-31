@@ -1,3 +1,5 @@
+import type { Result } from '@/shared/types';
+
 // Re-export DB types
 export type { GroupMember, NewGroupMember } from '@/db/schema';
 
@@ -40,9 +42,5 @@ export const MEMBER_ERROR_MESSAGES = {
   UNKNOWN_ERROR: 'Une erreur est survenue',
 } as const satisfies Record<MemberError, string>;
 
-// Result wrapper type
-export interface MemberResult<T = void> {
-  readonly success: boolean;
-  readonly error?: MemberError;
-  readonly data?: T;
-}
+// API result type alias
+export type MemberResult<T = void> = Result<T, MemberError>;

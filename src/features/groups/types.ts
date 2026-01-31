@@ -1,3 +1,5 @@
+import type { Result } from '@/shared/types';
+
 // Re-export DB types
 export type {
   Group,
@@ -114,9 +116,5 @@ export const GROUP_ERROR_MESSAGES = {
   UNKNOWN_ERROR: 'Une erreur est survenue',
 } as const satisfies Record<GroupError, string>;
 
-// API result types
-export interface GroupResult<T = void> {
-  readonly success: boolean;
-  readonly error?: GroupError;
-  readonly data?: T;
-}
+// API result type alias
+export type GroupResult<T = void> = Result<T, GroupError>;

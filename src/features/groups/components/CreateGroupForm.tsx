@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/shared/components/Button';
 import { useGroups } from '../hooks/useGroups';
-import { CURRENCIES, GROUP_ERROR_MESSAGES, type GroupError } from '../types';
+import { CURRENCIES, GROUP_ERROR_MESSAGES } from '../types';
 
 type FormState = 'idle' | 'loading' | 'error';
 
@@ -35,14 +35,13 @@ export const CreateGroupForm = () => {
         currency,
       });
 
-      if (result.success && result.data?.id) {
-        navigate(`/groups/${result.data.id}`);
-      } else {
+      if (!result.success) {
         setFormState('error');
-        setErrorMessage(
-          GROUP_ERROR_MESSAGES[result.error as GroupError] || GROUP_ERROR_MESSAGES.UNKNOWN_ERROR,
-        );
+        setErrorMessage(GROUP_ERROR_MESSAGES[result.error] || GROUP_ERROR_MESSAGES.UNKNOWN_ERROR);
+        return;
       }
+
+      navigate(`/groups/${result.data.id}`);
     },
     [name, description, currency, createGroup, navigate],
   );

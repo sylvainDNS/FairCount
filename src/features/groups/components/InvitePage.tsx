@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AuthLayout, useAuth } from '@/features/auth';
 import { useAcceptInvitation } from '../hooks/useAcceptInvitation';
-import { GROUP_ERROR_MESSAGES, type GroupError } from '../types';
+import { GROUP_ERROR_MESSAGES } from '../types';
 
 export const InvitePage = () => {
   const { token = '' } = useParams<{ token: string }>();
@@ -19,14 +19,13 @@ export const InvitePage = () => {
 
     const result = await accept();
 
-    if (result.success && result.data?.groupId) {
-      navigate(`/groups/${result.data.groupId}`);
-    } else {
+    if (!result.success) {
       setAccepting(false);
-      setAcceptError(
-        GROUP_ERROR_MESSAGES[result.error as GroupError] || GROUP_ERROR_MESSAGES.UNKNOWN_ERROR,
-      );
+      setAcceptError(GROUP_ERROR_MESSAGES[result.error] || GROUP_ERROR_MESSAGES.UNKNOWN_ERROR);
+      return;
     }
+
+    navigate(`/groups/${result.data.groupId}`);
   }, [accept, navigate]);
 
   if (authLoading || isLoading) {
