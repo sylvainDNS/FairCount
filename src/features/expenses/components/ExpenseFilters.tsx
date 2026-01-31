@@ -1,6 +1,7 @@
 import { Collapsible } from '@ark-ui/react/collapsible';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useMembers } from '@/features/members/hooks/useMembers';
+import { TextInput } from '@/shared/components/TextInput';
 import type { ExpenseFilters as FilterType } from '../types';
 
 interface ExpenseFiltersProps {
@@ -111,13 +112,12 @@ export const ExpenseFilters = ({ groupId, filters, onFiltersChange }: ExpenseFil
           >
             Rechercher
           </label>
-          <input
+          <TextInput
             id="expense-search"
             type="text"
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
             placeholder="Description..."
-            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 

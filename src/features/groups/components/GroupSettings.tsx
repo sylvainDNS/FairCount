@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/shared/components/Button';
+import { TextInput } from '@/shared/components/TextInput';
 import { useGroup } from '../hooks/useGroup';
 import { GROUP_ERROR_MESSAGES, type GroupError } from '../types';
 
@@ -93,13 +94,12 @@ export const GroupSettings = ({ groupId }: GroupSettingsProps) => {
           >
             Nom
           </label>
-          <input
+          <TextInput
             id="group-name"
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             disabled={saving}
-            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
           />
         </div>
 

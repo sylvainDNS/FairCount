@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { isValidEmail } from '@/lib/validation';
 import { Button } from '@/shared/components/Button';
+import { TextInput } from '@/shared/components/TextInput';
 import { useInvitations } from '../hooks/useInvitations';
 import { GROUP_ERROR_MESSAGES, type GroupError } from '../types';
 
@@ -57,7 +58,7 @@ export const InviteForm = ({ groupId, onSuccess }: InviteFormProps) => {
         >
           Adresse email
         </label>
-        <input
+        <TextInput
           id="invite-email"
           type="email"
           value={email}
@@ -79,7 +80,6 @@ export const InviteForm = ({ groupId, onSuccess }: InviteFormProps) => {
                 : undefined
           }
           aria-invalid={formState === 'error'}
-          className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
         />
       </div>
 

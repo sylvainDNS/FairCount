@@ -9,3 +9,4 @@ export { LinkButton } from './LinkButton';
 export { Loading, Skeleton } from './Loading';
 export { ProtectedRoute } from './ProtectedRoute';
 export { Spinner } from './Spinner';
+export { TextInput } from './TextInput';

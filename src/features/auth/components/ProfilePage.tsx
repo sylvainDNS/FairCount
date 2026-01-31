@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/shared/components/Button';
+import { TextInput } from '@/shared/components/TextInput';
 import { useAuth } from '../hooks/useAuth';
 import { AUTH_ERROR_MESSAGES, type AuthError } from '../types';
 
@@ -79,7 +80,7 @@ export const ProfilePage = () => {
             Nom
           </label>
           <div className="flex gap-2">
-            <input
+            <TextInput
               id="name"
               type="text"
               value={name}
@@ -92,7 +93,8 @@ export const ProfilePage = () => {
               }}
               placeholder="Votre nom"
               disabled={saveState === 'saving'}
-              className="flex-1 px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
+              fullWidth={false}
+              className="flex-1"
             />
             <Button
               type="button"
