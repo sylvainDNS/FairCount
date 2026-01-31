@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
+import { useFetch } from '@/shared/hooks';
 import { settlementsApi } from '../api';
 import type {
   CreateSettlementFormData,
@@ -6,6 +7,10 @@ import type {
   SettlementResult,
   SettlementSuggestion,
 } from '../types';
+
+interface SuggestionsResponse {
+  readonly suggestions: SettlementSuggestion[];
+}
 
 interface UseSettlementResult {
   readonly suggestions: SettlementSuggestion[];
@@ -17,40 +22,16 @@ interface UseSettlementResult {
 }
 
 export const useSettlement = (groupId: string): UseSettlementResult => {
-  const [suggestions, setSuggestions] = useState<SettlementSuggestion[]>([]);
-  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
-  const [suggestionsError, setSuggestionsError] = useState<SettlementError | null>(null);
-
-  const fetchSuggestions = useCallback(async () => {
-    if (!groupId) return;
-
-    try {
-      setIsLoadingSuggestions(true);
-      setSuggestionsError(null);
-      const result = await settlementsApi.getSuggested(groupId);
-
-      if ('error' in result) {
-        setSuggestionsError(result.error as SettlementError);
-        setSuggestions([]);
-      } else {
-        setSuggestions(result.suggestions);
-      }
-    } catch {
-      setSuggestionsError('UNKNOWN_ERROR');
-      setSuggestions([]);
-    } finally {
-      setIsLoadingSuggestions(false);
-    }
-  }, [groupId]);
-
-  useEffect(() => {
-    fetchSuggestions();
-  }, [fetchSuggestions]);
+  const { data, isLoading, error, refetch } = useFetch<SuggestionsResponse, SettlementError>(
+    () => settlementsApi.getSuggested(groupId),
+    [groupId],
+    { skip: !groupId },
+  );
 
   const create = useCallback(
-    async (data: CreateSettlementFormData): Promise<SettlementResult<{ id: string }>> => {
+    async (formData: CreateSettlementFormData): Promise<SettlementResult<{ id: string }>> => {
       try {
-        const result = await settlementsApi.create(groupId, data);
+        const result = await settlementsApi.create(groupId, formData);
 
         if ('error' in result) {
           return { success: false, error: result.error as SettlementError };
@@ -82,11 +63,11 @@ export const useSettlement = (groupId: string): UseSettlementResult => {
   );
 
   return {
-    suggestions,
-    isLoadingSuggestions,
-    suggestionsError,
+    suggestions: data?.suggestions ?? [],
+    isLoadingSuggestions: isLoading,
+    suggestionsError: error,
     create,
     remove,
-    refreshSuggestions: fetchSuggestions,
+    refreshSuggestions: refetch,
   };
 };

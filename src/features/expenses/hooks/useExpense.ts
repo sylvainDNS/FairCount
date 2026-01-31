@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
+import { useFetch } from '@/shared/hooks';
 import { expensesApi } from '../api';
 import type {
   CreateExpenseFormData,
@@ -19,45 +20,17 @@ interface UseExpenseResult {
 }
 
 export const useExpense = (groupId: string, expenseId?: string): UseExpenseResult => {
-  const [expense, setExpense] = useState<ExpenseDetail | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<ExpenseError | null>(null);
-
-  const fetchExpense = useCallback(async () => {
-    if (!groupId || !expenseId) {
-      setExpense(null);
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      setError(null);
-      const result = await expensesApi.get(groupId, expenseId);
-
-      if ('error' in result) {
-        setError(result.error as ExpenseError);
-        setExpense(null);
-      } else {
-        setExpense(result);
-      }
-    } catch {
-      setError('UNKNOWN_ERROR');
-      setExpense(null);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [groupId, expenseId]);
-
-  useEffect(() => {
-    if (expenseId) {
-      fetchExpense();
-    }
-  }, [expenseId, fetchExpense]);
+  const { data, isLoading, error, refetch, reset } = useFetch<ExpenseDetail, ExpenseError>(
+    // La fonction n'est appelée que si skip=false, donc expenseId est défini
+    () => expensesApi.get(groupId, expenseId ?? ''),
+    [groupId, expenseId],
+    { skip: !groupId || !expenseId },
+  );
 
   const create = useCallback(
-    async (data: CreateExpenseFormData): Promise<ExpenseResult<{ id: string }>> => {
+    async (formData: CreateExpenseFormData): Promise<ExpenseResult<{ id: string }>> => {
       try {
-        const result = await expensesApi.create(groupId, data);
+        const result = await expensesApi.create(groupId, formData);
 
         if ('error' in result) {
           return { success: false, error: result.error as ExpenseError };
@@ -72,25 +45,25 @@ export const useExpense = (groupId: string, expenseId?: string): UseExpenseResul
   );
 
   const update = useCallback(
-    async (data: UpdateExpenseFormData): Promise<ExpenseResult> => {
+    async (formData: UpdateExpenseFormData): Promise<ExpenseResult> => {
       if (!expenseId) {
         return { success: false, error: 'EXPENSE_NOT_FOUND' };
       }
 
       try {
-        const result = await expensesApi.update(groupId, expenseId, data);
+        const result = await expensesApi.update(groupId, expenseId, formData);
 
         if ('error' in result) {
           return { success: false, error: result.error as ExpenseError };
         }
 
-        await fetchExpense();
+        await refetch();
         return { success: true };
       } catch {
         return { success: false, error: 'UNKNOWN_ERROR' };
       }
     },
-    [groupId, expenseId, fetchExpense],
+    [groupId, expenseId, refetch],
   );
 
   const remove = useCallback(async (): Promise<ExpenseResult> => {
@@ -105,20 +78,20 @@ export const useExpense = (groupId: string, expenseId?: string): UseExpenseResul
         return { success: false, error: result.error as ExpenseError };
       }
 
-      setExpense(null);
+      reset();
       return { success: true };
     } catch {
       return { success: false, error: 'UNKNOWN_ERROR' };
     }
-  }, [groupId, expenseId]);
+  }, [groupId, expenseId, reset]);
 
   return {
-    expense,
+    expense: data,
     isLoading,
     error,
     create,
     update,
     remove,
-    refresh: fetchExpense,
+    refresh: refetch,
   };
 };

@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
+import { useFetch } from '@/shared/hooks';
 import { groupsApi } from '../api';
 import type { GroupError, GroupResult, GroupWithMembers, UpdateGroupFormData } from '../types';
 
@@ -14,46 +15,26 @@ interface UseGroupResult {
 }
 
 export const useGroup = (groupId: string): UseGroupResult => {
-  const [group, setGroup] = useState<GroupWithMembers | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<GroupError | null>(null);
-
-  const fetchGroup = useCallback(async () => {
-    if (!groupId) return;
-    try {
-      setIsLoading(true);
-      setError(null);
-      const data = await groupsApi.get(groupId);
-      if ('error' in data) {
-        setError(data.error as GroupError);
-        return;
-      }
-      setGroup(data);
-    } catch {
-      setError('UNKNOWN_ERROR');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [groupId]);
-
-  useEffect(() => {
-    fetchGroup();
-  }, [fetchGroup]);
+  const { data, isLoading, error, refetch } = useFetch<GroupWithMembers, GroupError>(
+    () => groupsApi.get(groupId),
+    [groupId],
+    { skip: !groupId },
+  );
 
   const updateGroup = useCallback(
-    async (data: UpdateGroupFormData): Promise<GroupResult> => {
+    async (formData: UpdateGroupFormData): Promise<GroupResult> => {
       try {
-        const result = await groupsApi.update(groupId, data);
+        const result = await groupsApi.update(groupId, formData);
         if ('error' in result) {
           return { success: false, error: result.error as GroupError };
         }
-        await fetchGroup();
+        await refetch();
         return { success: true };
       } catch {
         return { success: false, error: 'UNKNOWN_ERROR' };
       }
     },
-    [groupId, fetchGroup],
+    [groupId, refetch],
   );
 
   const archiveGroup = useCallback(async (): Promise<GroupResult> => {
@@ -62,12 +43,12 @@ export const useGroup = (groupId: string): UseGroupResult => {
       if ('error' in result) {
         return { success: false, error: result.error as GroupError };
       }
-      await fetchGroup();
+      await refetch();
       return { success: true };
     } catch {
       return { success: false, error: 'UNKNOWN_ERROR' };
     }
-  }, [groupId, fetchGroup]);
+  }, [groupId, refetch]);
 
   const leaveGroup = useCallback(async (): Promise<GroupResult> => {
     try {
@@ -94,13 +75,13 @@ export const useGroup = (groupId: string): UseGroupResult => {
   }, [groupId]);
 
   return {
-    group,
+    group: data,
     isLoading,
     error,
     updateGroup,
     archiveGroup,
     leaveGroup,
     deleteGroup,
-    refresh: fetchGroup,
+    refresh: refetch,
   };
 };

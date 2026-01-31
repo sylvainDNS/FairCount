@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
+import { useFetch } from '@/shared/hooks';
 import { groupsApi } from '../api';
 import type { CreateGroupFormData, GroupError, GroupListItem, GroupResult } from '../types';
 
@@ -11,48 +12,32 @@ interface UseGroupsResult {
 }
 
 export const useGroups = (): UseGroupsResult => {
-  const [groups, setGroups] = useState<GroupListItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<GroupError | null>(null);
-
-  const fetchGroups = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      const data = await groupsApi.list();
-      setGroups(data);
-    } catch {
-      setError('UNKNOWN_ERROR');
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchGroups();
-  }, [fetchGroups]);
+  const { data, isLoading, error, refetch } = useFetch<GroupListItem[], GroupError>(
+    () => groupsApi.list(),
+    [],
+  );
 
   const createGroup = useCallback(
-    async (data: CreateGroupFormData): Promise<GroupResult<{ id: string }>> => {
+    async (formData: CreateGroupFormData): Promise<GroupResult<{ id: string }>> => {
       try {
-        const result = await groupsApi.create(data);
+        const result = await groupsApi.create(formData);
         if ('error' in result) {
           return { success: false, error: result.error as GroupError };
         }
-        await fetchGroups();
+        await refetch();
         return { success: true, data: result };
       } catch {
         return { success: false, error: 'UNKNOWN_ERROR' };
       }
     },
-    [fetchGroups],
+    [refetch],
   );
 
   return {
-    groups,
+    groups: data ?? [],
     isLoading,
     error,
     createGroup,
-    refresh: fetchGroups,
+    refresh: refetch,
   };
 };

@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
+import { useFetch } from '@/shared/hooks';
 import { membersApi } from '../api';
 import type {
   MemberError,
@@ -17,42 +18,26 @@ interface UseMembersResult {
 }
 
 export const useMembers = (groupId: string): UseMembersResult => {
-  const [members, setMembers] = useState<MemberWithCoefficient[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<MemberError | null>(null);
-
-  const fetchMembers = useCallback(async () => {
-    if (!groupId) return;
-    try {
-      setIsLoading(true);
-      setError(null);
-      const data = await membersApi.list(groupId);
-      setMembers(data);
-    } catch {
-      setError('UNKNOWN_ERROR');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [groupId]);
-
-  useEffect(() => {
-    fetchMembers();
-  }, [fetchMembers]);
+  const { data, isLoading, error, refetch } = useFetch<MemberWithCoefficient[], MemberError>(
+    () => membersApi.list(groupId),
+    [groupId],
+    { skip: !groupId },
+  );
 
   const updateMember = useCallback(
-    async (memberId: string, data: UpdateMemberFormData): Promise<MemberResult> => {
+    async (memberId: string, formData: UpdateMemberFormData): Promise<MemberResult> => {
       try {
-        const result = await membersApi.update(groupId, memberId, data);
+        const result = await membersApi.update(groupId, memberId, formData);
         if ('error' in result) {
           return { success: false, error: result.error as MemberError };
         }
-        await fetchMembers();
+        await refetch();
         return { success: true };
       } catch {
         return { success: false, error: 'UNKNOWN_ERROR' };
       }
     },
-    [groupId, fetchMembers],
+    [groupId, refetch],
   );
 
   const removeMember = useCallback(
@@ -62,21 +47,21 @@ export const useMembers = (groupId: string): UseMembersResult => {
         if ('error' in result) {
           return { success: false, error: result.error as MemberError };
         }
-        await fetchMembers();
+        await refetch();
         return { success: true };
       } catch {
         return { success: false, error: 'UNKNOWN_ERROR' };
       }
     },
-    [groupId, fetchMembers],
+    [groupId, refetch],
   );
 
   return {
-    members,
+    members: data ?? [],
     isLoading,
     error,
     updateMember,
     removeMember,
-    refresh: fetchMembers,
+    refresh: refetch,
   };
 };

@@ -5,7 +5,7 @@ import type { Balance } from '../types';
 import { BalanceCard } from './BalanceCard';
 
 interface BalanceListProps {
-  readonly balances: Balance[];
+  readonly balances: readonly Balance[];
   readonly totalExpenses: number;
   readonly currency: string;
   readonly isLoading?: boolean;

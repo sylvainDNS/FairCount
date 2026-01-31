@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo } from 'react';
+import { useFetch } from '@/shared/hooks';
 import { balancesApi } from '../api';
-import type { Balance, BalanceError } from '../types';
+import type { BalanceError, BalancesResponse } from '../types';
 
 interface UseBalancesResult {
-  readonly balances: Balance[];
-  readonly myBalance: Balance | null;
+  readonly balances: BalancesResponse['balances'];
+  readonly myBalance: BalancesResponse['balances'][number] | null;
   readonly totalExpenses: number;
   readonly isLoading: boolean;
   readonly isValid: boolean;
@@ -13,54 +14,22 @@ interface UseBalancesResult {
 }
 
 export const useBalances = (groupId: string): UseBalancesResult => {
-  const [balances, setBalances] = useState<Balance[]>([]);
-  const [totalExpenses, setTotalExpenses] = useState(0);
-  const [isValid, setIsValid] = useState(true);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<BalanceError | null>(null);
-  const currentGroupIdRef = useRef(groupId);
+  const { data, isLoading, error, refetch } = useFetch<BalancesResponse, BalanceError>(
+    () => balancesApi.list(groupId),
+    [groupId],
+    { skip: !groupId },
+  );
 
-  const fetchBalances = useCallback(async () => {
-    if (!groupId) return;
-
-    currentGroupIdRef.current = groupId;
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const result = await balancesApi.list(groupId);
-
-      // Éviter les données stales si groupId a changé pendant la requête
-      if (currentGroupIdRef.current !== groupId) return;
-
-      if ('error' in result) {
-        setError((result.error as BalanceError) || 'UNKNOWN_ERROR');
-        return;
-      }
-
-      setBalances([...result.balances]);
-      setTotalExpenses(result.totalExpenses);
-      setIsValid(result.isValid);
-    } catch {
-      setError('UNKNOWN_ERROR');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [groupId]);
-
-  useEffect(() => {
-    fetchBalances();
-  }, [fetchBalances]);
-
+  const balances = data?.balances ?? [];
   const myBalance = useMemo(() => balances.find((b) => b.isCurrentUser) ?? null, [balances]);
 
   return {
     balances,
     myBalance,
-    totalExpenses,
+    totalExpenses: data?.totalExpenses ?? 0,
     isLoading,
-    isValid,
+    isValid: data?.isValid ?? true,
     error,
-    refetch: fetchBalances,
+    refetch,
   };
 };

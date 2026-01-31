@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useFetch } from '@/shared/hooks';
 import { balancesApi } from '../api';
 import type { BalanceDetail, BalanceError } from '../types';
 
@@ -10,45 +10,16 @@ interface UseBalanceDetailResult {
 }
 
 export const useBalanceDetail = (groupId: string): UseBalanceDetailResult => {
-  const [detail, setDetail] = useState<BalanceDetail | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<BalanceError | null>(null);
-  const currentGroupIdRef = useRef(groupId);
-
-  const fetchDetail = useCallback(async () => {
-    if (!groupId) return;
-
-    currentGroupIdRef.current = groupId;
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const result = await balancesApi.getMyBalance(groupId);
-
-      // Éviter les données stales si groupId a changé pendant la requête
-      if (currentGroupIdRef.current !== groupId) return;
-
-      if ('error' in result) {
-        setError((result.error as BalanceError) || 'UNKNOWN_ERROR');
-        return;
-      }
-
-      setDetail(result);
-    } catch {
-      setError('UNKNOWN_ERROR');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [groupId]);
-
-  useEffect(() => {
-    fetchDetail();
-  }, [fetchDetail]);
+  const { data, isLoading, error, refetch } = useFetch<BalanceDetail, BalanceError>(
+    () => balancesApi.getMyBalance(groupId),
+    [groupId],
+    { skip: !groupId },
+  );
 
   return {
-    detail,
+    detail: data,
     isLoading,
     error,
-    refetch: fetchDetail,
+    refetch,
   };
 };
