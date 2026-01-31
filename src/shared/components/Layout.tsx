@@ -36,7 +36,6 @@ const DesktopSidebar = () => {
 
       <nav className="flex-1 p-4">
         <ul className="space-y-2">
-          <SidebarLink to="/" label="Accueil" />
           <SidebarLink to="/groups" label="Groupes" />
           <SidebarLink to="/profile" label="Profil" />
         </ul>

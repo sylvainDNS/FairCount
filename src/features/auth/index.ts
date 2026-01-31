@@ -1,4 +1,5 @@
 // Components (public exports)
+export { AuthErrorPage } from './components/AuthErrorPage';
 export { AuthLayout } from './components/AuthLayout';
 export { LoginPage } from './components/LoginPage';
 export { ProfilePage } from './components/ProfilePage';

@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom';
+import { EmptyState, EmptyStateIcons } from '@/shared/components/EmptyState';
+import { Skeleton } from '@/shared/components/Loading';
 import { useGroups } from '../hooks/useGroups';
 import { GroupCard } from './GroupCard';
 
@@ -11,10 +13,10 @@ export const GroupList = () => {
         {[1, 2, 3].map((i) => (
           <div
             key={i}
-            className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 animate-pulse"
+            className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4"
           >
-            <div className="h-5 bg-slate-200 dark:bg-slate-700 rounded w-1/3 mb-2" />
-            <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/2" />
+            <Skeleton className="h-5 w-1/3 mb-2" />
+            <Skeleton className="h-4 w-1/2" />
           </div>
         ))}
       </div>
@@ -31,12 +33,12 @@ export const GroupList = () => {
 
   if (groups.length === 0) {
     return (
-      <div className="text-center py-12">
-        <p className="text-slate-500 dark:text-slate-400">Aucun groupe pour le moment</p>
-        <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
-          Créez votre premier groupe pour commencer
-        </p>
-      </div>
+      <EmptyState
+        icon={<EmptyStateIcons.Users />}
+        title="Aucun groupe pour le moment"
+        description="Créez votre premier groupe pour commencer à partager vos dépenses équitablement."
+        action={{ label: 'Créer un groupe', to: '/groups/new' }}
+      />
     );
   }
 

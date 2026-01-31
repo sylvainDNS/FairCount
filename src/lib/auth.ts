@@ -38,6 +38,7 @@ export const createAuth = ({ db, env }: CreateAuthOptions) => {
     plugins: [
       magicLink({
         expiresIn: 60 * 15, // 15 minutes
+        disableSignUp: false,
         sendMagicLink: async ({ email, url }) => {
           const port = parseInt(env.SMTP_PORT, 10) || 1025;
 

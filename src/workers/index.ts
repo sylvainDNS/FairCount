@@ -67,6 +67,16 @@ export default {
         const db = createDb(env.DB);
         const auth = createAuth({ db, env });
         const response = await auth.handler(request);
+
+        // Handle magic link verification errors - redirect to error page
+        if (url.pathname.includes('/magic-link/verify') && !response.ok) {
+          const errorUrl = new URL('/auth/error', env.APP_URL);
+          // Determine error type based on response status
+          const errorType = response.status === 410 ? 'expired' : 'invalid_token';
+          errorUrl.searchParams.set('error', errorType);
+          return Response.redirect(errorUrl.toString(), 302);
+        }
+
         return addCorsHeaders(response, request, env);
       }
 

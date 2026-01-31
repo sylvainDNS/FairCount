@@ -1,6 +1,8 @@
 import { useCallback, useState } from 'react';
 import { Button } from '@/shared/components/Button';
 import { ConfirmDialog } from '@/shared/components/ConfirmDialog';
+import { EmptyState, EmptyStateIcons } from '@/shared/components/EmptyState';
+import { Skeleton } from '@/shared/components/Loading';
 import { useInfiniteLoad } from '@/shared/hooks/useInfiniteLoad';
 import { expensesApi } from '../api';
 import { useExpenses } from '../hooks/useExpenses';
@@ -83,7 +85,7 @@ export const ExpenseList = ({ groupId, currency }: ExpenseListProps) => {
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Dépenses</h2>
         </div>
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-          <div className="animate-pulse">
+          <div>
             {[1, 2, 3, 4, 5].map((i) => (
               <div
                 key={i}
@@ -91,12 +93,12 @@ export const ExpenseList = ({ groupId, currency }: ExpenseListProps) => {
               >
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
-                    <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-32 mb-2" />
-                    <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-48" />
+                    <Skeleton className="h-4 w-32 mb-2" />
+                    <Skeleton className="h-3 w-48" />
                   </div>
                   <div className="text-right">
-                    <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-16 mb-1" />
-                    <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-20" />
+                    <Skeleton className="h-4 w-16 mb-1 ml-auto" />
+                    <Skeleton className="h-3 w-20 ml-auto" />
                   </div>
                 </div>
               </div>
@@ -122,21 +124,20 @@ export const ExpenseList = ({ groupId, currency }: ExpenseListProps) => {
 
       {/* Expense list */}
       {expenses.length === 0 ? (
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-8 text-center">
-          <p className="text-slate-500 dark:text-slate-400">
-            {Object.keys(filters).length > 0
-              ? 'Aucune dépense ne correspond aux filtres'
-              : 'Aucune dépense dans ce groupe'}
-          </p>
-          {Object.keys(filters).length === 0 && (
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setShowCreateForm(true)}
-              className="mt-4"
-            >
-              Ajouter la première dépense
-            </Button>
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
+          {Object.keys(filters).length > 0 ? (
+            <EmptyState
+              icon={<EmptyStateIcons.Search />}
+              title="Aucun résultat"
+              description="Aucune dépense ne correspond aux filtres appliqués."
+            />
+          ) : (
+            <EmptyState
+              icon={<EmptyStateIcons.Receipt />}
+              title="Aucune dépense"
+              description="Ajoutez votre première dépense pour commencer le suivi."
+              action={{ label: 'Ajouter une dépense', onClick: () => setShowCreateForm(true) }}
+            />
           )}
         </div>
       ) : (
