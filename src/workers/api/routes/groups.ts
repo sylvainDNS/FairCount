@@ -5,6 +5,7 @@ import type { Auth } from '../../../lib/auth';
 import { isValidEmail, isValidUUID } from '../../../lib/validation';
 import type { Env } from '../../types';
 import { sendInvitationEmail } from '../utils/email';
+import { calculateShares } from '../utils/share-calculation';
 import * as balanceHandlers from './balances-handlers';
 import * as expenseHandlers from './expenses-handlers';
 import * as memberHandlers from './members-handlers';
@@ -42,56 +43,6 @@ async function parseJsonBody<T>(request: Request): Promise<T | null> {
   } catch {
     return null;
   }
-}
-
-// Calculate fair shares based on coefficients
-function calculateShares(
-  amount: number,
-  participants: Array<{ memberId: string; customAmount: number | null }>,
-  memberCoefficients: Map<string, number>,
-): Map<string, number> {
-  const shares = new Map<string, number>();
-  let remainingAmount = amount;
-  const fairShareParticipants: string[] = [];
-
-  for (const p of participants) {
-    if (p.customAmount !== null) {
-      shares.set(p.memberId, p.customAmount);
-      remainingAmount -= p.customAmount;
-    } else {
-      fairShareParticipants.push(p.memberId);
-    }
-  }
-
-  if (fairShareParticipants.length > 0 && remainingAmount > 0) {
-    const totalCoeff = fairShareParticipants.reduce(
-      (sum, id) => sum + (memberCoefficients.get(id) ?? 0),
-      0,
-    );
-    let allocated = 0;
-
-    for (let i = 0; i < fairShareParticipants.length; i++) {
-      const memberId = fairShareParticipants[i] as string;
-      const coeff = memberCoefficients.get(memberId) ?? 0;
-      let share: number;
-
-      if (i === fairShareParticipants.length - 1) {
-        share = remainingAmount - allocated;
-      } else if (totalCoeff > 0) {
-        share = Math.round((coeff / totalCoeff) * remainingAmount);
-      } else {
-        share = Math.round(remainingAmount / fairShareParticipants.length);
-      }
-      shares.set(memberId, share);
-      allocated += share;
-    }
-  } else if (fairShareParticipants.length > 0) {
-    for (const memberId of fairShareParticipants) {
-      shares.set(memberId, 0);
-    }
-  }
-
-  return shares;
 }
 
 // List user's groups
