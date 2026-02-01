@@ -166,7 +166,7 @@ export async function handleInvitationsRoutes(
   const action = pathParts[1];
 
   if (!token || !isValidUUID(token)) {
-    return Response.json({ error: 'Not found' }, { status: 404 });
+    return Response.json({ error: 'NOT_FOUND' }, { status: 404 });
   }
 
   // GET /api/invitations/:token - Get invitation details (no auth)
@@ -178,10 +178,10 @@ export async function handleInvitationsRoutes(
   if (method === 'POST' && action === 'accept') {
     const session = await ctx.auth.api.getSession({ headers: request.headers });
     if (!session?.user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      return Response.json({ error: 'UNAUTHORIZED' }, { status: 401 });
     }
     return acceptInvitation(ctx, token, session.user);
   }
 
-  return Response.json({ error: 'Not found' }, { status: 404 });
+  return Response.json({ error: 'NOT_FOUND' }, { status: 404 });
 }

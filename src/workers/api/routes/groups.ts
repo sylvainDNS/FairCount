@@ -591,7 +591,7 @@ export async function handleGroupsRoutes(request: Request, ctx: RouteContext): P
   // Get session first
   const session = await ctx.auth.api.getSession({ headers: request.headers });
   if (!session?.user) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    return Response.json({ error: 'UNAUTHORIZED' }, { status: 401 });
   }
 
   const user = session.user;
@@ -616,7 +616,7 @@ export async function handleGroupsRoutes(request: Request, ctx: RouteContext): P
   // Routes with :id
   const groupId = pathParts[0];
   if (!groupId || !isValidUUID(groupId)) {
-    return Response.json({ error: 'Not found' }, { status: 404 });
+    return Response.json({ error: 'NOT_FOUND' }, { status: 404 });
   }
 
   const action = pathParts[1];
@@ -867,5 +867,5 @@ export async function handleGroupsRoutes(request: Request, ctx: RouteContext): P
     }
   }
 
-  return Response.json({ error: 'Not found' }, { status: 404 });
+  return Response.json({ error: 'NOT_FOUND' }, { status: 404 });
 }

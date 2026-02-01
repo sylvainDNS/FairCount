@@ -98,14 +98,14 @@ export default {
 
       // API routes - 404 for unknown routes
       if (url.pathname.startsWith('/api/')) {
-        return addCorsHeaders(Response.json({ error: 'Not found' }, { status: 404 }), request, env);
+        return addCorsHeaders(Response.json({ error: 'NOT_FOUND' }, { status: 404 }), request, env);
       }
 
-      return addCorsHeaders(Response.json({ error: 'Not found' }, { status: 404 }), request, env);
+      return addCorsHeaders(Response.json({ error: 'NOT_FOUND' }, { status: 404 }), request, env);
     } catch (error) {
       console.error('Worker error:', error);
       return addCorsHeaders(
-        Response.json({ error: 'Internal server error' }, { status: 500 }),
+        Response.json({ error: 'INTERNAL_ERROR' }, { status: 500 }),
         request,
         env,
       );
