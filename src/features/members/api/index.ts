@@ -2,13 +2,9 @@ import { fetchWithAuth } from '@/lib/api';
 import type { MemberWithCoefficient, UpdateMemberFormData } from '../types';
 
 export const membersApi = {
-  list: async (groupId: string): Promise<MemberWithCoefficient[]> => {
+  list: async (groupId: string): Promise<MemberWithCoefficient[] | { error: string }> => {
     const res = await fetchWithAuth(`/api/groups/${groupId}/members`);
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.error || 'Failed to fetch members');
-    }
-    return data;
+    return res.json();
   },
 
   get: async (

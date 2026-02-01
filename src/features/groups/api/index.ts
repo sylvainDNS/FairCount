@@ -7,13 +7,9 @@ import type {
 } from '../types';
 
 export const groupsApi = {
-  list: async (): Promise<GroupListItem[]> => {
+  list: async (): Promise<GroupListItem[] | { error: string }> => {
     const res = await fetchWithAuth('/api/groups');
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.error || 'Failed to fetch groups');
-    }
-    return data;
+    return res.json();
   },
 
   create: async (data: CreateGroupFormData): Promise<{ id: string } | { error: string }> => {
