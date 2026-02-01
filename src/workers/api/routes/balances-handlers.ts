@@ -1,175 +1,21 @@
 import { and, eq, gte, isNull, sql } from 'drizzle-orm';
-import type { Database } from '../../../db';
 import * as schema from '../../../db/schema';
+import {
+  type BalanceContext as BaseBalanceContext,
+  calculateGroupBalances,
+  verifyBalancesIntegrity,
+} from '../utils/balance-calculation';
 import { calculateShares } from '../utils/share-calculation';
 
-interface BalanceContext {
-  readonly db: Database;
-  readonly groupId: string;
+interface BalanceContext extends BaseBalanceContext {
   readonly userId: string;
-  readonly currentMemberId: string;
-}
-
-interface Balance {
-  memberId: string;
-  memberName: string;
-  memberUserId: string | null;
-  totalPaid: number;
-  totalOwed: number;
-  balance: number;
-  settlementsPaid: number;
-  settlementsReceived: number;
-  netBalance: number;
-  isCurrentUser: boolean;
-}
-
-// Calculate balances for all members
-async function calculateBalances(ctx: BalanceContext): Promise<Balance[]> {
-  // Get active members
-  const members = await ctx.db
-    .select({
-      id: schema.groupMembers.id,
-      name: schema.groupMembers.name,
-      userId: schema.groupMembers.userId,
-      coefficient: schema.groupMembers.coefficient,
-    })
-    .from(schema.groupMembers)
-    .where(and(eq(schema.groupMembers.groupId, ctx.groupId), isNull(schema.groupMembers.leftAt)));
-
-  const memberCoefficients = new Map(members.map((m) => [m.id, m.coefficient]));
-
-  // Initialize balances
-  const balances = new Map<string, Balance>(
-    members.map((m) => [
-      m.id,
-      {
-        memberId: m.id,
-        memberName: m.name,
-        memberUserId: m.userId,
-        totalPaid: 0,
-        totalOwed: 0,
-        balance: 0,
-        settlementsPaid: 0,
-        settlementsReceived: 0,
-        netBalance: 0,
-        isCurrentUser: m.id === ctx.currentMemberId,
-      },
-    ]),
-  );
-
-  // Get all active expenses for the group
-  const expenses = await ctx.db
-    .select()
-    .from(schema.expenses)
-    .where(and(eq(schema.expenses.groupId, ctx.groupId), isNull(schema.expenses.deletedAt)));
-
-  if (expenses.length > 0) {
-    // Get all participants for these expenses
-    const expenseIds = expenses.map((e) => e.id);
-    const participants = await ctx.db
-      .select()
-      .from(schema.expenseParticipants)
-      .where(
-        sql`${schema.expenseParticipants.expenseId} IN (${sql.join(
-          expenseIds.map((id) => sql`${id}`),
-          sql`, `,
-        )})`,
-      );
-
-    // Group participants by expense
-    const participantsByExpense = new Map<
-      string,
-      Array<{ memberId: string; customAmount: number | null }>
-    >();
-    for (const p of participants) {
-      const list = participantsByExpense.get(p.expenseId) ?? [];
-      list.push({ memberId: p.memberId, customAmount: p.customAmount });
-      participantsByExpense.set(p.expenseId, list);
-    }
-
-    // Process each expense
-    for (const expense of expenses) {
-      // Add what the payer paid
-      const payer = balances.get(expense.paidBy);
-      if (payer) {
-        balances.set(expense.paidBy, {
-          ...payer,
-          totalPaid: payer.totalPaid + expense.amount,
-        });
-      }
-
-      // Calculate shares and add to totalOwed
-      const expenseParticipants = participantsByExpense.get(expense.id) ?? [];
-      const shares = calculateShares(expense.amount, expenseParticipants, memberCoefficients);
-
-      for (const [memberId, share] of shares) {
-        const member = balances.get(memberId);
-        if (member) {
-          balances.set(memberId, {
-            ...member,
-            totalOwed: member.totalOwed + share,
-          });
-        }
-      }
-    }
-  }
-
-  // Get all settlements for the group
-  const settlements = await ctx.db
-    .select()
-    .from(schema.settlements)
-    .where(eq(schema.settlements.groupId, ctx.groupId));
-
-  // Process settlements
-  for (const settlement of settlements) {
-    const payer = balances.get(settlement.fromMember);
-    if (payer) {
-      balances.set(settlement.fromMember, {
-        ...payer,
-        settlementsPaid: payer.settlementsPaid + settlement.amount,
-      });
-    }
-
-    const receiver = balances.get(settlement.toMember);
-    if (receiver) {
-      balances.set(settlement.toMember, {
-        ...receiver,
-        settlementsReceived: receiver.settlementsReceived + settlement.amount,
-      });
-    }
-  }
-
-  // Calculate final balances
-  const result: Balance[] = [];
-  for (const balance of balances.values()) {
-    const rawBalance = balance.totalPaid - balance.totalOwed;
-    // settlementsPaid = what I reimbursed → increases my balance (I owe less)
-    // settlementsReceived = what I received → decreases my balance (I'm owed less)
-    const netBalance = rawBalance + balance.settlementsPaid - balance.settlementsReceived;
-    result.push({
-      ...balance,
-      balance: rawBalance,
-      netBalance,
-    });
-  }
-
-  // Sort by netBalance descending (creditors first, then debtors)
-  result.sort((a, b) => b.netBalance - a.netBalance);
-
-  return result;
-}
-
-// Verify balance integrity (sum should be 0)
-function verifyIntegrity(balances: Balance[]): boolean {
-  const total = balances.reduce((sum, b) => sum + b.netBalance, 0);
-  return Math.abs(total) < 1; // Tolerance of 1 cent for rounding
 }
 
 // List all balances for a group
 export async function listBalances(ctx: BalanceContext): Promise<Response> {
-  const balances = await calculateBalances(ctx);
+  const balances = await calculateGroupBalances(ctx);
   const totalExpenses = balances.reduce((sum, b) => sum + b.totalPaid, 0);
-  const isValid = verifyIntegrity(balances);
+  const isValid = verifyBalancesIntegrity(balances);
 
   return Response.json({
     balances,
@@ -180,7 +26,7 @@ export async function listBalances(ctx: BalanceContext): Promise<Response> {
 
 // Get my balance detail
 export async function getMyBalance(ctx: BalanceContext): Promise<Response> {
-  const balances = await calculateBalances(ctx);
+  const balances = await calculateGroupBalances(ctx);
   const myBalance = balances.find((b) => b.memberId === ctx.currentMemberId);
 
   if (!myBalance) {

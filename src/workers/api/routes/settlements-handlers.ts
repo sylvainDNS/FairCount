@@ -1,14 +1,13 @@
 import { and, desc, eq, isNull, lt, sql } from 'drizzle-orm';
-import type { Database } from '../../../db';
 import * as schema from '../../../db/schema';
+import {
+  type BalanceContext as BaseBalanceContext,
+  calculateGroupBalances,
+} from '../utils/balance-calculation';
 import { calculateOptimalSettlements } from '../utils/optimize-settlements';
-import { calculateShares } from '../utils/share-calculation';
 
-interface SettlementContext {
-  readonly db: Database;
-  readonly groupId: string;
+interface SettlementContext extends BaseBalanceContext {
   readonly userId: string;
-  readonly currentMemberId: string;
 }
 
 interface ListParams {
@@ -21,138 +20,6 @@ interface CreateSettlementData {
   readonly toMember: string;
   readonly amount: number;
   readonly date: string;
-}
-
-// Calculate net balances for suggestions
-async function calculateNetBalances(ctx: SettlementContext) {
-  // Get active members
-  const members = await ctx.db
-    .select({
-      id: schema.groupMembers.id,
-      name: schema.groupMembers.name,
-      userId: schema.groupMembers.userId,
-      coefficient: schema.groupMembers.coefficient,
-    })
-    .from(schema.groupMembers)
-    .where(and(eq(schema.groupMembers.groupId, ctx.groupId), isNull(schema.groupMembers.leftAt)));
-
-  const memberCoefficients = new Map(members.map((m) => [m.id, m.coefficient]));
-
-  // Initialize balances
-  const balances = new Map<
-    string,
-    {
-      memberId: string;
-      memberName: string;
-      totalPaid: number;
-      totalOwed: number;
-      settlementsPaid: number;
-      settlementsReceived: number;
-      isCurrentUser: boolean;
-    }
-  >(
-    members.map((m) => [
-      m.id,
-      {
-        memberId: m.id,
-        memberName: m.name,
-        totalPaid: 0,
-        totalOwed: 0,
-        settlementsPaid: 0,
-        settlementsReceived: 0,
-        isCurrentUser: m.id === ctx.currentMemberId,
-      },
-    ]),
-  );
-
-  // Get active expenses
-  const expenses = await ctx.db
-    .select()
-    .from(schema.expenses)
-    .where(and(eq(schema.expenses.groupId, ctx.groupId), isNull(schema.expenses.deletedAt)));
-
-  if (expenses.length > 0) {
-    const expenseIds = expenses.map((e) => e.id);
-    const participants = await ctx.db
-      .select()
-      .from(schema.expenseParticipants)
-      .where(
-        sql`${schema.expenseParticipants.expenseId} IN (${sql.join(
-          expenseIds.map((id) => sql`${id}`),
-          sql`, `,
-        )})`,
-      );
-
-    // Group by expense
-    const participantsByExpense = new Map<
-      string,
-      Array<{ memberId: string; customAmount: number | null }>
-    >();
-    for (const p of participants) {
-      const list = participantsByExpense.get(p.expenseId) ?? [];
-      list.push({ memberId: p.memberId, customAmount: p.customAmount });
-      participantsByExpense.set(p.expenseId, list);
-    }
-
-    // Process each expense
-    for (const expense of expenses) {
-      const payer = balances.get(expense.paidBy);
-      if (payer) {
-        balances.set(expense.paidBy, {
-          ...payer,
-          totalPaid: payer.totalPaid + expense.amount,
-        });
-      }
-
-      // Calculate shares
-      const expenseParticipants = participantsByExpense.get(expense.id) ?? [];
-      const shares = calculateShares(expense.amount, expenseParticipants, memberCoefficients);
-
-      for (const [memberId, share] of shares) {
-        const member = balances.get(memberId);
-        if (member) {
-          balances.set(memberId, {
-            ...member,
-            totalOwed: member.totalOwed + share,
-          });
-        }
-      }
-    }
-  }
-
-  // Get existing settlements
-  const settlements = await ctx.db
-    .select()
-    .from(schema.settlements)
-    .where(eq(schema.settlements.groupId, ctx.groupId));
-
-  for (const settlement of settlements) {
-    const payer = balances.get(settlement.fromMember);
-    if (payer) {
-      balances.set(settlement.fromMember, {
-        ...payer,
-        settlementsPaid: payer.settlementsPaid + settlement.amount,
-      });
-    }
-
-    const receiver = balances.get(settlement.toMember);
-    if (receiver) {
-      balances.set(settlement.toMember, {
-        ...receiver,
-        settlementsReceived: receiver.settlementsReceived + settlement.amount,
-      });
-    }
-  }
-
-  // Calculate net balances
-  // settlementsPaid = what I reimbursed → increases my balance (I owe less)
-  // settlementsReceived = what I received → decreases my balance (I'm owed less)
-  return Array.from(balances.values()).map((b) => ({
-    memberId: b.memberId,
-    memberName: b.memberName,
-    isCurrentUser: b.isCurrentUser,
-    netBalance: b.totalPaid - b.totalOwed + b.settlementsPaid - b.settlementsReceived,
-  }));
 }
 
 // GET /api/groups/:id/settlements
@@ -231,7 +98,14 @@ export async function listSettlements(
 
 // GET /api/groups/:id/settlements/suggested
 export async function getSuggestedSettlements(ctx: SettlementContext): Promise<Response> {
-  const netBalances = await calculateNetBalances(ctx);
+  const balances = await calculateGroupBalances(ctx);
+  // Transformer les balances complètes en format attendu par calculateOptimalSettlements
+  const netBalances = balances.map((b) => ({
+    memberId: b.memberId,
+    memberName: b.memberName,
+    isCurrentUser: b.isCurrentUser,
+    netBalance: b.netBalance,
+  }));
   const suggestions = calculateOptimalSettlements(netBalances);
 
   return Response.json({ suggestions });
