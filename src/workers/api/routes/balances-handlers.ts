@@ -6,6 +6,7 @@ import {
   verifyBalancesIntegrity,
 } from '../utils/balance-calculation';
 import { calculateShares } from '../utils/share-calculation';
+import { activeGroupMembersCondition, sqlInClause } from '../utils/sql-helpers';
 
 interface BalanceContext extends BaseBalanceContext {
   readonly userId: string;
@@ -57,7 +58,7 @@ export async function getMyBalance(ctx: BalanceContext): Promise<Response> {
   const members = await ctx.db
     .select({ id: schema.groupMembers.id, coefficient: schema.groupMembers.coefficient })
     .from(schema.groupMembers)
-    .where(and(eq(schema.groupMembers.groupId, ctx.groupId), isNull(schema.groupMembers.leftAt)));
+    .where(activeGroupMembersCondition(ctx.groupId));
   const memberCoefficients = new Map(members.map((m) => [m.id, m.coefficient]));
 
   // Get participants for my expenses
@@ -67,16 +68,12 @@ export async function getMyBalance(ctx: BalanceContext): Promise<Response> {
     Array<{ memberId: string; customAmount: number | null }>
   >();
 
-  if (expenseIds.length > 0) {
+  const expenseIdsInClause = sqlInClause(schema.expenseParticipants.expenseId, expenseIds);
+  if (expenseIdsInClause) {
     const participants = await ctx.db
       .select()
       .from(schema.expenseParticipants)
-      .where(
-        sql`${schema.expenseParticipants.expenseId} IN (${sql.join(
-          expenseIds.map((id) => sql`${id}`),
-          sql`, `,
-        )})`,
-      );
+      .where(expenseIdsInClause);
 
     for (const p of participants) {
       const list = participantsByExpense.get(p.expenseId) ?? [];

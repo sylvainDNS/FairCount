@@ -1,7 +1,12 @@
-import { and, desc, eq, exists, gte, isNull, like, lt, lte, sql } from 'drizzle-orm';
+import { and, desc, eq, exists, gte, isNull, like, lte, sql } from 'drizzle-orm';
 import type { Database } from '../../../db';
 import * as schema from '../../../db/schema';
 import { calculateShares } from '../utils/share-calculation';
+import {
+  activeGroupMembersCondition,
+  buildCursorCondition,
+  sqlInClause,
+} from '../utils/sql-helpers';
 
 interface ExpenseContext {
   readonly db: Database;
@@ -85,11 +90,9 @@ export async function listExpenses(
   // Build conditions
   const conditions = [eq(schema.expenses.groupId, ctx.groupId), isNull(schema.expenses.deletedAt)];
 
-  if (params.cursor) {
-    const cursorDate = new Date(params.cursor);
-    if (!Number.isNaN(cursorDate.getTime())) {
-      conditions.push(lt(schema.expenses.createdAt, cursorDate));
-    }
+  const cursorCondition = buildCursorCondition(schema.expenses.createdAt, params.cursor);
+  if (cursorCondition) {
+    conditions.push(cursorCondition);
   }
 
   if (params.startDate) {
@@ -168,15 +171,10 @@ export async function listExpenses(
   }
 
   // Get all participants for these expenses
-  const participants = await ctx.db
-    .select()
-    .from(schema.expenseParticipants)
-    .where(
-      sql`${schema.expenseParticipants.expenseId} IN (${sql.join(
-        expenseIds.map((id) => sql`${id}`),
-        sql`, `,
-      )})`,
-    );
+  const inClause = sqlInClause(schema.expenseParticipants.expenseId, expenseIds);
+  const participants = inClause
+    ? await ctx.db.select().from(schema.expenseParticipants).where(inClause)
+    : [];
 
   // Group participants by expense
   const participantsByExpense = new Map<
@@ -197,17 +195,12 @@ export async function listExpenses(
 
   // Get member coefficients only for participants (optimized)
   const memberCoefficients = new Map<string, number>();
-  if (participantMemberIds.size > 0) {
-    const memberIdsArray = [...participantMemberIds];
+  const memberIdsInClause = sqlInClause(schema.groupMembers.id, [...participantMemberIds]);
+  if (memberIdsInClause) {
     const members = await ctx.db
       .select({ id: schema.groupMembers.id, coefficient: schema.groupMembers.coefficient })
       .from(schema.groupMembers)
-      .where(
-        sql`${schema.groupMembers.id} IN (${sql.join(
-          memberIdsArray.map((id) => sql`${id}`),
-          sql`, `,
-        )})`,
-      );
+      .where(memberIdsInClause);
 
     for (const m of members) {
       memberCoefficients.set(m.id, m.coefficient);
@@ -216,15 +209,13 @@ export async function listExpenses(
 
   // Get creator names
   const creatorIds = [...new Set(expenses.map((r) => r.expense.createdBy))];
-  const creators = await ctx.db
-    .select({ id: schema.groupMembers.id, name: schema.groupMembers.name })
-    .from(schema.groupMembers)
-    .where(
-      sql`${schema.groupMembers.id} IN (${sql.join(
-        creatorIds.map((id) => sql`${id}`),
-        sql`, `,
-      )})`,
-    );
+  const creatorIdsInClause = sqlInClause(schema.groupMembers.id, creatorIds);
+  const creators = creatorIdsInClause
+    ? await ctx.db
+        .select({ id: schema.groupMembers.id, name: schema.groupMembers.name })
+        .from(schema.groupMembers)
+        .where(creatorIdsInClause)
+    : [];
   const creatorNames = new Map(creators.map((c) => [c.id, c.name]));
 
   const expensesList = expenses.map((r) => {
@@ -297,7 +288,7 @@ export async function getExpense(ctx: ExpenseContext, expenseId: string): Promis
   const members = await ctx.db
     .select({ id: schema.groupMembers.id, coefficient: schema.groupMembers.coefficient })
     .from(schema.groupMembers)
-    .where(and(eq(schema.groupMembers.groupId, ctx.groupId), isNull(schema.groupMembers.leftAt)));
+    .where(activeGroupMembersCondition(ctx.groupId));
 
   const memberCoefficients = new Map(members.map((m) => [m.id, m.coefficient]));
 
@@ -388,7 +379,7 @@ export async function createExpense(
   const activeMembers = await ctx.db
     .select({ id: schema.groupMembers.id })
     .from(schema.groupMembers)
-    .where(and(eq(schema.groupMembers.groupId, ctx.groupId), isNull(schema.groupMembers.leftAt)));
+    .where(activeGroupMembersCondition(ctx.groupId));
 
   const activeMemberIds = new Set(activeMembers.map((m) => m.id));
 
@@ -515,7 +506,7 @@ export async function updateExpense(
     const activeMembers = await ctx.db
       .select({ id: schema.groupMembers.id })
       .from(schema.groupMembers)
-      .where(and(eq(schema.groupMembers.groupId, ctx.groupId), isNull(schema.groupMembers.leftAt)));
+      .where(activeGroupMembersCondition(ctx.groupId));
 
     const activeMemberIds = new Set(activeMembers.map((m) => m.id));
     const expenseAmount = updates.amount ?? expense.amount;

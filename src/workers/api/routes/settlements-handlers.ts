@@ -1,10 +1,11 @@
-import { and, desc, eq, isNull, lt, sql } from 'drizzle-orm';
+import { and, desc, eq, isNull, sql } from 'drizzle-orm';
 import * as schema from '../../../db/schema';
 import {
   type BalanceContext as BaseBalanceContext,
   calculateGroupBalances,
 } from '../utils/balance-calculation';
 import { calculateOptimalSettlements } from '../utils/optimize-settlements';
+import { buildCursorCondition } from '../utils/sql-helpers';
 
 interface SettlementContext extends BaseBalanceContext {
   readonly userId: string;
@@ -41,11 +42,9 @@ export async function listSettlements(
   }
 
   // Cursor-based pagination
-  if (params.cursor) {
-    const cursorDate = new Date(params.cursor);
-    if (!Number.isNaN(cursorDate.getTime())) {
-      conditions.push(lt(schema.settlements.createdAt, cursorDate));
-    }
+  const cursorCondition = buildCursorCondition(schema.settlements.createdAt, params.cursor);
+  if (cursorCondition) {
+    conditions.push(cursorCondition);
   }
 
   // Query with joins for names

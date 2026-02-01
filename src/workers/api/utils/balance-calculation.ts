@@ -1,7 +1,8 @@
-import { and, eq, isNull, sql } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import type { Database } from '../../../db';
 import * as schema from '../../../db/schema';
 import { calculateShares } from './share-calculation';
+import { activeGroupMembersCondition, sqlInClause } from './sql-helpers';
 
 export interface BalanceContext {
   readonly db: Database;
@@ -36,7 +37,7 @@ export async function calculateGroupBalances(ctx: BalanceContext): Promise<Membe
       coefficient: schema.groupMembers.coefficient,
     })
     .from(schema.groupMembers)
-    .where(and(eq(schema.groupMembers.groupId, ctx.groupId), isNull(schema.groupMembers.leftAt)));
+    .where(activeGroupMembersCondition(ctx.groupId));
 
   const memberCoefficients = new Map(members.map((m) => [m.id, m.coefficient]));
 
@@ -68,15 +69,10 @@ export async function calculateGroupBalances(ctx: BalanceContext): Promise<Membe
   if (expenses.length > 0) {
     // Récupérer les participants pour ces dépenses
     const expenseIds = expenses.map((e) => e.id);
-    const participants = await ctx.db
-      .select()
-      .from(schema.expenseParticipants)
-      .where(
-        sql`${schema.expenseParticipants.expenseId} IN (${sql.join(
-          expenseIds.map((id) => sql`${id}`),
-          sql`, `,
-        )})`,
-      );
+    const expenseIdsInClause = sqlInClause(schema.expenseParticipants.expenseId, expenseIds);
+    const participants = expenseIdsInClause
+      ? await ctx.db.select().from(schema.expenseParticipants).where(expenseIdsInClause)
+      : [];
 
     // Grouper les participants par dépense
     const participantsByExpense = new Map<
