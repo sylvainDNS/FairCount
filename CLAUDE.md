@@ -125,4 +125,6 @@ Worker secrets configured in `.dev.vars` (not committed). Required:
 
 ## Language
 
-The application UI and codebase comments are in **French**. Maintain French for user-facing strings.
+- **UI strings:** French (user-facing text, error messages, labels)
+- **Code comments:** English
+- **Variable/function names:** English
