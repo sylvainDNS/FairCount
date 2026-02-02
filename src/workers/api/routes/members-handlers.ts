@@ -101,7 +101,7 @@ export async function getMember(ctx: MemberContext, memberId: string): Promise<R
 export async function updateMember(
   ctx: MemberContext,
   memberId: string,
-  data: { name?: string; income?: number },
+  data: { name?: string | undefined; income?: number | undefined },
 ): Promise<Response> {
   // Verify member exists
   const [member] = await ctx.db
@@ -198,7 +198,7 @@ export async function removeMember(ctx: MemberContext, memberId: string): Promis
 // Update own membership (special /me endpoint)
 export async function updateMyMembership(
   ctx: MemberContext,
-  data: { name?: string; income?: number },
+  data: { name?: string | undefined; income?: number | undefined },
 ): Promise<Response> {
   // Find current user's membership
   const [myMember] = await ctx.db

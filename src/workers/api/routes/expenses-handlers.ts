@@ -30,15 +30,15 @@ interface CreateExpenseData {
   description: string;
   date: string;
   paidBy: string;
-  participants: Array<{ memberId: string; customAmount?: number | null }>;
+  participants: Array<{ memberId: string; customAmount?: number | null | undefined }>;
 }
 
 interface UpdateExpenseData {
-  amount?: number;
-  description?: string;
-  date?: string;
-  paidBy?: string;
-  participants?: Array<{ memberId: string; customAmount?: number | null }>;
+  amount?: number | undefined;
+  description?: string | undefined;
+  date?: string | undefined;
+  paidBy?: string | undefined;
+  participants?: Array<{ memberId: string; customAmount?: number | null | undefined }> | undefined;
 }
 
 // Participant validation result
@@ -51,7 +51,7 @@ type ParticipantValidationResult =
 
 // Validate participants against active members and check custom amounts
 function validateParticipants(
-  participants: Array<{ memberId: string; customAmount?: number | null }>,
+  participants: Array<{ memberId: string; customAmount?: number | null | undefined }>,
   activeMemberIds: Set<string>,
   totalAmount: number,
 ): ParticipantValidationResult {
