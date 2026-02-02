@@ -328,10 +328,10 @@ export const ExpenseForm = ({
               </div>
 
               {/* Participants */}
-              <div>
-                <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              <fieldset className="border-0 p-0 m-0">
+                <legend className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                   Participants
-                </span>
+                </legend>
                 <div className="space-y-2 max-h-48 overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-lg p-2">
                   {participants.map((p) => (
                     <div
@@ -386,7 +386,7 @@ export const ExpenseForm = ({
                     </div>
                   ))}
                 </div>
-              </div>
+              </fieldset>
 
               {error && (
                 <p

@@ -521,9 +521,9 @@ Envelopper la section "Participants" dans un `<fieldset>` avec `<legend>` pour u
 ```
 
 **Critères de validation :**
-- [ ] Section participants enveloppée dans `<fieldset>`
-- [ ] `<legend>` avec texte "Participants"
-- [ ] Styling cohérent avec le reste du formulaire
+- [x] Section participants enveloppée dans `<fieldset>`
+- [x] `<legend>` avec texte "Participants"
+- [x] Styling cohérent avec le reste du formulaire
 
 ---
 
