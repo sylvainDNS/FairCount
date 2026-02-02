@@ -4,10 +4,10 @@ import { throwIfError, toTypedError } from '@/lib/api-error';
 import { queryKeys } from '@/lib/query-keys';
 import { settlementsApi } from '../api';
 import {
-  SETTLEMENT_ERROR_MESSAGES,
   type SettlementError,
   type SettlementFilter,
   type SettlementListItem,
+  VALID_SETTLEMENT_ERRORS,
 } from '../types';
 
 interface UseSettlementsResult {
@@ -22,11 +22,6 @@ interface UseSettlementsResult {
   readonly refresh: () => Promise<void>;
 }
 
-// Valid settlement error types for toTypedError
-const VALID_SETTLEMENT_ERRORS = Object.keys(
-  SETTLEMENT_ERROR_MESSAGES,
-) as const satisfies readonly SettlementError[];
-
 export const useSettlements = (groupId: string): UseSettlementsResult => {
   const [filter, setFilterState] = useState<SettlementFilter>('all');
 
@@ -36,7 +31,7 @@ export const useSettlements = (groupId: string): UseSettlementsResult => {
       queryFn: async ({ pageParam }) => {
         const result = await settlementsApi.list(groupId, {
           filter,
-          cursor: pageParam,
+          ...(pageParam !== undefined && { cursor: pageParam }),
           limit: 20,
         });
         return throwIfError(result);

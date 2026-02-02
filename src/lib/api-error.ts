@@ -14,12 +14,13 @@ function isApiError(result: unknown): result is ApiError {
 /**
  * Throws if the API result contains an error.
  * Compatible with the existing { error: string } pattern.
+ * Uses Exclude to properly narrow the return type.
  */
-export function throwIfError<T>(result: T | ApiError): T {
+export function throwIfError<T>(result: T): Exclude<T, ApiError> {
   if (isApiError(result)) {
     throw new Error(result.error);
   }
-  return result;
+  return result as Exclude<T, ApiError>;
 }
 
 /**

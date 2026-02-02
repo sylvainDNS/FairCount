@@ -2,14 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { throwIfError, toTypedError } from '@/lib/api-error';
 import { queryKeys } from '@/lib/query-keys';
 import { balancesApi } from '../api';
-import type { BalanceDetail, BalanceError } from '../types';
-
-const VALID_BALANCE_ERRORS = [
-  'UNKNOWN_ERROR',
-  'NOT_A_MEMBER',
-  'GROUP_NOT_FOUND',
-  'MEMBER_NOT_FOUND',
-] as const satisfies readonly BalanceError[];
+import { type BalanceDetail, type BalanceError, VALID_BALANCE_ERRORS } from '../types';
 
 interface UseBalanceDetailResult {
   readonly detail: BalanceDetail | null;

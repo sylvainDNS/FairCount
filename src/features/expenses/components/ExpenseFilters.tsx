@@ -106,7 +106,10 @@ export const ExpenseFilters = ({ groupId, filters, onFiltersChange }: ExpenseFil
 
       e.preventDefault();
       periodTabsRef.current[newIndex]?.focus();
-      handlePeriodChange(PERIOD_OPTIONS[newIndex].value);
+      const option = PERIOD_OPTIONS[newIndex];
+      if (option) {
+        handlePeriodChange(option.value);
+      }
     },
     [handlePeriodChange],
   );

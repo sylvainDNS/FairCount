@@ -52,7 +52,10 @@ export const SettlementHistory = ({ groupId, currency }: SettlementHistoryProps)
 
       e.preventDefault();
       tabsRef.current[newIndex]?.focus();
-      setFilter(FILTER_KEYS[newIndex]);
+      const filterKey = FILTER_KEYS[newIndex];
+      if (filterKey) {
+        setFilter(filterKey);
+      }
     },
     [setFilter],
   );

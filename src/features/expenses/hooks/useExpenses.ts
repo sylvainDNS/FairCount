@@ -4,10 +4,10 @@ import { throwIfError, toTypedError } from '@/lib/api-error';
 import { queryKeys } from '@/lib/query-keys';
 import { expensesApi } from '../api';
 import {
-  EXPENSE_ERROR_MESSAGES,
   type ExpenseError,
   type ExpenseFilters,
   type ExpenseSummary,
+  VALID_EXPENSE_ERRORS,
 } from '../types';
 
 interface UseExpensesResult {
@@ -22,11 +22,6 @@ interface UseExpensesResult {
   readonly refresh: () => Promise<void>;
 }
 
-// Valid expense error types for toTypedError
-const VALID_EXPENSE_ERRORS = Object.keys(
-  EXPENSE_ERROR_MESSAGES,
-) as const satisfies readonly ExpenseError[];
-
 export const useExpenses = (groupId: string): UseExpensesResult => {
   const [filters, setFiltersState] = useState<ExpenseFilters>({});
 
@@ -36,7 +31,7 @@ export const useExpenses = (groupId: string): UseExpensesResult => {
       queryFn: async ({ pageParam }) => {
         const result = await expensesApi.list(groupId, {
           ...filters,
-          cursor: pageParam,
+          ...(pageParam !== undefined && { cursor: pageParam }),
           limit: 20,
         });
         return throwIfError(result);

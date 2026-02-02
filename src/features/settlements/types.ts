@@ -72,5 +72,17 @@ export const SETTLEMENT_ERROR_MESSAGES = {
   SAME_MEMBER: 'Le payeur et le bénéficiaire doivent être différents',
 } as const satisfies Record<SettlementError, string>;
 
+// Valid error values for type narrowing with toTypedError
+export const VALID_SETTLEMENT_ERRORS: readonly SettlementError[] = [
+  'UNKNOWN_ERROR',
+  'NOT_A_MEMBER',
+  'SETTLEMENT_NOT_FOUND',
+  'NOT_CREATOR',
+  'INVALID_AMOUNT',
+  'INVALID_RECIPIENT',
+  'INVALID_DATE',
+  'SAME_MEMBER',
+] as const;
+
 // API result type alias
 export type SettlementResult<T = void> = Result<T, SettlementError>;

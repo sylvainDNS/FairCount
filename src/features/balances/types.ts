@@ -89,3 +89,11 @@ export const BALANCE_ERROR_MESSAGES = {
   GROUP_NOT_FOUND: 'Groupe introuvable',
   MEMBER_NOT_FOUND: 'Membre introuvable',
 } as const satisfies Record<BalanceError, string>;
+
+// Valid error values for type narrowing with toTypedError
+export const VALID_BALANCE_ERRORS: readonly BalanceError[] = [
+  'UNKNOWN_ERROR',
+  'NOT_A_MEMBER',
+  'GROUP_NOT_FOUND',
+  'MEMBER_NOT_FOUND',
+] as const;

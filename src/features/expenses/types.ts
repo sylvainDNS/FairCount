@@ -128,5 +128,20 @@ export const EXPENSE_ERROR_MESSAGES = {
   CUSTOM_AMOUNTS_EXCEED_TOTAL: 'Les montants personnalisés dépassent le total',
 } as const satisfies Record<ExpenseError, string>;
 
+// Valid error values for type narrowing with toTypedError
+export const VALID_EXPENSE_ERRORS: readonly ExpenseError[] = [
+  'UNKNOWN_ERROR',
+  'NOT_A_MEMBER',
+  'EXPENSE_NOT_FOUND',
+  'NOT_CREATOR',
+  'INVALID_AMOUNT',
+  'INVALID_DESCRIPTION',
+  'INVALID_DATE',
+  'INVALID_PAYER',
+  'NO_PARTICIPANTS',
+  'INVALID_PARTICIPANT',
+  'CUSTOM_AMOUNTS_EXCEED_TOTAL',
+] as const;
+
 // API result type alias
 export type ExpenseResult<T = void> = Result<T, ExpenseError>;

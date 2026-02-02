@@ -3,14 +3,12 @@ import { useState } from 'react';
 import { throwIfError, toTypedError } from '@/lib/api-error';
 import { queryKeys } from '@/lib/query-keys';
 import { balancesApi } from '../api';
-import type { BalanceError, GroupStats, StatsPeriod } from '../types';
-
-const VALID_BALANCE_ERRORS = [
-  'UNKNOWN_ERROR',
-  'NOT_A_MEMBER',
-  'GROUP_NOT_FOUND',
-  'MEMBER_NOT_FOUND',
-] as const satisfies readonly BalanceError[];
+import {
+  type BalanceError,
+  type GroupStats,
+  type StatsPeriod,
+  VALID_BALANCE_ERRORS,
+} from '../types';
 
 interface UseGroupStatsResult {
   readonly stats: GroupStats | null;

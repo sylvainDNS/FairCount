@@ -80,7 +80,9 @@ export default {
           const errorUrl = new URL('/auth/error', env.APP_URL);
           // 410 Gone = token expired, other 4xx/5xx = invalid token
           const errorType =
-            response.status === 410 ? MAGIC_LINK_ERRORS.EXPIRED_TOKEN : MAGIC_LINK_ERRORS.INVALID_TOKEN;
+            response.status === 410
+              ? MAGIC_LINK_ERRORS.EXPIRED_TOKEN
+              : MAGIC_LINK_ERRORS.INVALID_TOKEN;
           errorUrl.searchParams.set('error', errorType);
           return Response.redirect(errorUrl.toString(), 302);
         }
