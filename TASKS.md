@@ -348,9 +348,9 @@ const { totalPaid, totalOwed } = expenses.reduce(
 ```
 
 **Critères de validation :**
-- [ ] Aucun `let` accumulateur dans une boucle
-- [ ] Utilisation de `reduce()` pour les accumulations
-- [ ] Code plus déclaratif et lisible
+- [x] Aucun `let` accumulateur dans une boucle
+- [x] Utilisation de `reduce()` pour les accumulations
+- [x] Code plus déclaratif et lisible
 
 ---
 

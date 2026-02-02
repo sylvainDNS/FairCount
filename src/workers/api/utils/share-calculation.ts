@@ -27,26 +27,21 @@ export function calculateShares(
       0,
     );
 
-    let allocated = 0;
-    const fairShares: Array<{ memberId: string; share: number }> = [];
-
-    for (let i = 0; i < fairShareParticipants.length; i++) {
-      const memberId = fairShareParticipants[i] as string;
+    // Calculate shares using map (O(n))
+    const fairShares = fairShareParticipants.map((memberId) => {
       const coeff = memberCoefficients.get(memberId) ?? 0;
+      const share =
+        totalCoeff > 0
+          ? Math.round((coeff / totalCoeff) * remainingAmount)
+          : Math.round(remainingAmount / fairShareParticipants.length);
+      return { memberId, share };
+    });
 
-      let share: number;
-      if (i === fairShareParticipants.length - 1) {
-        // Last participant gets the remainder to avoid rounding errors
-        share = remainingAmount - allocated;
-      } else if (totalCoeff > 0) {
-        share = Math.round((coeff / totalCoeff) * remainingAmount);
-      } else {
-        // Equal split when no coefficients
-        share = Math.round(remainingAmount / fairShareParticipants.length);
-      }
-
-      fairShares.push({ memberId, share });
-      allocated += share;
+    // Adjust last participant's share to absorb rounding errors
+    const allocated = fairShares.reduce((sum, s) => sum + s.share, 0);
+    const lastShare = fairShares[fairShares.length - 1];
+    if (lastShare) {
+      lastShare.share += remainingAmount - allocated;
     }
 
     for (const { memberId, share } of fairShares) {

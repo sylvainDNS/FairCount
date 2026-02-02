@@ -137,30 +137,32 @@ async function listGroups(ctx: RouteContext, userId: string): Promise<Response> 
     if (!myMemberId) continue;
 
     const memberCoeffs = membersByGroup.get(groupId) ?? new Map();
-    let totalPaid = 0;
-    let totalOwed = 0;
-    let settlementsPaid = 0;
-    let settlementsReceived = 0;
+    const groupExpenses = allExpenses.filter((e) => e.groupId === groupId);
+    const groupSettlements = allSettlements.filter((s) => s.groupId === groupId);
 
     // Process expenses
-    for (const expense of allExpenses.filter((e) => e.groupId === groupId)) {
-      if (expense.paidBy === myMemberId) {
-        totalPaid += expense.amount;
-      }
-      const participants = participantsByExpense.get(expense.id) ?? [];
-      const shares = calculateShares(expense.amount, participants, memberCoeffs);
-      totalOwed += shares.get(myMemberId) ?? 0;
-    }
+    const { totalPaid, totalOwed } = groupExpenses.reduce(
+      (acc, expense) => {
+        const participants = participantsByExpense.get(expense.id) ?? [];
+        const shares = calculateShares(expense.amount, participants, memberCoeffs);
+        return {
+          totalPaid: acc.totalPaid + (expense.paidBy === myMemberId ? expense.amount : 0),
+          totalOwed: acc.totalOwed + (shares.get(myMemberId) ?? 0),
+        };
+      },
+      { totalPaid: 0, totalOwed: 0 },
+    );
 
     // Process settlements
-    for (const settlement of allSettlements.filter((s) => s.groupId === groupId)) {
-      if (settlement.fromMember === myMemberId) {
-        settlementsPaid += settlement.amount;
-      }
-      if (settlement.toMember === myMemberId) {
-        settlementsReceived += settlement.amount;
-      }
-    }
+    const { settlementsPaid, settlementsReceived } = groupSettlements.reduce(
+      (acc, settlement) => ({
+        settlementsPaid:
+          acc.settlementsPaid + (settlement.fromMember === myMemberId ? settlement.amount : 0),
+        settlementsReceived:
+          acc.settlementsReceived + (settlement.toMember === myMemberId ? settlement.amount : 0),
+      }),
+      { settlementsPaid: 0, settlementsReceived: 0 },
+    );
 
     const netBalance = totalPaid - totalOwed - settlementsPaid + settlementsReceived;
     balanceByGroup.set(groupId, netBalance);
