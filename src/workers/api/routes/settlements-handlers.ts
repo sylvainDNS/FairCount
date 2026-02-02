@@ -32,19 +32,19 @@ export async function listSettlements(
   const filter = params.filter as 'sent' | 'received' | undefined;
 
   // Build WHERE conditions
-  let conditions = [eq(schema.settlements.groupId, ctx.groupId)];
+  const conditions = [eq(schema.settlements.groupId, ctx.groupId)];
 
   // Filter by direction
   if (filter === 'sent') {
-    conditions = [...conditions, eq(schema.settlements.fromMember, ctx.currentMemberId)];
+    conditions.push(eq(schema.settlements.fromMember, ctx.currentMemberId));
   } else if (filter === 'received') {
-    conditions = [...conditions, eq(schema.settlements.toMember, ctx.currentMemberId)];
+    conditions.push(eq(schema.settlements.toMember, ctx.currentMemberId));
   }
 
   // Cursor-based pagination
   const cursorCondition = buildCursorCondition(schema.settlements.createdAt, params.cursor);
   if (cursorCondition) {
-    conditions = [...conditions, cursorCondition];
+    conditions.push(cursorCondition);
   }
 
   // Query with joins for names

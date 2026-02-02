@@ -88,29 +88,29 @@ export async function listExpenses(
   const limit = Math.min(Math.max(params.limit ?? 20, 1), 100);
 
   // Build conditions
-  let conditions = [eq(schema.expenses.groupId, ctx.groupId), isNull(schema.expenses.deletedAt)];
+  const conditions = [eq(schema.expenses.groupId, ctx.groupId), isNull(schema.expenses.deletedAt)];
 
   const cursorCondition = buildCursorCondition(schema.expenses.createdAt, params.cursor);
   if (cursorCondition) {
-    conditions = [...conditions, cursorCondition];
+    conditions.push(cursorCondition);
   }
 
   if (params.startDate) {
-    conditions = [...conditions, gte(schema.expenses.date, params.startDate)];
+    conditions.push(gte(schema.expenses.date, params.startDate));
   }
 
   if (params.endDate) {
-    conditions = [...conditions, lte(schema.expenses.date, params.endDate)];
+    conditions.push(lte(schema.expenses.date, params.endDate));
   }
 
   if (params.paidBy) {
-    conditions = [...conditions, eq(schema.expenses.paidBy, params.paidBy)];
+    conditions.push(eq(schema.expenses.paidBy, params.paidBy));
   }
 
   if (params.search) {
     // Escape LIKE special characters to prevent wildcard injection
     const escapedSearch = params.search.replace(/[%_\\]/g, '\\$&');
-    conditions = [...conditions, like(schema.expenses.description, `%${escapedSearch}%`)];
+    conditions.push(like(schema.expenses.description, `%${escapedSearch}%`));
   }
 
   // Build base query
@@ -185,10 +185,8 @@ export async function listExpenses(
 
   for (const p of participants) {
     const list = participantsByExpense.get(p.expenseId) ?? [];
-    participantsByExpense.set(p.expenseId, [
-      ...list,
-      { memberId: p.memberId, customAmount: p.customAmount },
-    ]);
+    list.push({ memberId: p.memberId, customAmount: p.customAmount });
+    participantsByExpense.set(p.expenseId, list);
     participantMemberIds.add(p.memberId);
   }
 

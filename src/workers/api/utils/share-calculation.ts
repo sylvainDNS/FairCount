@@ -10,14 +10,14 @@ export function calculateShares(
   const shares = new Map<string, number>();
 
   let remainingAmount = amount;
-  let fairShareParticipants: string[] = [];
+  const fairShareParticipants: string[] = [];
 
   for (const p of participants) {
     if (p.customAmount !== null) {
       shares.set(p.memberId, p.customAmount);
       remainingAmount -= p.customAmount;
     } else {
-      fairShareParticipants = [...fairShareParticipants, p.memberId];
+      fairShareParticipants.push(p.memberId);
     }
   }
 
@@ -28,7 +28,7 @@ export function calculateShares(
     );
 
     let allocated = 0;
-    let fairShares: Array<{ memberId: string; share: number }> = [];
+    const fairShares: Array<{ memberId: string; share: number }> = [];
 
     for (let i = 0; i < fairShareParticipants.length; i++) {
       const memberId = fairShareParticipants[i] as string;
@@ -45,7 +45,7 @@ export function calculateShares(
         share = Math.round(remainingAmount / fairShareParticipants.length);
       }
 
-      fairShares = [...fairShares, { memberId, share }];
+      fairShares.push({ memberId, share });
       allocated += share;
     }
 

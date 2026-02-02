@@ -350,9 +350,9 @@ for (let i = 0; i < array.length; i++) {
 ```
 
 **Critères de validation :**
-- [x] Aucun `push()` dans le code backend (sauf si justifié)
-- [x] Aucun `shift()` ou `pop()` mutatif
-- [x] Utilisation de spread operator ou méthodes fonctionnelles
+- [ ] Aucun `push()` dans le code backend (sauf si justifié)
+- [ ] Aucun `shift()` ou `pop()` mutatif
+- [ ] Utilisation de spread operator ou méthodes fonctionnelles
 
 ---
 

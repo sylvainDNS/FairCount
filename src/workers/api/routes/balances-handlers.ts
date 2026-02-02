@@ -77,10 +77,8 @@ export async function getMyBalance(ctx: BalanceContext): Promise<Response> {
 
     for (const p of participants) {
       const list = participantsByExpense.get(p.expenseId) ?? [];
-      participantsByExpense.set(p.expenseId, [
-        ...list,
-        { memberId: p.memberId, customAmount: p.customAmount },
-      ]);
+      list.push({ memberId: p.memberId, customAmount: p.customAmount });
+      participantsByExpense.set(p.expenseId, list);
     }
   }
 
@@ -185,11 +183,11 @@ export async function getGroupStats(ctx: BalanceContext, period?: string): Promi
   }
 
   // Build query conditions
-  let conditions = [eq(schema.expenses.groupId, ctx.groupId), isNull(schema.expenses.deletedAt)];
+  const conditions = [eq(schema.expenses.groupId, ctx.groupId), isNull(schema.expenses.deletedAt)];
 
   if (dateFilter) {
     const dateStr = dateFilter.toISOString().split('T')[0];
-    conditions = [...conditions, gte(schema.expenses.date, dateStr as string)];
+    conditions.push(gte(schema.expenses.date, dateStr as string));
   }
 
   // Get expenses

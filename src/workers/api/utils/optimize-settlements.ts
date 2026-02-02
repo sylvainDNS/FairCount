@@ -45,60 +45,49 @@ export function calculateOptimalSettlements(
     }
   }
 
-  // Filter zero balances and create working copies with mutable balance tracking
-  let creditorBalances = balances
+  // Filter zero balances and create mutable copies
+  const creditors = balances
     .filter((b) => b.netBalance > 0)
     .map((b) => ({ ...b, balance: b.netBalance }))
     .sort((a, b) => b.balance - a.balance);
 
-  let debtorBalances = balances
+  const debtors = balances
     .filter((b) => b.netBalance < 0)
     .map((b) => ({ ...b, balance: Math.abs(b.netBalance) }))
     .sort((a, b) => b.balance - a.balance);
 
-  let settlements: OptimizedSettlement[] = [];
+  const settlements: OptimizedSettlement[] = [];
 
-  while (creditorBalances.length > 0 && debtorBalances.length > 0) {
-    const creditor = creditorBalances[0];
-    const debtor = debtorBalances[0];
+  while (creditors.length > 0 && debtors.length > 0) {
+    const creditor = creditors[0];
+    const debtor = debtors[0];
 
     if (!creditor || !debtor) break;
 
     const amount = Math.min(creditor.balance, debtor.balance);
 
     if (amount > 0) {
-      settlements = [
-        ...settlements,
-        {
-          from: {
-            id: debtor.memberId,
-            name: debtor.memberName,
-            isCurrentUser: debtor.isCurrentUser,
-          },
-          to: {
-            id: creditor.memberId,
-            name: creditor.memberName,
-            isCurrentUser: creditor.isCurrentUser,
-          },
-          amount,
+      settlements.push({
+        from: {
+          id: debtor.memberId,
+          name: debtor.memberName,
+          isCurrentUser: debtor.isCurrentUser,
         },
-      ];
+        to: {
+          id: creditor.memberId,
+          name: creditor.memberName,
+          isCurrentUser: creditor.isCurrentUser,
+        },
+        amount,
+      });
     }
 
-    const newCreditorBalance = creditor.balance - amount;
-    const newDebtorBalance = debtor.balance - amount;
+    creditor.balance -= amount;
+    debtor.balance -= amount;
 
-    // Update creditors: remove if settled, otherwise update balance
-    creditorBalances =
-      newCreditorBalance <= 0
-        ? creditorBalances.slice(1)
-        : [{ ...creditor, balance: newCreditorBalance }, ...creditorBalances.slice(1)];
-
-    // Update debtors: remove if settled, otherwise update balance
-    debtorBalances =
-      newDebtorBalance <= 0
-        ? debtorBalances.slice(1)
-        : [{ ...debtor, balance: newDebtorBalance }, ...debtorBalances.slice(1)];
+    // Remove members whose balance is settled
+    if (creditor.balance <= 0) creditors.shift();
+    if (debtor.balance <= 0) debtors.shift();
   }
 
   return settlements;

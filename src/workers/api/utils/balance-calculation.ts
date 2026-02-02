@@ -140,20 +140,17 @@ export async function calculateGroupBalances(ctx: BalanceContext): Promise<Membe
   }
 
   // Calculer les balances finales
-  let result: MemberBalance[] = [];
+  const result: MemberBalance[] = [];
   for (const balance of balances.values()) {
     const rawBalance = balance.totalPaid - balance.totalOwed;
     // settlementsPaid = ce que j'ai remboursé → augmente ma balance (je dois moins)
     // settlementsReceived = ce que j'ai reçu → diminue ma balance (on me doit moins)
     const netBalance = rawBalance + balance.settlementsPaid - balance.settlementsReceived;
-    result = [
-      ...result,
-      {
-        ...balance,
-        balance: rawBalance,
-        netBalance,
-      },
-    ];
+    result.push({
+      ...balance,
+      balance: rawBalance,
+      netBalance,
+    });
   }
 
   // Trier par netBalance décroissant (créditeurs d'abord, puis débiteurs)

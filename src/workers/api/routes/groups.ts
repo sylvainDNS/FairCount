@@ -120,10 +120,8 @@ async function listGroups(ctx: RouteContext, userId: string): Promise<Response> 
   >();
   for (const p of allParticipants) {
     const list = participantsByExpense.get(p.expenseId) ?? [];
-    participantsByExpense.set(p.expenseId, [
-      ...list,
-      { memberId: p.memberId, customAmount: p.customAmount },
-    ]);
+    list.push({ memberId: p.memberId, customAmount: p.customAmount });
+    participantsByExpense.set(p.expenseId, list);
   }
 
   // Get all settlements
