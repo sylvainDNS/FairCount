@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { invalidations } from '@/lib/query-invalidations';
 import { invitationsApi } from '../api/invitations';
 import type { GroupError, GroupResult, InvitationDetails } from '../types';
 
@@ -10,6 +12,7 @@ interface UseAcceptInvitationResult {
 }
 
 export const useAcceptInvitation = (token: string): UseAcceptInvitationResult => {
+  const queryClient = useQueryClient();
   const [invitation, setInvitation] = useState<InvitationDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<GroupError | null>(null);
@@ -41,11 +44,12 @@ export const useAcceptInvitation = (token: string): UseAcceptInvitationResult =>
       if ('error' in result) {
         return { success: false, error: result.error as GroupError };
       }
+      invalidations.afterInvitationAccept(queryClient, result.groupId);
       return { success: true, data: { groupId: result.groupId } };
     } catch {
       return { success: false, error: 'UNKNOWN_ERROR' };
     }
-  }, [token]);
+  }, [token, queryClient]);
 
   return {
     invitation,

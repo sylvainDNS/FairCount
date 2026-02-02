@@ -38,6 +38,13 @@ export const invalidations = {
     queryClient.invalidateQueries({ queryKey: queryKeys.invitations.list(groupId) });
   },
 
+  afterInvitationAccept: (queryClient: QueryClient, groupId: string) => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.invitations.list(groupId) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.members.list(groupId) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.groups.detail(groupId) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.groups.list() });
+  },
+
   // Members
   afterMemberUpdate: (queryClient: QueryClient, groupId: string) => {
     queryClient.invalidateQueries({ queryKey: queryKeys.members.list(groupId) });
