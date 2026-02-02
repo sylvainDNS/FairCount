@@ -428,9 +428,9 @@ Ajouter des `aria-label` explicites sur tous les boutons ne contenant qu'une ic�
 ```
 
 **Critères de validation :**
-- [ ] Tous les boutons icône ont un `aria-label`
-- [ ] Les icônes SVG ont `aria-hidden="true"`
-- [ ] Labels descriptifs en français
+- [x] Tous les boutons icône ont un `aria-label`
+- [x] Les icônes SVG ont `aria-hidden="true"`
+- [x] Labels descriptifs en français
 
 ---
 
