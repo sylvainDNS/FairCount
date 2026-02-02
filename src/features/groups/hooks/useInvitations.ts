@@ -1,95 +1,100 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { throwIfError, toTypedError } from '@/lib/api-error';
+import { invalidations } from '@/lib/query-invalidations';
+import { queryKeys } from '@/lib/query-keys';
 import { invitationsApi } from '../api/invitations';
 import type { GroupError, GroupResult, InvitationInfo } from '../types';
 
 interface UseInvitationsResult {
   readonly invitations: InvitationInfo[];
   readonly isLoading: boolean;
-  readonly error: string | null;
+  readonly error: GroupError | null;
   readonly sendInvitation: (email: string) => Promise<GroupResult>;
   readonly cancelInvitation: (invitationId: string) => Promise<GroupResult>;
   readonly resendInvitation: (invitationId: string) => Promise<GroupResult>;
   readonly refresh: () => Promise<void>;
 }
 
+const VALID_ERRORS = [
+  'UNKNOWN_ERROR',
+  'NOT_A_MEMBER',
+  'INVALID_EMAIL',
+  'ALREADY_INVITED',
+  'ALREADY_MEMBER',
+  'INVITATION_NOT_FOUND',
+] as const;
+
 export const useInvitations = (groupId: string): UseInvitationsResult => {
-  const [invitations, setInvitations] = useState<InvitationInfo[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  const fetchInvitations = useCallback(async () => {
-    if (!groupId) return;
+  const { data, isLoading, error, refetch } = useQuery<InvitationInfo[]>({
+    queryKey: queryKeys.invitations.list(groupId),
+    queryFn: () => invitationsApi.list(groupId),
+    enabled: !!groupId,
+  });
+
+  const sendMutation = useMutation<{ id: string }, Error, string>({
+    mutationFn: async (email: string) => {
+      const result = await invitationsApi.send(groupId, email);
+      const data = throwIfError(result);
+      return data;
+    },
+    onSuccess: () => invalidations.afterInvitationSend(queryClient, groupId),
+  });
+
+  const cancelMutation = useMutation<{ success: boolean }, Error, string>({
+    mutationFn: async (invitationId: string) => {
+      const result = await invitationsApi.cancel(groupId, invitationId);
+      const data = throwIfError(result);
+      return data;
+    },
+    onSuccess: () => invalidations.afterInvitationCancel(queryClient, groupId),
+  });
+
+  const resendMutation = useMutation<{ success: boolean }, Error, string>({
+    mutationFn: async (invitationId: string) => {
+      const result = await invitationsApi.resend(groupId, invitationId);
+      const data = throwIfError(result);
+      return data;
+    },
+  });
+
+  const sendInvitation = async (email: string): Promise<GroupResult> => {
     try {
-      setIsLoading(true);
-      setError(null);
-      const data = await invitationsApi.list(groupId);
-      setInvitations(data);
+      await sendMutation.mutateAsync(email);
+      return { success: true };
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erreur lors du chargement des invitations');
-      setInvitations([]);
-    } finally {
-      setIsLoading(false);
+      return { success: false, error: toTypedError(err, VALID_ERRORS) as GroupError };
     }
-  }, [groupId]);
+  };
 
-  useEffect(() => {
-    fetchInvitations();
-  }, [fetchInvitations]);
+  const cancelInvitation = async (invitationId: string): Promise<GroupResult> => {
+    try {
+      await cancelMutation.mutateAsync(invitationId);
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: toTypedError(err, VALID_ERRORS) as GroupError };
+    }
+  };
 
-  const sendInvitation = useCallback(
-    async (email: string): Promise<GroupResult> => {
-      try {
-        const result = await invitationsApi.send(groupId, email);
-        if ('error' in result) {
-          return { success: false, error: result.error as GroupError };
-        }
-        await fetchInvitations();
-        return { success: true };
-      } catch {
-        return { success: false, error: 'UNKNOWN_ERROR' };
-      }
-    },
-    [groupId, fetchInvitations],
-  );
-
-  const cancelInvitation = useCallback(
-    async (invitationId: string): Promise<GroupResult> => {
-      try {
-        const result = await invitationsApi.cancel(groupId, invitationId);
-        if ('error' in result) {
-          return { success: false, error: result.error as GroupError };
-        }
-        await fetchInvitations();
-        return { success: true };
-      } catch {
-        return { success: false, error: 'UNKNOWN_ERROR' };
-      }
-    },
-    [groupId, fetchInvitations],
-  );
-
-  const resendInvitation = useCallback(
-    async (invitationId: string): Promise<GroupResult> => {
-      try {
-        const result = await invitationsApi.resend(groupId, invitationId);
-        if ('error' in result) {
-          return { success: false, error: result.error as GroupError };
-        }
-        return { success: true };
-      } catch {
-        return { success: false, error: 'UNKNOWN_ERROR' };
-      }
-    },
-    [groupId],
-  );
+  const resendInvitation = async (invitationId: string): Promise<GroupResult> => {
+    try {
+      await resendMutation.mutateAsync(invitationId);
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: toTypedError(err, VALID_ERRORS) as GroupError };
+    }
+  };
 
   return {
-    invitations,
+    invitations: data ?? [],
     isLoading,
-    error,
+    error: error ? (toTypedError(error, VALID_ERRORS) as GroupError) : null,
     sendInvitation,
     cancelInvitation,
     resendInvitation,
-    refresh: fetchInvitations,
+    refresh: async () => {
+      await refetch();
+    },
   };
 };

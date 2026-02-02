@@ -29,15 +29,28 @@ export const invalidations = {
     queryClient.invalidateQueries({ queryKey: queryKeys.groups.all });
   },
 
+  // Invitations
+  afterInvitationSend: (queryClient: QueryClient, groupId: string) => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.invitations.list(groupId) });
+  },
+
+  afterInvitationCancel: (queryClient: QueryClient, groupId: string) => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.invitations.list(groupId) });
+  },
+
   // Members
   afterMemberUpdate: (queryClient: QueryClient, groupId: string) => {
     queryClient.invalidateQueries({ queryKey: queryKeys.members.list(groupId) });
     queryClient.invalidateQueries({ queryKey: queryKeys.balances.byGroup(groupId) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.settlements.suggestions(groupId) });
+    // Income changes affect expense shares calculation
+    queryClient.invalidateQueries({ queryKey: queryKeys.expenses.byGroup(groupId) });
   },
 
   afterMemberRemove: (queryClient: QueryClient, groupId: string) => {
     queryClient.invalidateQueries({ queryKey: queryKeys.members.list(groupId) });
     queryClient.invalidateQueries({ queryKey: queryKeys.balances.byGroup(groupId) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.settlements.suggestions(groupId) });
     queryClient.invalidateQueries({ queryKey: queryKeys.groups.detail(groupId) });
   },
 
@@ -45,6 +58,7 @@ export const invalidations = {
   afterExpenseCreate: (queryClient: QueryClient, groupId: string) => {
     queryClient.invalidateQueries({ queryKey: queryKeys.expenses.byGroup(groupId) });
     queryClient.invalidateQueries({ queryKey: queryKeys.balances.byGroup(groupId) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.settlements.suggestions(groupId) });
     queryClient.invalidateQueries({ queryKey: queryKeys.groups.list() });
   },
 
@@ -52,12 +66,14 @@ export const invalidations = {
     queryClient.invalidateQueries({ queryKey: queryKeys.expenses.detail(groupId, expenseId) });
     queryClient.invalidateQueries({ queryKey: queryKeys.expenses.byGroup(groupId) });
     queryClient.invalidateQueries({ queryKey: queryKeys.balances.byGroup(groupId) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.settlements.suggestions(groupId) });
     queryClient.invalidateQueries({ queryKey: queryKeys.groups.list() });
   },
 
   afterExpenseDelete: (queryClient: QueryClient, groupId: string) => {
     queryClient.invalidateQueries({ queryKey: queryKeys.expenses.byGroup(groupId) });
     queryClient.invalidateQueries({ queryKey: queryKeys.balances.byGroup(groupId) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.settlements.suggestions(groupId) });
     queryClient.invalidateQueries({ queryKey: queryKeys.groups.list() });
   },
 

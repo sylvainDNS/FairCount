@@ -19,6 +19,13 @@ export const queryKeys = {
     detail: (groupId: string) => [...queryKeys.groups.all, 'detail', groupId] as const,
   },
 
+  // Invitations
+  invitations: {
+    all: ['invitations'] as const,
+    byGroup: (groupId: string) => [...queryKeys.invitations.all, 'group', groupId] as const,
+    list: (groupId: string) => [...queryKeys.invitations.byGroup(groupId), 'list'] as const,
+  },
+
   // Members
   members: {
     all: ['members'] as const,
