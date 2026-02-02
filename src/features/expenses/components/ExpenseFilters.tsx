@@ -1,4 +1,5 @@
 import { Collapsible } from '@ark-ui/react/collapsible';
+import type { KeyboardEvent } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useMembers } from '@/features/members/hooks/useMembers';
 import { TextInput } from '@/shared/components/TextInput';
@@ -11,6 +12,15 @@ interface ExpenseFiltersProps {
 }
 
 type PeriodPreset = 'all' | 'this-month' | 'last-month' | 'custom';
+
+const PERIOD_OPTIONS: readonly {
+  readonly value: Exclude<PeriodPreset, 'custom'>;
+  readonly label: string;
+}[] = [
+  { value: 'all', label: 'Toutes' },
+  { value: 'this-month', label: 'Ce mois' },
+  { value: 'last-month', label: 'Mois dernier' },
+];
 
 export const ExpenseFilters = ({ groupId, filters, onFiltersChange }: ExpenseFiltersProps) => {
   const { members } = useMembers(groupId);
@@ -75,6 +85,32 @@ export const ExpenseFilters = ({ groupId, filters, onFiltersChange }: ExpenseFil
 
   const hasActiveFilters = filters.startDate || filters.endDate || filters.paidBy || filters.search;
 
+  // Period tab keyboard navigation
+  const periodTabsRef = useRef<(HTMLButtonElement | null)[]>([]);
+
+  const handlePeriodKeyDown = useCallback(
+    (e: KeyboardEvent, index: number) => {
+      let newIndex = index;
+
+      if (e.key === 'ArrowRight') {
+        newIndex = (index + 1) % PERIOD_OPTIONS.length;
+      } else if (e.key === 'ArrowLeft') {
+        newIndex = (index - 1 + PERIOD_OPTIONS.length) % PERIOD_OPTIONS.length;
+      } else if (e.key === 'Home') {
+        newIndex = 0;
+      } else if (e.key === 'End') {
+        newIndex = PERIOD_OPTIONS.length - 1;
+      } else {
+        return;
+      }
+
+      e.preventDefault();
+      periodTabsRef.current[newIndex]?.focus();
+      handlePeriodChange(PERIOD_OPTIONS[newIndex].value);
+    },
+    [handlePeriodChange],
+  );
+
   return (
     <Collapsible.Root open={isOpen} onOpenChange={(details) => setIsOpen(details.open)}>
       <div className="flex items-center gap-2">
@@ -123,19 +159,29 @@ export const ExpenseFilters = ({ groupId, filters, onFiltersChange }: ExpenseFil
 
         {/* Period */}
         <div>
-          <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+          <span
+            id="period-filter-label"
+            className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+          >
             Période
           </span>
-          <div className="flex flex-wrap gap-2">
-            {[
-              { value: 'all', label: 'Toutes' },
-              { value: 'this-month', label: 'Ce mois' },
-              { value: 'last-month', label: 'Mois dernier' },
-            ].map((option) => (
+          <div
+            role="tablist"
+            aria-labelledby="period-filter-label"
+            className="flex flex-wrap gap-2"
+          >
+            {PERIOD_OPTIONS.map((option, index) => (
               <button
                 key={option.value}
+                ref={(el) => {
+                  periodTabsRef.current[index] = el;
+                }}
                 type="button"
-                onClick={() => handlePeriodChange(option.value as PeriodPreset)}
+                role="tab"
+                aria-selected={periodPreset === option.value}
+                tabIndex={periodPreset === option.value ? 0 : -1}
+                onClick={() => handlePeriodChange(option.value)}
+                onKeyDown={(e) => handlePeriodKeyDown(e, index)}
                 className={`px-3 py-1.5 text-sm rounded-full transition-colors ${
                   periodPreset === option.value
                     ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'

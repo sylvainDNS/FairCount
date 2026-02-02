@@ -495,9 +495,9 @@ Transformer les boutons de filtre en tabs accessibles avec les rôles ARIA appro
 ```
 
 **Critères de validation :**
-- [ ] Container avec `role="tablist"`
-- [ ] Boutons avec `role="tab"` et `aria-selected`
-- [ ] Navigation clavier fonctionnelle (flèches)
+- [x] Container avec `role="tablist"`
+- [x] Boutons avec `role="tab"` et `aria-selected`
+- [x] Navigation clavier fonctionnelle (flèches)
 
 ---
 
