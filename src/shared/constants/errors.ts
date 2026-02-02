@@ -21,3 +21,11 @@ export const API_ERROR_CODES = {
 } as const;
 
 export type ApiErrorCode = (typeof API_ERROR_CODES)[keyof typeof API_ERROR_CODES];
+
+/** Magic link verification error codes */
+export const MAGIC_LINK_ERRORS = {
+  EXPIRED_TOKEN: 'expired',
+  INVALID_TOKEN: 'invalid_token',
+} as const;
+
+export type MagicLinkError = (typeof MAGIC_LINK_ERRORS)[keyof typeof MAGIC_LINK_ERRORS];
