@@ -314,49 +314,9 @@ Remplacer tous les codes d'erreur incohérents par le format SNAKE_CASE standard
 
 ---
 
-## Sprint 3 - Approche fonctionnelle et immutable
+## Sprint 3 - Approche fonctionnelle
 
-### 9. Remplacer les mutations array par spread
-
-**Fichiers concernés :**
-- `src/workers/api/utils/optimize-settlements.ts` (modification)
-- `src/workers/api/utils/share-calculation.ts` (modification)
-- `src/workers/api/routes/expenses-handlers.ts` (modification)
-- `src/workers/api/routes/balances-handlers.ts` (modification)
-- `src/workers/api/routes/settlements-handlers.ts` (modification)
-- `src/workers/api/routes/groups.ts` (modification)
-
-**Description :**
-Remplacer toutes les mutations d'arrays (`push()`, `shift()`, `pop()`) par des opérations immutables.
-
-**Patterns à remplacer :**
-
-```typescript
-// Avant
-list.push(newItem);
-// Après
-const newList = [...list, newItem];
-
-// Avant (boucle avec shift)
-while (array.length > 0) {
-  const item = array.shift();
-  // ...
-}
-// Après (itération par index ou filter)
-for (let i = 0; i < array.length; i++) {
-  const item = array[i];
-  // ...
-}
-```
-
-**Critères de validation :**
-- [ ] Aucun `push()` dans le code backend (sauf si justifié)
-- [ ] Aucun `shift()` ou `pop()` mutatif
-- [ ] Utilisation de spread operator ou méthodes fonctionnelles
-
----
-
-### 10. Remplacer les accumulateurs let par reduce
+### 9. Remplacer les accumulateurs let par reduce
 
 **Fichiers concernés :**
 - `src/workers/api/routes/groups.ts` (modification)
@@ -394,7 +354,7 @@ const { totalPaid, totalOwed } = expenses.reduce(
 
 ---
 
-### 11. Remplacer les for loops par map/filter/reduce
+### 10. Remplacer les for loops par map/filter/reduce
 
 **Fichiers concernés :**
 - `src/workers/api/routes/groups.ts` (modification - 6 emplacements)
@@ -420,7 +380,7 @@ Refactorer les 15+ boucles `for` impératives en méthodes fonctionnelles (`map`
 
 ## Sprint 4 - Accessibilité
 
-### 12. Ajouter aria-labelledby aux dialogs
+### 11. Ajouter aria-labelledby aux dialogs
 
 **Fichiers concernés :**
 - `src/shared/components/ConfirmDialog.tsx` (modification)
@@ -447,7 +407,7 @@ Ajouter les attributs `aria-labelledby` sur les `Dialog.Root` pour associer corr
 
 ---
 
-### 13. Ajouter aria-label aux boutons icône
+### 12. Ajouter aria-label aux boutons icône
 
 **Fichiers concernés :**
 - `src/features/settlements/components/SettlementCard.tsx` (modification)
@@ -474,7 +434,7 @@ Ajouter des `aria-label` explicites sur tous les boutons ne contenant qu'une ic�
 
 ---
 
-### 14. Associer les erreurs aux inputs avec aria-describedby
+### 13. Associer les erreurs aux inputs avec aria-describedby
 
 **Fichiers concernés :**
 - `src/features/auth/components/LoginForm.tsx` (modification)
@@ -508,7 +468,7 @@ Associer les messages d'erreur aux champs de formulaire via `aria-describedby`.
 
 ---
 
-### 15. Ajouter la sémantique tabs aux filtres
+### 14. Ajouter la sémantique tabs aux filtres
 
 **Fichiers concernés :**
 - `src/features/settlements/components/SettlementHistory.tsx` (modification)
@@ -541,7 +501,7 @@ Transformer les boutons de filtre en tabs accessibles avec les rôles ARIA appro
 
 ---
 
-### 16. Ajouter fieldset/legend aux checkboxes groupés
+### 15. Ajouter fieldset/legend aux checkboxes groupés
 
 **Fichiers concernés :**
 - `src/features/expenses/components/ExpenseForm.tsx` (modification)
@@ -569,7 +529,7 @@ Envelopper la section "Participants" dans un `<fieldset>` avec `<legend>` pour u
 
 ## Sprint 5 - Nettoyage et polish
 
-### 17. Utiliser le Spinner partagé
+### 16. Utiliser le Spinner partagé
 
 **Fichiers concernés :**
 - `src/features/auth/components/LoginPage.tsx` (modification)
@@ -595,7 +555,7 @@ import { Spinner } from '@/shared/components';
 
 ---
 
-### 18. Importer isValidEmail depuis lib/validation
+### 17. Importer isValidEmail depuis lib/validation
 
 **Fichiers concernés :**
 - `src/features/auth/components/LoginForm.tsx` (modification)
@@ -621,7 +581,7 @@ import { isValidEmail } from '@/lib/validation';
 
 ---
 
-### 19. Renommer les types SettlementSummary conflictuels
+### 18. Renommer les types SettlementSummary conflictuels
 
 **Fichiers concernés :**
 - `src/features/balances/types.ts` (modification)
@@ -639,7 +599,7 @@ Renommer les deux types `SettlementSummary` pour éviter la confusion :
 
 ---
 
-### 20. Uniformiser as const satisfies dans settlements
+### 19. Uniformiser as const satisfies dans settlements
 
 **Fichiers concernés :**
 - `src/features/settlements/types.ts` (modification)
@@ -682,16 +642,16 @@ export const SETTLEMENT_ERROR_MESSAGES = {
 |---|-------|---------------|
 | 7 | Helpers SQL | Moyen |
 | 8 | Codes d'erreur backend | Faible |
-| 9-11 | Refactoring immutable | Moyen |
-| 12-16 | Accessibilité | Moyen |
+| 9-10 | Refactoring fonctionnel | Moyen |
+| 11-15 | Accessibilité | Moyen |
 
 ### Priorité 3 - Polish (Sprint 5)
 | # | Tâche | Effort estimé |
 |---|-------|---------------|
-| 17 | Spinner partagé | Faible |
-| 18 | Import isValidEmail | Faible |
-| 19 | Renommer SettlementSummary | Faible |
-| 20 | Uniformiser as const satisfies | Faible |
+| 16 | Spinner partagé | Faible |
+| 17 | Import isValidEmail | Faible |
+| 18 | Renommer SettlementSummary | Faible |
+| 19 | Uniformiser as const satisfies | Faible |
 
 ---
 
