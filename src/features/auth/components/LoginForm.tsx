@@ -93,11 +93,15 @@ export const LoginForm = () => {
           placeholder="vous@exemple.com"
           required
           disabled={formState === 'loading'}
+          aria-invalid={formState === 'error'}
+          aria-describedby={formState === 'error' ? 'email-error' : undefined}
         />
       </div>
 
       {formState === 'error' && errorMessage && (
-        <div className="text-red-600 dark:text-red-400 text-sm">{errorMessage}</div>
+        <div id="email-error" role="alert" className="text-red-600 dark:text-red-400 text-sm">
+          {errorMessage}
+        </div>
       )}
 
       <Button

@@ -253,6 +253,8 @@ export const ExpenseForm = ({
                   placeholder="0.00"
                   disabled={isSubmitting}
                   required
+                  aria-invalid={!!error}
+                  aria-describedby={error ? 'expense-form-error' : undefined}
                 />
               </div>
 
@@ -272,6 +274,8 @@ export const ExpenseForm = ({
                   placeholder="Ex: Courses, Restaurant..."
                   disabled={isSubmitting}
                   required
+                  aria-invalid={!!error}
+                  aria-describedby={error ? 'expense-form-error' : undefined}
                 />
               </div>
 
@@ -290,6 +294,8 @@ export const ExpenseForm = ({
                   onChange={(e) => setDate(e.target.value)}
                   disabled={isSubmitting}
                   required
+                  aria-invalid={!!error}
+                  aria-describedby={error ? 'expense-form-error' : undefined}
                 />
               </div>
 
@@ -308,6 +314,8 @@ export const ExpenseForm = ({
                   className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   disabled={isSubmitting}
                   required
+                  aria-invalid={!!error}
+                  aria-describedby={error ? 'expense-form-error' : undefined}
                 >
                   <option value="">Sélectionner...</option>
                   {members.map((m) => (
@@ -381,7 +389,11 @@ export const ExpenseForm = ({
               </div>
 
               {error && (
-                <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+                <p
+                  id="expense-form-error"
+                  className="text-sm text-red-600 dark:text-red-400"
+                  role="alert"
+                >
                   {error}
                 </p>
               )}

@@ -85,11 +85,17 @@ export const IncomeForm = ({
                   onChange={(e) => setIncome(e.target.value)}
                   placeholder="Ex: 2500.00"
                   disabled={isSubmitting}
+                  aria-invalid={!!error}
+                  aria-describedby={error ? 'income-error' : undefined}
                 />
               </div>
 
               {error && (
-                <p className="text-sm text-red-600 dark:text-red-400 mb-4" role="alert">
+                <p
+                  id="income-error"
+                  className="text-sm text-red-600 dark:text-red-400 mb-4"
+                  role="alert"
+                >
                   {error}
                 </p>
               )}

@@ -462,9 +462,9 @@ Associer les messages d'erreur aux champs de formulaire via `aria-describedby`.
 ```
 
 **Critères de validation :**
-- [ ] Tous les inputs avec erreur ont `aria-invalid` et `aria-describedby`
-- [ ] Messages d'erreur ont `role="alert"`
-- [ ] IDs uniques et correspondants
+- [x] Tous les inputs avec erreur ont `aria-invalid` et `aria-describedby`
+- [x] Messages d'erreur ont `role="alert"`
+- [x] IDs uniques et correspondants
 
 ---
 
