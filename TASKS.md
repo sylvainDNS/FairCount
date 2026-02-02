@@ -575,9 +575,9 @@ import { isValidEmail } from '@/lib/validation';
 ```
 
 **Critères de validation :**
-- [ ] Import depuis `@/lib/validation`
-- [ ] Suppression de la fonction locale et du `useCallback` associé
-- [ ] Fonctionnement identique de la validation
+- [x] Import depuis `@/lib/validation`
+- [x] Suppression de la fonction locale et du `useCallback` associé
+- [x] Fonctionnement identique de la validation
 
 ---
 

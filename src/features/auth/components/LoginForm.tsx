@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { isValidEmail } from '@/lib/validation';
 import { Button } from '@/shared/components/Button';
 import { TextInput } from '@/shared/components/TextInput';
 import { useAuth } from '../hooks/useAuth';
@@ -11,11 +12,6 @@ export const LoginForm = () => {
   const [email, setEmail] = useState('');
   const [formState, setFormState] = useState<FormState>('idle');
   const [errorMessage, setErrorMessage] = useState<string>('');
-
-  const isValidEmail = useCallback((value: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(value);
-  }, []);
 
   const handleSubmit = useCallback(
     async (e: React.SubmitEvent) => {
@@ -41,7 +37,7 @@ export const LoginForm = () => {
         );
       }
     },
-    [email, isValidEmail, login],
+    [email, login],
   );
 
   if (formState === 'success') {
