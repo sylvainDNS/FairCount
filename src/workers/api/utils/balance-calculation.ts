@@ -81,10 +81,8 @@ export async function calculateGroupBalances(ctx: BalanceContext): Promise<Membe
     >();
     for (const p of participants) {
       const list = participantsByExpense.get(p.expenseId) ?? [];
-      participantsByExpense.set(p.expenseId, [
-        ...list,
-        { memberId: p.memberId, customAmount: p.customAmount },
-      ]);
+      list.push({ memberId: p.memberId, customAmount: p.customAmount });
+      participantsByExpense.set(p.expenseId, list);
     }
 
     // Traiter chaque dépense
@@ -139,24 +137,20 @@ export async function calculateGroupBalances(ctx: BalanceContext): Promise<Membe
     }
   }
 
-  // Calculer les balances finales
-  const result: MemberBalance[] = [];
-  for (const balance of balances.values()) {
-    const rawBalance = balance.totalPaid - balance.totalOwed;
-    // settlementsPaid = ce que j'ai remboursé → augmente ma balance (je dois moins)
-    // settlementsReceived = ce que j'ai reçu → diminue ma balance (on me doit moins)
-    const netBalance = rawBalance + balance.settlementsPaid - balance.settlementsReceived;
-    result.push({
-      ...balance,
-      balance: rawBalance,
-      netBalance,
-    });
-  }
-
-  // Trier par netBalance décroissant (créditeurs d'abord, puis débiteurs)
-  result.sort((a, b) => b.netBalance - a.netBalance);
-
-  return result;
+  // Calculer les balances finales et trier par netBalance décroissant
+  return Array.from(balances.values())
+    .map((balance) => {
+      const rawBalance = balance.totalPaid - balance.totalOwed;
+      // settlementsPaid = ce que j'ai remboursé → augmente ma balance (je dois moins)
+      // settlementsReceived = ce que j'ai reçu → diminue ma balance (on me doit moins)
+      const netBalance = rawBalance + balance.settlementsPaid - balance.settlementsReceived;
+      return {
+        ...balance,
+        balance: rawBalance,
+        netBalance,
+      };
+    })
+    .sort((a, b) => b.netBalance - a.netBalance);
 }
 
 /**

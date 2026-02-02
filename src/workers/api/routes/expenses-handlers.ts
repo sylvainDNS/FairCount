@@ -200,18 +200,17 @@ export async function listExpenses(
   participantMemberIds.add(ctx.currentMemberId);
 
   // Get member coefficients only for participants (optimized)
-  const memberCoefficients = new Map<string, number>();
   const memberIdsInClause = sqlInClause(schema.groupMembers.id, [...participantMemberIds]);
-  if (memberIdsInClause) {
-    const members = await ctx.db
-      .select({ id: schema.groupMembers.id, coefficient: schema.groupMembers.coefficient })
-      .from(schema.groupMembers)
-      .where(memberIdsInClause);
-
-    for (const m of members) {
-      memberCoefficients.set(m.id, m.coefficient);
-    }
-  }
+  const memberCoefficients = memberIdsInClause
+    ? new Map(
+        (
+          await ctx.db
+            .select({ id: schema.groupMembers.id, coefficient: schema.groupMembers.coefficient })
+            .from(schema.groupMembers)
+            .where(memberIdsInClause)
+        ).map((m) => [m.id, m.coefficient]),
+      )
+    : new Map<string, number>();
 
   // Get creator names
   const creatorIds = [...new Set(expenses.map((r) => r.expense.createdBy))];

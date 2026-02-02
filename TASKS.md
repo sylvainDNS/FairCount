@@ -372,9 +372,9 @@ Refactorer les 15+ boucles `for` impératives en méthodes fonctionnelles (`map`
 - Lignes 385-392 : Construction de `monthStats`
 
 **Critères de validation :**
-- [ ] Boucles for remplacées par méthodes fonctionnelles
-- [ ] Code plus déclaratif
-- [ ] Même comportement fonctionnel (tests manuels)
+- [x] Boucles for remplacées par méthodes fonctionnelles
+- [x] Code plus déclaratif
+- [x] Même comportement fonctionnel (tests manuels)
 
 ---
 

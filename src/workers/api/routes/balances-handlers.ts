@@ -201,14 +201,14 @@ export async function getGroupStats(ctx: BalanceContext, period?: string): Promi
     .where(and(...conditions));
 
   // Calculate stats by member
-  const memberStats = new Map<string, { name: string; totalPaid: number }>();
-  for (const e of expenses) {
-    const current = memberStats.get(e.expense.paidBy) ?? { name: e.payerName, totalPaid: 0 };
-    memberStats.set(e.expense.paidBy, {
+  const memberStats = expenses.reduce((acc, e) => {
+    const current = acc.get(e.expense.paidBy) ?? { name: e.payerName, totalPaid: 0 };
+    acc.set(e.expense.paidBy, {
       name: current.name,
       totalPaid: current.totalPaid + e.expense.amount,
     });
-  }
+    return acc;
+  }, new Map<string, { name: string; totalPaid: number }>());
 
   const totalExpenses = expenses.reduce((sum, e) => sum + e.expense.amount, 0);
   const expenseCount = expenses.length;
@@ -224,15 +224,15 @@ export async function getGroupStats(ctx: BalanceContext, period?: string): Promi
     .sort((a, b) => b.totalPaid - a.totalPaid);
 
   // Calculate stats by month
-  const monthStats = new Map<string, { total: number; count: number }>();
-  for (const e of expenses) {
+  const monthStats = expenses.reduce((acc, e) => {
     const month = e.expense.date.substring(0, 7); // YYYY-MM
-    const current = monthStats.get(month) ?? { total: 0, count: 0 };
-    monthStats.set(month, {
+    const current = acc.get(month) ?? { total: 0, count: 0 };
+    acc.set(month, {
       total: current.total + e.expense.amount,
       count: current.count + 1,
     });
-  }
+    return acc;
+  }, new Map<string, { total: number; count: number }>());
 
   const byMonth = Array.from(monthStats.entries())
     .map(([month, data]) => ({

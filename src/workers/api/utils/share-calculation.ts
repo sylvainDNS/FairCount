@@ -44,14 +44,14 @@ export function calculateShares(
       lastShare.share += remainingAmount - allocated;
     }
 
-    for (const { memberId, share } of fairShares) {
+    fairShares.forEach(({ memberId, share }) => {
       shares.set(memberId, share);
-    }
+    });
   } else if (fairShareParticipants.length > 0 && remainingAmount <= 0) {
     // All amount used by custom amounts, fair share participants get 0
-    for (const memberId of fairShareParticipants) {
+    fairShareParticipants.forEach((memberId) => {
       shares.set(memberId, 0);
-    }
+    });
   }
 
   return shares;
