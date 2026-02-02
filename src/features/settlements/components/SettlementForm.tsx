@@ -110,8 +110,14 @@ export const SettlementForm = ({
       <Portal>
         <Dialog.Backdrop className="fixed inset-0 bg-black/50 z-50" />
         <Dialog.Positioner className="fixed inset-0 flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <Dialog.Content className="bg-white dark:bg-slate-900 rounded-xl p-6 w-full max-w-md shadow-xl my-8">
-            <Dialog.Title className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+          <Dialog.Content
+            aria-labelledby="settlement-form-dialog-title"
+            className="bg-white dark:bg-slate-900 rounded-xl p-6 w-full max-w-md shadow-xl my-8"
+          >
+            <Dialog.Title
+              id="settlement-form-dialog-title"
+              className="text-lg font-semibold text-slate-900 dark:text-white mb-4"
+            >
               Enregistrer un remboursement
             </Dialog.Title>
 

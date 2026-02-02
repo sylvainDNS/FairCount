@@ -158,8 +158,14 @@ export const SettlementHistory = ({ groupId, currency }: SettlementHistoryProps)
         <Portal>
           <Dialog.Backdrop className="fixed inset-0 bg-black/50 z-50" />
           <Dialog.Positioner className="fixed inset-0 flex items-center justify-center p-4 z-50">
-            <Dialog.Content className="bg-white dark:bg-slate-900 rounded-xl p-6 w-full max-w-sm shadow-xl">
-              <Dialog.Title className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+            <Dialog.Content
+              aria-labelledby="delete-settlement-dialog-title"
+              className="bg-white dark:bg-slate-900 rounded-xl p-6 w-full max-w-sm shadow-xl"
+            >
+              <Dialog.Title
+                id="delete-settlement-dialog-title"
+                className="text-lg font-semibold text-slate-900 dark:text-white mb-2"
+              >
                 Annuler ce remboursement ?
               </Dialog.Title>
               <Dialog.Description className="text-slate-500 dark:text-slate-400 mb-4">

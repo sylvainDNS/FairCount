@@ -52,8 +52,14 @@ export const IncomeForm = ({
       <Portal>
         <Dialog.Backdrop className="fixed inset-0 bg-black/50 z-50" />
         <Dialog.Positioner className="fixed inset-0 flex items-center justify-center p-4 z-50">
-          <Dialog.Content className="bg-white dark:bg-slate-900 rounded-xl p-6 w-full max-w-md shadow-xl">
-            <Dialog.Title className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+          <Dialog.Content
+            aria-labelledby="income-form-dialog-title"
+            className="bg-white dark:bg-slate-900 rounded-xl p-6 w-full max-w-md shadow-xl"
+          >
+            <Dialog.Title
+              id="income-form-dialog-title"
+              className="text-lg font-semibold text-slate-900 dark:text-white mb-2"
+            >
               Modifier le revenu de {memberName}
             </Dialog.Title>
 

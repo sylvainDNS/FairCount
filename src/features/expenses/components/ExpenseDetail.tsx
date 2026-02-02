@@ -48,7 +48,10 @@ export const ExpenseDetail = ({
       <Portal>
         <Dialog.Backdrop className="fixed inset-0 bg-black/50 z-50" />
         <Dialog.Positioner className="fixed inset-0 flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <Dialog.Content className="bg-white dark:bg-slate-900 rounded-xl w-full max-w-lg shadow-xl my-8">
+          <Dialog.Content
+            aria-labelledby="expense-detail-dialog-title"
+            className="bg-white dark:bg-slate-900 rounded-xl w-full max-w-lg shadow-xl my-8"
+          >
             {isLoading ? (
               <div className="p-6">
                 <div className="animate-pulse space-y-4">
@@ -73,7 +76,10 @@ export const ExpenseDetail = ({
               <>
                 {/* Header */}
                 <div className="p-6 border-b border-slate-200 dark:border-slate-800">
-                  <Dialog.Title className="text-xl font-semibold text-slate-900 dark:text-white">
+                  <Dialog.Title
+                    id="expense-detail-dialog-title"
+                    className="text-xl font-semibold text-slate-900 dark:text-white"
+                  >
                     {expense.description}
                   </Dialog.Title>
                   <p className="text-2xl font-bold text-slate-900 dark:text-white mt-2">

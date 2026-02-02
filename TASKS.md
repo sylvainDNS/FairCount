@@ -401,9 +401,9 @@ Ajouter les attributs `aria-labelledby` sur les `Dialog.Root` pour associer corr
 ```
 
 **Critères de validation :**
-- [ ] Tous les Dialog.Root ont un `aria-labelledby`
-- [ ] Tous les Dialog.Title ont un `id` correspondant
-- [ ] IDs uniques par dialog
+- [x] Tous les Dialog.Root ont un `aria-labelledby`
+- [x] Tous les Dialog.Title ont un `id` correspondant
+- [x] IDs uniques par dialog
 
 ---
 
