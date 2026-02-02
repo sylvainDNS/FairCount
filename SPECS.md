@@ -317,20 +317,20 @@ Préparation pour :
 
 ## Roadmap
 
-### v1.0 - MVP
-- [ ] Authentification magic link
-- [ ] Création et gestion de groupes (horizontalité, pas d'admin)
-- [ ] Ajout de personnes membres avec revenus (transparence)
-- [ ] Ajout de dépenses
-- [ ] Calcul des soldes (recalcul automatique)
-- [ ] Remboursements (modèle dédié)
+### v1.0 - MVP ✅
+- Authentification magic link
+- Création et gestion de groupes (horizontalité, pas d'admin)
+- Ajout de personnes membres avec revenus (transparence)
+- Ajout de dépenses
+- Calcul des soldes (recalcul automatique)
+- Remboursements (modèle dédié)
 
-### v1.1 - Améliorations
-- [ ] Notifications push
-- [ ] Export des données
+### v1.1 - Améliorations (en cours)
+- Notifications push
+- Export des données
 
-### v2.0 - Fonctionnalités avancées
-- [ ] Dépenses récurrentes
-- [ ] Budgets par catégorie
-- [ ] Statistiques et graphiques
-- [ ] Multi-devises
+### v2.0 - Fonctionnalités avancées (planifié)
+- Dépenses récurrentes
+- Budgets par catégorie
+- Statistiques et graphiques
+- Multi-devises
