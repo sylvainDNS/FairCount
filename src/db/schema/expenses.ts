@@ -2,6 +2,7 @@ import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import { groups } from './groups';
 import { groupMembers } from './members';
 
+// Note: Date columns use integer timestamps in milliseconds for better-auth compatibility
 export const expenses = sqliteTable('expenses', {
   id: text('id').primaryKey(),
   groupId: text('group_id')
@@ -16,9 +17,9 @@ export const expenses = sqliteTable('expenses', {
   createdBy: text('created_by')
     .notNull()
     .references(() => groupMembers.id),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
-  deletedAt: integer('deleted_at', { mode: 'timestamp' }), // soft delete
+  createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+  deletedAt: integer('deleted_at', { mode: 'timestamp_ms' }), // soft delete
 });
 
 export const expenseParticipants = sqliteTable('expense_participants', {

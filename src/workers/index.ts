@@ -4,6 +4,12 @@ import { handleGroupsRoutes } from './api/routes/groups';
 import { handleInvitationsRoutes } from './api/routes/invitations';
 import type { Env } from './types';
 
+// Magic link verification error codes
+const MAGIC_LINK_ERRORS = {
+  EXPIRED_TOKEN: 'expired',
+  INVALID_TOKEN: 'invalid_token',
+} as const;
+
 const getAllowedOrigin = (request: Request, env: Env): string => {
   const origin = request.headers.get('Origin');
   const allowedOrigins = [env.APP_URL, 'http://localhost:3000', 'http://localhost:5173'];
@@ -69,10 +75,12 @@ export default {
         const response = await auth.handler(request);
 
         // Handle magic link verification errors - redirect to error page
-        if (url.pathname.includes('/magic-link/verify') && !response.ok) {
+        // Note: successful verification returns 302 redirect, so we only intercept actual errors (4xx/5xx)
+        if (url.pathname.includes('/magic-link/verify') && response.status >= 400) {
           const errorUrl = new URL('/auth/error', env.APP_URL);
-          // Determine error type based on response status
-          const errorType = response.status === 410 ? 'expired' : 'invalid_token';
+          // 410 Gone = token expired, other 4xx/5xx = invalid token
+          const errorType =
+            response.status === 410 ? MAGIC_LINK_ERRORS.EXPIRED_TOKEN : MAGIC_LINK_ERRORS.INVALID_TOKEN;
           errorUrl.searchParams.set('error', errorType);
           return Response.redirect(errorUrl.toString(), 302);
         }
