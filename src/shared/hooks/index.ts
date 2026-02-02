@@ -1,1 +1,1 @@
-export { useFetch } from './useFetch';
+export { useInfiniteLoad } from './useInfiniteLoad';
