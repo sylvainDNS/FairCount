@@ -499,3 +499,455 @@ export type AppEnv = {
 ### Ordre de priorité
 
 Cette migration est recommandée **avant** d'ajouter de nouvelles fonctionnalités majeures au backend, car elle facilitera leur implémentation et leur maintenance.
+
+---
+
+## Tâches de développement
+
+### Phase 1 : Infrastructure Hono
+
+#### 1.1 Installation des dépendances Hono
+
+**Fichiers concernés :**
+- `package.json` (modification)
+
+**Description :**
+Installer Hono et ses packages complémentaires via pnpm.
+
+```bash
+pnpm add hono @hono/zod-validator
+```
+
+**Critères de validation :**
+- [ ] `hono` et `@hono/zod-validator` présents dans `dependencies`
+- [ ] `pnpm install` s'exécute sans erreur
+
+---
+
+#### 1.2 Créer les types Hono personnalisés
+
+**Fichiers concernés :**
+- `src/workers/types.ts` (modification)
+
+**Description :**
+Étendre le fichier `types.ts` existant avec les types `AppEnv` pour le contexte Hono (Variables, Bindings).
+
+**Critères de validation :**
+- [ ] Type `AppEnv` exporté avec `Bindings: Env` et `Variables`
+- [ ] Variables inclut : `db`, `auth`, `user`, `session`, `membership`
+- [ ] Aucune erreur TypeScript
+
+---
+
+#### 1.3 Créer le middleware d'injection DB/Auth
+
+**Fichiers concernés :**
+- `src/workers/middleware/db.ts` (création)
+
+**Description :**
+Middleware Hono qui instancie `Database` et `Auth` depuis les bindings Cloudflare et les injecte dans le contexte.
+
+**Critères de validation :**
+- [ ] Middleware injecte `db` et `auth` dans `c.set()`
+- [ ] Utilise `createDb()` et `createAuth()` existants
+- [ ] Export nommé `dbMiddleware`
+
+---
+
+#### 1.4 Créer le middleware CORS
+
+**Fichiers concernés :**
+- `src/workers/middleware/cors.ts` (création)
+
+**Description :**
+Configuration CORS avec le middleware `hono/cors`. Gérer les origines autorisées (`APP_URL`, `localhost:3000`, `localhost:5173`).
+
+**Critères de validation :**
+- [ ] Origines dynamiques selon `c.env.APP_URL`
+- [ ] `credentials: true` configuré
+- [ ] Méthodes `GET, POST, PUT, PATCH, DELETE, OPTIONS` autorisées
+
+---
+
+#### 1.5 Créer le middleware d'authentification
+
+**Fichiers concernés :**
+- `src/workers/middleware/auth.ts` (création)
+
+**Description :**
+Middleware qui vérifie la session via `better-auth` et injecte `user` et `session` dans le contexte. Throw `HTTPException(401)` si non authentifié.
+
+**Critères de validation :**
+- [ ] Appelle `auth.api.getSession()` avec les headers
+- [ ] Injecte `user` et `session` dans le contexte si valides
+- [ ] Lève `HTTPException(401, { message: 'UNAUTHORIZED' })` sinon
+- [ ] Export nommé `authMiddleware`
+
+---
+
+#### 1.6 Créer le middleware de vérification membership
+
+**Fichiers concernés :**
+- `src/workers/middleware/membership.ts` (création)
+
+**Description :**
+Middleware qui vérifie l'appartenance de l'utilisateur au groupe (`:id` param). Réutilise la logique de `verifyMembership()` de `groups.ts`.
+
+**Critères de validation :**
+- [ ] Récupère `groupId` depuis `c.req.param('id')`
+- [ ] Vérifie membre actif (`leftAt IS NULL`)
+- [ ] Injecte `membership` dans le contexte
+- [ ] Lève `HTTPException(403, { message: 'NOT_A_MEMBER' })` si non membre
+- [ ] Export nommé `membershipMiddleware`
+
+---
+
+#### 1.7 Créer le error handler global
+
+**Fichiers concernés :**
+- `src/workers/middleware/error.ts` (création)
+
+**Description :**
+Handler d'erreur Hono pour centraliser les réponses d'erreur. Gérer les `HTTPException` et les erreurs inattendues.
+
+**Critères de validation :**
+- [ ] Retourne le message de l'exception HTTP si `HTTPException`
+- [ ] Retourne `{ error: 'INTERNAL_ERROR' }` avec status 500 pour les autres erreurs
+- [ ] Log l'erreur en console pour le debug
+- [ ] Export nommé `errorHandler`
+
+---
+
+### Phase 2 : Migration des routes simples
+
+#### 2.1 Créer l'application Hono principale
+
+**Fichiers concernés :**
+- `src/workers/app.ts` (création)
+
+**Description :**
+Point d'entrée de l'application Hono avec les middleware globaux (CORS, DB, error handler).
+
+**Critères de validation :**
+- [ ] `Hono<{ Bindings: Env }>` instancié
+- [ ] CORS appliqué sur `*`
+- [ ] `dbMiddleware` appliqué sur `/api/*`
+- [ ] `errorHandler` configuré via `app.onError()`
+- [ ] Export par défaut de l'app
+
+---
+
+#### 2.2 Migrer la route health check
+
+**Fichiers concernés :**
+- `src/workers/routes/health.ts` (création)
+
+**Description :**
+Route `GET /api/health` retournant `{ status: 'ok' }`.
+
+**Critères de validation :**
+- [ ] Route `GET /` définie
+- [ ] Retourne `c.json({ status: 'ok' })`
+- [ ] Export nommé `healthRoute`
+
+---
+
+#### 2.3 Migrer les routes auth (better-auth)
+
+**Fichiers concernés :**
+- `src/workers/routes/auth.ts` (création)
+
+**Description :**
+Intégration de better-auth comme handler Hono sur `/api/auth/*`. Déléguer toutes les requêtes au handler better-auth existant.
+
+**Critères de validation :**
+- [ ] Route `all('/*', ...)` pour capturer toutes les méthodes et paths
+- [ ] Passe `c.req.raw` au handler better-auth
+- [ ] Retourne la réponse de better-auth
+- [ ] Export nommé `authRoutes`
+
+---
+
+### Phase 3 : Migration des routes groups
+
+#### 3.1 Créer le router groups principal
+
+**Fichiers concernés :**
+- `src/workers/routes/groups/index.ts` (création)
+
+**Description :**
+Router Hono pour `/api/groups` avec les routes de premier niveau (list, create) et composition des sous-routers.
+
+**Critères de validation :**
+- [ ] Middleware `authMiddleware` appliqué sur `*`
+- [ ] `GET /` → liste des groupes de l'utilisateur
+- [ ] `POST /` → création de groupe avec validation Zod
+- [ ] Sous-router `/:id` avec `membershipMiddleware`
+- [ ] Export nommé `groupsRoutes`
+
+---
+
+#### 3.2 Migrer les routes group par ID
+
+**Fichiers concernés :**
+- `src/workers/routes/groups/index.ts` (modification)
+
+**Description :**
+Routes pour un groupe spécifique : get, update, delete, archive, leave.
+
+**Critères de validation :**
+- [ ] `GET /:id` → détails du groupe
+- [ ] `PATCH /:id` → mise à jour avec validation Zod
+- [ ] `DELETE /:id` → suppression du groupe
+- [ ] `POST /:id/archive` → toggle archive
+- [ ] `POST /:id/leave` → quitter le groupe
+- [ ] Réutilise les handlers de `groups.ts`
+
+---
+
+#### 3.3 Migrer les routes invitations de groupe
+
+**Fichiers concernés :**
+- `src/workers/routes/groups/invitations.ts` (création)
+
+**Description :**
+Routes pour gérer les invitations depuis un groupe : create, list, cancel, resend.
+
+**Critères de validation :**
+- [ ] `POST /:id/invite` → envoyer invitation
+- [ ] `GET /:id/invitations` → liste invitations en attente
+- [ ] `DELETE /:id/invitations/:invitationId` → annuler invitation
+- [ ] `POST /:id/invitations/:invitationId/resend` → renvoyer invitation
+- [ ] Réutilise les handlers de `groups.ts` (lignes 340-450)
+
+---
+
+#### 3.4 Migrer les routes members
+
+**Fichiers concernés :**
+- `src/workers/routes/groups/members.ts` (création)
+
+**Description :**
+Router pour `/api/groups/:id/members`. Extraire la logique de `members-handlers.ts`.
+
+**Critères de validation :**
+- [ ] `GET /` → liste des membres
+- [ ] `GET /me` → membership de l'utilisateur courant
+- [ ] `GET /:memberId` → détails d'un membre
+- [ ] `PATCH /me` → mise à jour de son propre membership
+- [ ] `PATCH /:memberId` → mise à jour d'un membre
+- [ ] `DELETE /:memberId` → retirer un membre
+- [ ] Export nommé `membersRoutes`
+
+---
+
+#### 3.5 Migrer les routes expenses
+
+**Fichiers concernés :**
+- `src/workers/routes/groups/expenses.ts` (création)
+
+**Description :**
+Router pour `/api/groups/:id/expenses`. Fichier le plus complexe (572 lignes de handlers).
+
+**Critères de validation :**
+- [ ] `GET /` → liste paginée avec filtres (query params validés par Zod)
+- [ ] `POST /` → création dépense avec validation participants
+- [ ] `GET /:expenseId` → détails dépense
+- [ ] `PATCH /:expenseId` → mise à jour dépense
+- [ ] `DELETE /:expenseId` → suppression dépense
+- [ ] Réutilise `expenses-handlers.ts` sans modification de logique
+- [ ] Export nommé `expensesRoutes`
+
+---
+
+#### 3.6 Migrer les routes balances
+
+**Fichiers concernés :**
+- `src/workers/routes/groups/balances.ts` (création)
+
+**Description :**
+Router pour `/api/groups/:id/balances`.
+
+**Critères de validation :**
+- [ ] `GET /` → toutes les balances du groupe
+- [ ] `GET /me` → détail balance de l'utilisateur courant
+- [ ] Réutilise `balances-handlers.ts`
+- [ ] Export nommé `balancesRoutes`
+
+---
+
+#### 3.7 Migrer les routes settlements
+
+**Fichiers concernés :**
+- `src/workers/routes/groups/settlements.ts` (création)
+
+**Description :**
+Router pour `/api/groups/:id/settlements`.
+
+**Critères de validation :**
+- [ ] `GET /` → liste paginée des règlements
+- [ ] `POST /` → création règlement
+- [ ] `DELETE /:settlementId` → suppression règlement
+- [ ] `GET /suggested` → suggestions optimisées
+- [ ] Réutilise `settlements-handlers.ts`
+- [ ] Export nommé `settlementsRoutes`
+
+---
+
+#### 3.8 Migrer les routes stats
+
+**Fichiers concernés :**
+- `src/workers/routes/groups/stats.ts` (création)
+
+**Description :**
+Router pour `/api/groups/:id/stats`.
+
+**Critères de validation :**
+- [ ] `GET /` → statistiques du groupe (query param `period`)
+- [ ] Réutilise la logique existante de `groups.ts`
+- [ ] Export nommé `statsRoutes`
+
+---
+
+### Phase 4 : Migration des routes invitations publiques
+
+#### 4.1 Migrer les routes invitations publiques
+
+**Fichiers concernés :**
+- `src/workers/routes/invitations.ts` (création)
+
+**Description :**
+Routes publiques pour accepter une invitation via token.
+
+**Critères de validation :**
+- [ ] `GET /:token` → détails invitation (sans auth)
+- [ ] `POST /:token/accept` → accepter invitation (avec auth)
+- [ ] Réutilise `invitations.ts` existant
+- [ ] Export nommé `invitationsRoutes`
+
+---
+
+### Phase 5 : Intégration et finalisation
+
+#### 5.1 Assembler toutes les routes dans app.ts
+
+**Fichiers concernés :**
+- `src/workers/app.ts` (modification)
+
+**Description :**
+Connecter tous les routers créés à l'application principale.
+
+**Critères de validation :**
+- [ ] `app.route('/api/health', healthRoute)`
+- [ ] `app.route('/api/auth', authRoutes)`
+- [ ] `app.route('/api/groups', groupsRoutes)`
+- [ ] `app.route('/api/invitations', invitationsRoutes)`
+
+---
+
+#### 5.2 Mettre à jour le point d'entrée worker
+
+**Fichiers concernés :**
+- `src/workers/index.ts` (modification)
+
+**Description :**
+Remplacer le contenu par un simple export de l'app Hono.
+
+**Critères de validation :**
+- [ ] `export default app` depuis `./app`
+- [ ] Ancien code supprimé
+- [ ] Worker démarre correctement avec `pnpm worker:dev`
+
+---
+
+#### 5.3 Tests de non-régression
+
+**Fichiers concernés :**
+- Tous les endpoints
+
+**Description :**
+Tester manuellement chaque endpoint pour valider la compatibilité.
+
+**Critères de validation :**
+- [ ] `GET /api/health` → `{ status: 'ok' }`
+- [ ] Flow auth magic link fonctionnel
+- [ ] CRUD groupes opérationnel
+- [ ] Gestion membres fonctionnelle
+- [ ] CRUD dépenses avec pagination
+- [ ] Calcul balances correct
+- [ ] CRUD settlements avec suggestions
+- [ ] Invitations email + acceptation
+- [ ] CORS fonctionne depuis le frontend
+
+---
+
+### Phase 6 : Nettoyage
+
+#### 6.1 Supprimer l'ancien code
+
+**Fichiers concernés :**
+- `src/workers/api/routes/groups.ts` (suppression)
+- `src/workers/api/routes/invitations.ts` (suppression)
+- `src/workers/api/routes/balances-handlers.ts` (suppression)
+- `src/workers/api/routes/expenses-handlers.ts` (suppression)
+- `src/workers/api/routes/members-handlers.ts` (suppression)
+- `src/workers/api/routes/settlements-handlers.ts` (suppression)
+
+**Description :**
+Supprimer les fichiers de routing manuel obsolètes après validation complète.
+
+**Critères de validation :**
+- [ ] Dossier `src/workers/api/routes/` supprimé
+- [ ] Aucune référence aux anciens fichiers dans le code
+- [ ] Application fonctionne toujours
+
+---
+
+#### 6.2 Réorganiser les utilitaires
+
+**Fichiers concernés :**
+- `src/workers/api/utils/*` → `src/workers/utils/*` (déplacement)
+
+**Description :**
+Déplacer les utilitaires vers la nouvelle structure.
+
+**Critères de validation :**
+- [ ] `balance-calculation.ts` déplacé
+- [ ] `share-calculation.ts` déplacé
+- [ ] `optimize-settlements.ts` déplacé
+- [ ] `sql-helpers.ts` déplacé
+- [ ] `email.ts` déplacé
+- [ ] Imports mis à jour dans les routes
+- [ ] Dossier `src/workers/api/` supprimé
+
+---
+
+## Résumé des tâches
+
+| Phase | Tâches | Fichiers créés | Fichiers modifiés | Fichiers supprimés |
+|-------|--------|----------------|-------------------|-------------------|
+| 1. Infrastructure | 7 | 5 | 1 | 0 |
+| 2. Routes simples | 3 | 3 | 0 | 0 |
+| 3. Routes groups | 8 | 7 | 1 | 0 |
+| 4. Invitations | 1 | 1 | 0 | 0 |
+| 5. Intégration | 3 | 0 | 2 | 0 |
+| 6. Nettoyage | 2 | 0 | 5 | 8 |
+| **Total** | **24** | **16** | **9** | **8** |
+
+### Ordre d'exécution recommandé
+
+```
+1.1 → 1.2 → 1.3 → 1.4 → 1.5 → 1.6 → 1.7
+                    ↓
+              2.1 → 2.2 → 2.3
+                    ↓
+        3.1 → 3.2 → 3.3 → 3.4 → 3.5 → 3.6 → 3.7 → 3.8
+                    ↓
+                   4.1
+                    ↓
+              5.1 → 5.2 → 5.3
+                    ↓
+              6.1 → 6.2
+```
+
+Les tâches 3.3 à 3.8 peuvent être parallélisées une fois 3.1 et 3.2 terminées.
