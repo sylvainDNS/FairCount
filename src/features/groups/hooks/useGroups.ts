@@ -1,5 +1,7 @@
-import { useCallback } from 'react';
-import { useFetch } from '@/shared/hooks';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { throwIfError, toTypedError } from '@/lib/api-error';
+import { invalidations } from '@/lib/query-invalidations';
+import { queryKeys } from '@/lib/query-keys';
 import { groupsApi } from '../api';
 import type { CreateGroupFormData, GroupError, GroupListItem, GroupResult } from '../types';
 
@@ -11,33 +13,59 @@ interface UseGroupsResult {
   readonly refresh: () => Promise<void>;
 }
 
-export const useGroups = (): UseGroupsResult => {
-  const { data, isLoading, error, refetch } = useFetch<GroupListItem[], GroupError>(
-    () => groupsApi.list(),
-    [],
-  );
+const VALID_ERRORS = [
+  'UNKNOWN_ERROR',
+  'NOT_A_MEMBER',
+  'INVALID_NAME',
+  'NOT_AUTHORIZED',
+  'GROUP_NOT_FOUND',
+  'INVALID_EMAIL',
+  'ALREADY_INVITED',
+  'ALREADY_MEMBER',
+  'INVITATION_NOT_FOUND',
+  'INVITATION_EXPIRED',
+  'CANNOT_LEAVE_ALONE',
+] as const;
 
-  const createGroup = useCallback(
-    async (formData: CreateGroupFormData): Promise<GroupResult<{ id: string }>> => {
-      try {
-        const result = await groupsApi.create(formData);
-        if ('error' in result) {
-          return { success: false, error: result.error as GroupError };
-        }
-        await refetch();
-        return { success: true, data: result };
-      } catch {
-        return { success: false, error: 'UNKNOWN_ERROR' };
-      }
+export const useGroups = (): UseGroupsResult => {
+  const queryClient = useQueryClient();
+
+  const { data, isLoading, error, refetch } = useQuery<GroupListItem[]>({
+    queryKey: queryKeys.groups.list(),
+    queryFn: async () => {
+      const result = await groupsApi.list();
+      const data = throwIfError(result);
+      return data;
     },
-    [refetch],
-  );
+  });
+
+  const createMutation = useMutation<{ id: string }, Error, CreateGroupFormData>({
+    mutationFn: async (formData: CreateGroupFormData) => {
+      const result = await groupsApi.create(formData);
+      const data = throwIfError(result);
+      return data;
+    },
+    onSuccess: () => invalidations.afterGroupCreate(queryClient),
+  });
+
+  const createGroup = async (
+    formData: CreateGroupFormData,
+  ): Promise<GroupResult<{ id: string }>> => {
+    try {
+      const result = await createMutation.mutateAsync(formData);
+      return { success: true, data: result };
+    } catch (err) {
+      return { success: false, error: toTypedError(err, VALID_ERRORS) as GroupError };
+    }
+  };
 
   return {
     groups: data ?? [],
     isLoading,
-    error,
+    error: error ? (toTypedError(error, VALID_ERRORS) as GroupError) : null,
     createGroup,
-    refresh: refetch,
+    refresh: async () => {
+      await refetch();
+    },
   };
 };

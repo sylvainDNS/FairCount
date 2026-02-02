@@ -1,5 +1,7 @@
-import { useCallback } from 'react';
-import { useFetch } from '@/shared/hooks';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { throwIfError, toTypedError } from '@/lib/api-error';
+import { invalidations } from '@/lib/query-invalidations';
+import { queryKeys } from '@/lib/query-keys';
 import { membersApi } from '../api';
 import type {
   MemberError,
@@ -17,51 +19,80 @@ interface UseMembersResult {
   readonly refresh: () => Promise<void>;
 }
 
+const VALID_ERRORS = [
+  'UNKNOWN_ERROR',
+  'NOT_A_MEMBER',
+  'INVALID_NAME',
+  'INVALID_INCOME',
+  'MEMBER_NOT_FOUND',
+  'CANNOT_REMOVE_SELF',
+  'CANNOT_REMOVE_LAST_MEMBER',
+] as const;
+
 export const useMembers = (groupId: string): UseMembersResult => {
-  const { data, isLoading, error, refetch } = useFetch<MemberWithCoefficient[], MemberError>(
-    () => membersApi.list(groupId),
-    [groupId],
-    { skip: !groupId },
-  );
+  const queryClient = useQueryClient();
 
-  const updateMember = useCallback(
-    async (memberId: string, formData: UpdateMemberFormData): Promise<MemberResult> => {
-      try {
-        const result = await membersApi.update(groupId, memberId, formData);
-        if ('error' in result) {
-          return { success: false, error: result.error as MemberError };
-        }
-        await refetch();
-        return { success: true };
-      } catch {
-        return { success: false, error: 'UNKNOWN_ERROR' };
-      }
+  const { data, isLoading, error, refetch } = useQuery<MemberWithCoefficient[]>({
+    queryKey: queryKeys.members.list(groupId),
+    queryFn: async () => {
+      const result = await membersApi.list(groupId);
+      const data = throwIfError(result);
+      return data;
     },
-    [groupId, refetch],
-  );
+    enabled: !!groupId,
+  });
 
-  const removeMember = useCallback(
-    async (memberId: string): Promise<MemberResult> => {
-      try {
-        const result = await membersApi.remove(groupId, memberId);
-        if ('error' in result) {
-          return { success: false, error: result.error as MemberError };
-        }
-        await refetch();
-        return { success: true };
-      } catch {
-        return { success: false, error: 'UNKNOWN_ERROR' };
-      }
+  const updateMutation = useMutation<
+    { success: boolean },
+    Error,
+    { memberId: string; data: UpdateMemberFormData }
+  >({
+    mutationFn: async (params: { memberId: string; data: UpdateMemberFormData }) => {
+      const result = await membersApi.update(groupId, params.memberId, params.data);
+      const data = throwIfError(result);
+      return data;
     },
-    [groupId, refetch],
-  );
+    onSuccess: () => invalidations.afterMemberUpdate(queryClient, groupId),
+  });
+
+  const removeMutation = useMutation<{ success: boolean }, Error, string>({
+    mutationFn: async (memberId: string) => {
+      const result = await membersApi.remove(groupId, memberId);
+      const data = throwIfError(result);
+      return data;
+    },
+    onSuccess: () => invalidations.afterMemberRemove(queryClient, groupId),
+  });
+
+  const updateMember = async (
+    memberId: string,
+    formData: UpdateMemberFormData,
+  ): Promise<MemberResult> => {
+    try {
+      await updateMutation.mutateAsync({ memberId, data: formData });
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: toTypedError(err, VALID_ERRORS) as MemberError };
+    }
+  };
+
+  const removeMember = async (memberId: string): Promise<MemberResult> => {
+    try {
+      await removeMutation.mutateAsync(memberId);
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: toTypedError(err, VALID_ERRORS) as MemberError };
+    }
+  };
 
   return {
     members: data ?? [],
     isLoading,
-    error,
+    error: error ? (toTypedError(error, VALID_ERRORS) as MemberError) : null,
     updateMember,
     removeMember,
-    refresh: refetch,
+    refresh: async () => {
+      await refetch();
+    },
   };
 };
