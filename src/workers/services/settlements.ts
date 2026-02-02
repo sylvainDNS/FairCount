@@ -3,9 +3,9 @@ import * as schema from '@/db/schema';
 import {
   type BalanceContext as BaseBalanceContext,
   calculateGroupBalances,
-} from '../../utils/balance-calculation';
-import { calculateOptimalSettlements } from '../../utils/optimize-settlements';
-import { buildCursorCondition } from '../../utils/sql-helpers';
+} from './shared/balance-calculation';
+import { calculateOptimalSettlements } from './shared/optimize-settlements';
+import { buildCursorCondition } from './shared/sql-helpers';
 
 interface SettlementContext extends BaseBalanceContext {
   readonly userId: string;

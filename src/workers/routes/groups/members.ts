@@ -3,7 +3,7 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { API_ERROR_CODES } from '@/shared/constants/errors';
 import { isValidUUID } from '../../../lib/validation';
-import * as memberHandlers from '../../api/routes/members-handlers';
+import * as memberHandlers from '../../services/members';
 import type { AppEnv } from '../../types';
 
 export const membersRoutes = new Hono<AppEnv>();

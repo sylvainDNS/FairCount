@@ -5,9 +5,9 @@ import { z } from 'zod';
 import { API_ERROR_CODES } from '@/shared/constants/errors';
 import * as schema from '../../../db/schema';
 import { isValidUUID } from '../../../lib/validation';
-import * as memberHandlers from '../../api/routes/members-handlers';
+import * as memberHandlers from '../../services/members';
+import { sendInvitationEmail } from '../../services/shared/email';
 import type { AppEnv } from '../../types';
-import { sendInvitationEmail } from '../../utils/email';
 
 export const invitationsRoutes = new Hono<AppEnv>();
 

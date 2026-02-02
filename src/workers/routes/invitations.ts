@@ -3,8 +3,8 @@ import { Hono } from 'hono';
 import { API_ERROR_CODES } from '@/shared/constants/errors';
 import * as schema from '../../db/schema';
 import { isValidUUID } from '../../lib/validation';
-import * as memberHandlers from '../api/routes/members-handlers';
 import { authMiddleware } from '../middleware';
+import * as memberHandlers from '../services/members';
 import type { AppEnv } from '../types';
 
 export const invitationsRoutes = new Hono<AppEnv>();

@@ -4,9 +4,9 @@ import {
   type BalanceContext as BaseBalanceContext,
   calculateGroupBalances,
   verifyBalancesIntegrity,
-} from '../../utils/balance-calculation';
-import { calculateShares } from '../../utils/share-calculation';
-import { activeGroupMembersCondition, sqlInClause } from '../../utils/sql-helpers';
+} from './shared/balance-calculation';
+import { calculateShares } from './shared/share-calculation';
+import { activeGroupMembersCondition, sqlInClause } from './shared/sql-helpers';
 
 interface BalanceContext extends BaseBalanceContext {
   readonly userId: string;

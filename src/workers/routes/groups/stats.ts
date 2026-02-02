@@ -1,7 +1,7 @@
 import { zValidator } from '@hono/zod-validator';
 import { Hono } from 'hono';
 import { z } from 'zod';
-import * as balanceHandlers from '../../api/routes/balances-handlers';
+import * as balanceHandlers from '../../services/balances';
 import type { AppEnv } from '../../types';
 
 export const statsRoutes = new Hono<AppEnv>();

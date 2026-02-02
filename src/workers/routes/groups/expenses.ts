@@ -3,7 +3,7 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { API_ERROR_CODES } from '@/shared/constants/errors';
 import { isValidUUID } from '../../../lib/validation';
-import * as expenseHandlers from '../../api/routes/expenses-handlers';
+import * as expenseHandlers from '../../services/expenses';
 import type { AppEnv } from '../../types';
 
 export const expensesRoutes = new Hono<AppEnv>();

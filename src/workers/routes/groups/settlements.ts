@@ -3,7 +3,7 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { API_ERROR_CODES } from '@/shared/constants/errors';
 import { isValidUUID } from '../../../lib/validation';
-import * as settlementHandlers from '../../api/routes/settlements-handlers';
+import * as settlementHandlers from '../../services/settlements';
 import type { AppEnv } from '../../types';
 
 export const settlementsRoutes = new Hono<AppEnv>();

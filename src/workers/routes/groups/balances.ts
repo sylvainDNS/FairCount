@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import * as balanceHandlers from '../../api/routes/balances-handlers';
+import * as balanceHandlers from '../../services/balances';
 import type { AppEnv } from '../../types';
 
 export const balancesRoutes = new Hono<AppEnv>();

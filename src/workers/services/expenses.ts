@@ -1,12 +1,12 @@
 import { and, desc, eq, exists, gte, isNull, like, lte, sql } from 'drizzle-orm';
 import type { Database } from '@/db';
 import * as schema from '@/db/schema';
-import { calculateShares } from '../../utils/share-calculation';
+import { calculateShares } from './shared/share-calculation';
 import {
   activeGroupMembersCondition,
   buildCursorCondition,
   sqlInClause,
-} from '../../utils/sql-helpers';
+} from './shared/sql-helpers';
 
 interface ExpenseContext {
   readonly db: Database;
