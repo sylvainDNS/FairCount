@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { API_ERROR_CODES } from '@/shared/constants/errors';
 import { corsMiddleware, dbMiddleware, errorHandler } from './middleware';
-import { authRoutes, groupsRoutes, healthRoute } from './routes';
+import { authRoutes, groupsRoutes, healthRoute, invitationsRoutes } from './routes';
 import type { Env } from './types';
 
 const app = new Hono<{ Bindings: Env }>();
@@ -19,6 +19,7 @@ app.onError(errorHandler);
 app.route('/api/health', healthRoute);
 app.route('/api/auth', authRoutes);
 app.route('/api/groups', groupsRoutes);
+app.route('/api/invitations', invitationsRoutes);
 
 // 404 catch-all
 app.notFound((c) => {
