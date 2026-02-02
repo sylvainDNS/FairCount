@@ -1,8 +1,16 @@
-import { useCallback, useEffect, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { throwIfError, toTypedError } from '@/lib/api-error';
 import { invalidations } from '@/lib/query-invalidations';
+import { queryKeys } from '@/lib/query-keys';
 import { invitationsApi } from '../api/invitations';
 import type { GroupError, GroupResult, InvitationDetails } from '../types';
+
+const VALID_ERRORS = [
+  'UNKNOWN_ERROR',
+  'INVITATION_NOT_FOUND',
+  'INVITATION_EXPIRED',
+  'INVITATION_USED',
+] as const;
 
 interface UseAcceptInvitationResult {
   readonly invitation: InvitationDetails | null;
@@ -13,48 +21,39 @@ interface UseAcceptInvitationResult {
 
 export const useAcceptInvitation = (token: string): UseAcceptInvitationResult => {
   const queryClient = useQueryClient();
-  const [invitation, setInvitation] = useState<InvitationDetails | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<GroupError | null>(null);
 
-  useEffect(() => {
-    const fetchInvitation = async () => {
-      if (!token) return;
-      try {
-        setIsLoading(true);
-        const data = await invitationsApi.getByToken(token);
-        if ('error' in data) {
-          setError(data.error as GroupError);
-          return;
-        }
-        setInvitation(data);
-      } catch {
-        setError('UNKNOWN_ERROR');
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const { data, isLoading, error } = useQuery<InvitationDetails>({
+    queryKey: queryKeys.invitations.byToken(token),
+    queryFn: async () => {
+      const result = await invitationsApi.getByToken(token);
+      return throwIfError(result);
+    },
+    enabled: !!token,
+  });
 
-    fetchInvitation();
-  }, [token]);
-
-  const accept = useCallback(async (): Promise<GroupResult<{ groupId: string }>> => {
-    try {
+  const acceptMutation = useMutation<{ groupId: string }, Error>({
+    mutationFn: async () => {
       const result = await invitationsApi.accept(token);
-      if ('error' in result) {
-        return { success: false, error: result.error as GroupError };
-      }
-      invalidations.afterInvitationAccept(queryClient, result.groupId);
+      return throwIfError(result);
+    },
+    onSuccess: (data) => {
+      invalidations.afterInvitationAccept(queryClient, data.groupId);
+    },
+  });
+
+  const accept = async (): Promise<GroupResult<{ groupId: string }>> => {
+    try {
+      const result = await acceptMutation.mutateAsync();
       return { success: true, data: { groupId: result.groupId } };
-    } catch {
-      return { success: false, error: 'UNKNOWN_ERROR' };
+    } catch (err) {
+      return { success: false, error: toTypedError(err, VALID_ERRORS) as GroupError };
     }
-  }, [token, queryClient]);
+  };
 
   return {
-    invitation,
+    invitation: data ?? null,
     isLoading,
-    error,
+    error: error ? (toTypedError(error, VALID_ERRORS) as GroupError) : null,
     accept,
   };
 };
