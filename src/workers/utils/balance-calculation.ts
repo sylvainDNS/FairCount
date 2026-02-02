@@ -1,6 +1,6 @@
 import { and, eq, isNull } from 'drizzle-orm';
-import type { Database } from '../../../db';
-import * as schema from '../../../db/schema';
+import type { Database } from '@/db';
+import * as schema from '@/db/schema';
 import { calculateShares } from './share-calculation';
 import { activeGroupMembersCondition, sqlInClause } from './sql-helpers';
 

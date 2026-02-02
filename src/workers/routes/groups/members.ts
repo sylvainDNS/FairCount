@@ -1,8 +1,8 @@
 import { zValidator } from '@hono/zod-validator';
 import { Hono } from 'hono';
 import { z } from 'zod';
+import { API_ERROR_CODES } from '@/shared/constants/errors';
 import { isValidUUID } from '../../../lib/validation';
-import { API_ERROR_CODES } from '../../../shared/constants/errors';
 import * as memberHandlers from '../../api/routes/members-handlers';
 import type { AppEnv } from '../../types';
 

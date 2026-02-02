@@ -1,5 +1,5 @@
 import { WorkerMailer } from 'worker-mailer';
-import type { Env } from '../../types';
+import type { Env } from '../types';
 
 interface InvitationEmailData {
   readonly to: string;

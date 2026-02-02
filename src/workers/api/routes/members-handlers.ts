@@ -1,6 +1,6 @@
 import { and, count, eq, isNull } from 'drizzle-orm';
-import type { Database } from '../../../db';
-import * as schema from '../../../db/schema';
+import type { Database } from '@/db';
+import * as schema from '@/db/schema';
 
 interface MemberContext {
   readonly db: Database;

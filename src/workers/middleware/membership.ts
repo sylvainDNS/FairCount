@@ -1,8 +1,8 @@
 import { and, eq, isNull } from 'drizzle-orm';
 import { createMiddleware } from 'hono/factory';
 import { HTTPException } from 'hono/http-exception';
+import { API_ERROR_CODES } from '@/shared/constants/errors';
 import { groupMembers } from '../../db/schema';
-import { API_ERROR_CODES } from '../../shared/constants/errors';
 import type { AppEnv } from '../types';
 
 export const membershipMiddleware = createMiddleware<AppEnv>(async (c, next) => {

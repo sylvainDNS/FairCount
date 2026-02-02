@@ -1,6 +1,6 @@
 import type { ErrorHandler } from 'hono';
 import { HTTPException } from 'hono/http-exception';
-import { API_ERROR_CODES } from '../../shared/constants/errors';
+import { API_ERROR_CODES } from '@/shared/constants/errors';
 
 export const errorHandler: ErrorHandler = (err, c) => {
   console.error('Error:', err);

@@ -1,12 +1,12 @@
 import { and, eq, gte, isNull, sql } from 'drizzle-orm';
-import * as schema from '../../../db/schema';
+import * as schema from '@/db/schema';
 import {
   type BalanceContext as BaseBalanceContext,
   calculateGroupBalances,
   verifyBalancesIntegrity,
-} from '../utils/balance-calculation';
-import { calculateShares } from '../utils/share-calculation';
-import { activeGroupMembersCondition, sqlInClause } from '../utils/sql-helpers';
+} from '../../utils/balance-calculation';
+import { calculateShares } from '../../utils/share-calculation';
+import { activeGroupMembersCondition, sqlInClause } from '../../utils/sql-helpers';
 
 interface BalanceContext extends BaseBalanceContext {
   readonly userId: string;

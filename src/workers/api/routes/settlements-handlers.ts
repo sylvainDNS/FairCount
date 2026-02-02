@@ -1,11 +1,11 @@
 import { and, desc, eq, isNull, sql } from 'drizzle-orm';
-import * as schema from '../../../db/schema';
+import * as schema from '@/db/schema';
 import {
   type BalanceContext as BaseBalanceContext,
   calculateGroupBalances,
-} from '../utils/balance-calculation';
-import { calculateOptimalSettlements } from '../utils/optimize-settlements';
-import { buildCursorCondition } from '../utils/sql-helpers';
+} from '../../utils/balance-calculation';
+import { calculateOptimalSettlements } from '../../utils/optimize-settlements';
+import { buildCursorCondition } from '../../utils/sql-helpers';
 
 interface SettlementContext extends BaseBalanceContext {
   readonly userId: string;

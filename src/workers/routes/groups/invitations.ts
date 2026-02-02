@@ -2,12 +2,12 @@ import { zValidator } from '@hono/zod-validator';
 import { and, eq, gt, isNull } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { z } from 'zod';
+import { API_ERROR_CODES } from '@/shared/constants/errors';
 import * as schema from '../../../db/schema';
 import { isValidUUID } from '../../../lib/validation';
-import { API_ERROR_CODES } from '../../../shared/constants/errors';
 import * as memberHandlers from '../../api/routes/members-handlers';
-import { sendInvitationEmail } from '../../api/utils/email';
 import type { AppEnv } from '../../types';
+import { sendInvitationEmail } from '../../utils/email';
 
 export const invitationsRoutes = new Hono<AppEnv>();
 

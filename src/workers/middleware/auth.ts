@@ -1,6 +1,6 @@
 import { createMiddleware } from 'hono/factory';
 import { HTTPException } from 'hono/http-exception';
-import { API_ERROR_CODES } from '../../shared/constants/errors';
+import { API_ERROR_CODES } from '@/shared/constants/errors';
 import type { AppEnv } from '../types';
 
 export const authMiddleware = createMiddleware<AppEnv>(async (c, next) => {

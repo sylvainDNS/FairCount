@@ -1,8 +1,8 @@
 import { and, eq, isNull } from 'drizzle-orm';
 import { Hono } from 'hono';
+import { API_ERROR_CODES } from '@/shared/constants/errors';
 import * as schema from '../../db/schema';
 import { isValidUUID } from '../../lib/validation';
-import { API_ERROR_CODES } from '../../shared/constants/errors';
 import * as memberHandlers from '../api/routes/members-handlers';
 import { authMiddleware } from '../middleware';
 import type { AppEnv } from '../types';

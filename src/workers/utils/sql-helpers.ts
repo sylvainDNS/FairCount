@@ -1,6 +1,6 @@
 import { and, eq, isNull, lt, type SQL, sql } from 'drizzle-orm';
 import type { SQLiteColumn } from 'drizzle-orm/sqlite-core';
-import * as schema from '../../../db/schema';
+import * as schema from '@/db/schema';
 
 /**
  * Build SQL IN clause for a list of IDs.
