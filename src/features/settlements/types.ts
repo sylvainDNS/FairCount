@@ -8,8 +8,8 @@ export interface CreateSettlementFormData {
   readonly date: string; // YYYY-MM-DD
 }
 
-// Settlement summary for list display
-export interface SettlementSummary {
+// Settlement item for list display
+export interface SettlementListItem {
   readonly id: string;
   readonly groupId: string;
   readonly fromMember: {
@@ -32,7 +32,7 @@ export type SettlementFilter = 'all' | 'sent' | 'received';
 
 // Paginated response
 export interface SettlementsPage {
-  readonly settlements: ReadonlyArray<SettlementSummary>;
+  readonly settlements: ReadonlyArray<SettlementListItem>;
   readonly nextCursor: string | null;
   readonly hasMore: boolean;
 }

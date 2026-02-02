@@ -28,8 +28,8 @@ export interface ExpenseWithShare {
   readonly isPayer: boolean; // est-ce que c'est moi qui ai payé
 }
 
-// Remboursement pour le détail
-export interface SettlementSummary {
+// Remboursement pour le détail de balance
+export interface BalanceSettlement {
   readonly id: string;
   readonly date: string;
   readonly amount: number;
@@ -44,7 +44,7 @@ export interface SettlementSummary {
 export interface BalanceDetail {
   readonly balance: Balance;
   readonly expenses: ReadonlyArray<ExpenseWithShare>;
-  readonly settlements: ReadonlyArray<SettlementSummary>;
+  readonly settlements: ReadonlyArray<BalanceSettlement>;
 }
 
 // Statistiques par membre

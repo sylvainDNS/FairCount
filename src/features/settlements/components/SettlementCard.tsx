@@ -1,8 +1,8 @@
 import { formatCurrency } from '@/shared/utils/format';
-import type { SettlementSummary } from '../types';
+import type { SettlementListItem } from '../types';
 
 interface SettlementCardProps {
-  readonly settlement: SettlementSummary;
+  readonly settlement: SettlementListItem;
   readonly currency: string;
   readonly onDelete?: (() => void) | undefined;
 }

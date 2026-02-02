@@ -5,7 +5,7 @@ import { Button } from '@/shared/components/Button';
 import { useInfiniteLoad } from '@/shared/hooks/useInfiniteLoad';
 import { useSettlement } from '../hooks/useSettlement';
 import { useSettlements } from '../hooks/useSettlements';
-import type { SettlementFilter, SettlementSummary } from '../types';
+import type { SettlementFilter, SettlementListItem } from '../types';
 import { SETTLEMENT_ERROR_MESSAGES } from '../types';
 import { SettlementCard } from './SettlementCard';
 
@@ -27,7 +27,7 @@ export const SettlementHistory = ({ groupId, currency }: SettlementHistoryProps)
     useSettlements(groupId);
   const { remove } = useSettlement(groupId);
 
-  const [settlementToDelete, setSettlementToDelete] = useState<SettlementSummary | null>(null);
+  const [settlementToDelete, setSettlementToDelete] = useState<SettlementListItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 

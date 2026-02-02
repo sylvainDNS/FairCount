@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { settlementsApi } from '../api';
-import type { SettlementError, SettlementFilter, SettlementSummary } from '../types';
+import type { SettlementError, SettlementFilter, SettlementListItem } from '../types';
 
 interface UseSettlementsResult {
-  readonly settlements: SettlementSummary[];
+  readonly settlements: SettlementListItem[];
   readonly isLoading: boolean;
   readonly isLoadingMore: boolean;
   readonly error: SettlementError | null;
@@ -15,7 +15,7 @@ interface UseSettlementsResult {
 }
 
 export const useSettlements = (groupId: string): UseSettlementsResult => {
-  const [settlements, setSettlements] = useState<SettlementSummary[]>([]);
+  const [settlements, setSettlements] = useState<SettlementListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<SettlementError | null>(null);

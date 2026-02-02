@@ -593,9 +593,9 @@ Renommer les deux types `SettlementSummary` pour éviter la confusion :
 - `settlements/types.ts` : Renommer en `SettlementListItem`
 
 **Critères de validation :**
-- [ ] Types renommés avec noms explicites
-- [ ] Mise à jour des imports dans les composants utilisant ces types
-- [ ] Aucune erreur TypeScript
+- [x] Types renommés avec noms explicites
+- [x] Mise à jour des imports dans les composants utilisant ces types
+- [x] Aucune erreur TypeScript
 
 ---
 
@@ -620,8 +620,8 @@ export const SETTLEMENT_ERROR_MESSAGES = {
 ```
 
 **Critères de validation :**
-- [ ] Pattern `as const satisfies` utilisé
-- [ ] Cohérence avec les autres fichiers types.ts
+- [x] Pattern `as const satisfies` utilisé
+- [x] Cohérence avec les autres fichiers types.ts
 
 ---
 

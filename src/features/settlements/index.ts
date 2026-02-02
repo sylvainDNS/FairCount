@@ -12,9 +12,9 @@ export type {
   CreateSettlementFormData,
   SettlementError,
   SettlementFilter,
+  SettlementListItem,
   SettlementResult,
   SettlementSuggestion,
-  SettlementSummary,
   SettlementsPage,
 } from './types';
 export { SETTLEMENT_ERROR_MESSAGES } from './types';

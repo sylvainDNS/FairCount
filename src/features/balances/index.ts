@@ -14,12 +14,12 @@ export type {
   Balance,
   BalanceDetail as BalanceDetailType,
   BalanceError,
+  BalanceSettlement,
   BalancesResponse,
   ExpenseWithShare,
   GroupStats,
   MemberStats,
   MonthlyStats,
-  SettlementSummary,
   StatsPeriod,
 } from './types';
 export { BALANCE_ERROR_MESSAGES } from './types';
