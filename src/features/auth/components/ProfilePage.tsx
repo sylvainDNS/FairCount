@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/shared/components/Button';
-import { TextInput } from '@/shared/components/TextInput';
+import { Button, Spinner, TextInput } from '@/shared/components';
 import { useAuth } from '../hooks/useAuth';
 import { AUTH_ERROR_MESSAGES, type AuthError } from '../types';
 
@@ -53,7 +52,7 @@ export const ProfilePage = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin h-8 w-8 border-2 border-blue-500 border-t-transparent rounded-full" />
+        <Spinner size="lg" className="text-blue-500" />
       </div>
     );
   }

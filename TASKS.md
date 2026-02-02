@@ -549,9 +549,9 @@ import { Spinner } from '@/shared/components';
 ```
 
 **Critères de validation :**
-- [ ] Import de `Spinner` depuis `@/shared/components`
-- [ ] Suppression des spinners inline
-- [ ] Tailles appropriées (`sm`, `md`, `lg`)
+- [x] Import de `Spinner` depuis `@/shared/components`
+- [x] Suppression des spinners inline
+- [x] Tailles appropriées (`sm`, `md`, `lg`)
 
 ---
 
