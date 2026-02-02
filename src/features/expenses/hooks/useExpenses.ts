@@ -1,6 +1,14 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useInfiniteQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { throwIfError, toTypedError } from '@/lib/api-error';
+import { queryKeys } from '@/lib/query-keys';
 import { expensesApi } from '../api';
-import type { ExpenseError, ExpenseFilters, ExpenseSummary } from '../types';
+import {
+  EXPENSE_ERROR_MESSAGES,
+  type ExpenseError,
+  type ExpenseFilters,
+  type ExpenseSummary,
+} from '../types';
 
 interface UseExpensesResult {
   readonly expenses: ExpenseSummary[];
@@ -14,85 +22,46 @@ interface UseExpensesResult {
   readonly refresh: () => Promise<void>;
 }
 
+// Valid expense error types for toTypedError
+const VALID_EXPENSE_ERRORS = Object.keys(
+  EXPENSE_ERROR_MESSAGES,
+) as const satisfies readonly ExpenseError[];
+
 export const useExpenses = (groupId: string): UseExpensesResult => {
-  const [expenses, setExpenses] = useState<ExpenseSummary[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [error, setError] = useState<ExpenseError | null>(null);
-  const [hasMore, setHasMore] = useState(false);
-  const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [filters, setFiltersState] = useState<ExpenseFilters>({});
 
-  const fetchExpenses = useCallback(
-    async (cursor?: string, append = false) => {
-      if (!groupId) return;
-
-      if (append) {
-        setIsLoadingMore(true);
-      } else {
-        setIsLoading(true);
-        setError(null);
-      }
-
-      try {
+  const { data, isLoading, isFetchingNextPage, error, hasNextPage, fetchNextPage, refetch } =
+    useInfiniteQuery({
+      queryKey: queryKeys.expenses.infinite(groupId, filters),
+      queryFn: async ({ pageParam }) => {
         const result = await expensesApi.list(groupId, {
           ...filters,
-          ...(cursor ? { cursor } : {}),
+          cursor: pageParam,
           limit: 20,
         });
+        return throwIfError(result);
+      },
+      initialPageParam: undefined as string | undefined,
+      getNextPageParam: (lastPage) =>
+        lastPage.hasMore ? (lastPage.nextCursor ?? undefined) : undefined,
+      enabled: !!groupId,
+    });
 
-        if ('error' in result) {
-          setError((result.error as ExpenseError) || 'UNKNOWN_ERROR');
-          return;
-        }
-
-        if (append) {
-          setExpenses((prev) => [...prev, ...result.expenses]);
-        } else {
-          setExpenses([...result.expenses]);
-        }
-
-        setNextCursor(result.nextCursor);
-        setHasMore(result.hasMore);
-      } catch {
-        setError('UNKNOWN_ERROR');
-      } finally {
-        setIsLoading(false);
-        setIsLoadingMore(false);
-      }
-    },
-    [groupId, filters],
-  );
-
-  useEffect(() => {
-    fetchExpenses();
-  }, [fetchExpenses]);
-
-  const setFilters = useCallback((newFilters: ExpenseFilters) => {
-    setFiltersState(newFilters);
-    // Reset pagination when filters change
-    setNextCursor(null);
-  }, []);
-
-  const loadMore = useCallback(async () => {
-    if (!hasMore || isLoadingMore || !nextCursor) return;
-    await fetchExpenses(nextCursor, true);
-  }, [hasMore, isLoadingMore, nextCursor, fetchExpenses]);
-
-  const refresh = useCallback(async () => {
-    setNextCursor(null);
-    await fetchExpenses();
-  }, [fetchExpenses]);
+  const expenses = data?.pages.flatMap((page) => page.expenses) ?? [];
 
   return {
     expenses,
     isLoading,
-    isLoadingMore,
-    error,
-    hasMore,
+    isLoadingMore: isFetchingNextPage,
+    error: error ? toTypedError(error, VALID_EXPENSE_ERRORS) : null,
+    hasMore: hasNextPage ?? false,
     filters,
-    setFilters,
-    loadMore,
-    refresh,
+    setFilters: setFiltersState,
+    loadMore: async () => {
+      if (hasNextPage) await fetchNextPage();
+    },
+    refresh: async () => {
+      await refetch();
+    },
   };
 };

@@ -1,6 +1,14 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useInfiniteQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { throwIfError, toTypedError } from '@/lib/api-error';
+import { queryKeys } from '@/lib/query-keys';
 import { settlementsApi } from '../api';
-import type { SettlementError, SettlementFilter, SettlementListItem } from '../types';
+import {
+  SETTLEMENT_ERROR_MESSAGES,
+  type SettlementError,
+  type SettlementFilter,
+  type SettlementListItem,
+} from '../types';
 
 interface UseSettlementsResult {
   readonly settlements: SettlementListItem[];
@@ -14,85 +22,46 @@ interface UseSettlementsResult {
   readonly refresh: () => Promise<void>;
 }
 
+// Valid settlement error types for toTypedError
+const VALID_SETTLEMENT_ERRORS = Object.keys(
+  SETTLEMENT_ERROR_MESSAGES,
+) as const satisfies readonly SettlementError[];
+
 export const useSettlements = (groupId: string): UseSettlementsResult => {
-  const [settlements, setSettlements] = useState<SettlementListItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [error, setError] = useState<SettlementError | null>(null);
-  const [hasMore, setHasMore] = useState(false);
-  const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [filter, setFilterState] = useState<SettlementFilter>('all');
 
-  const fetchSettlements = useCallback(
-    async (cursor?: string, append = false) => {
-      if (!groupId) return;
-
-      if (append) {
-        setIsLoadingMore(true);
-      } else {
-        setIsLoading(true);
-        setError(null);
-      }
-
-      try {
+  const { data, isLoading, isFetchingNextPage, error, hasNextPage, fetchNextPage, refetch } =
+    useInfiniteQuery({
+      queryKey: queryKeys.settlements.infinite(groupId, filter),
+      queryFn: async ({ pageParam }) => {
         const result = await settlementsApi.list(groupId, {
           filter,
-          ...(cursor ? { cursor } : {}),
+          cursor: pageParam,
           limit: 20,
         });
+        return throwIfError(result);
+      },
+      initialPageParam: undefined as string | undefined,
+      getNextPageParam: (lastPage) =>
+        lastPage.hasMore ? (lastPage.nextCursor ?? undefined) : undefined,
+      enabled: !!groupId,
+    });
 
-        if ('error' in result) {
-          setError((result.error as SettlementError) || 'UNKNOWN_ERROR');
-          return;
-        }
-
-        if (append) {
-          setSettlements((prev) => [...prev, ...result.settlements]);
-        } else {
-          setSettlements([...result.settlements]);
-        }
-
-        setNextCursor(result.nextCursor);
-        setHasMore(result.hasMore);
-      } catch {
-        setError('UNKNOWN_ERROR');
-      } finally {
-        setIsLoading(false);
-        setIsLoadingMore(false);
-      }
-    },
-    [groupId, filter],
-  );
-
-  useEffect(() => {
-    fetchSettlements();
-  }, [fetchSettlements]);
-
-  const setFilter = useCallback((newFilter: SettlementFilter) => {
-    setFilterState(newFilter);
-    // Reset pagination when filter changes
-    setNextCursor(null);
-  }, []);
-
-  const loadMore = useCallback(async () => {
-    if (!hasMore || isLoadingMore || !nextCursor) return;
-    await fetchSettlements(nextCursor, true);
-  }, [hasMore, isLoadingMore, nextCursor, fetchSettlements]);
-
-  const refresh = useCallback(async () => {
-    setNextCursor(null);
-    await fetchSettlements();
-  }, [fetchSettlements]);
+  const settlements = data?.pages.flatMap((page) => page.settlements) ?? [];
 
   return {
     settlements,
     isLoading,
-    isLoadingMore,
-    error,
-    hasMore,
+    isLoadingMore: isFetchingNextPage,
+    error: error ? toTypedError(error, VALID_SETTLEMENT_ERRORS) : null,
+    hasMore: hasNextPage ?? false,
     filter,
-    setFilter,
-    loadMore,
-    refresh,
+    setFilter: setFilterState,
+    loadMore: async () => {
+      if (hasNextPage) await fetchNextPage();
+    },
+    refresh: async () => {
+      await refetch();
+    },
   };
 };
