@@ -32,10 +32,12 @@ export const invalidations = {
   // Invitations
   afterInvitationSend: (queryClient: QueryClient, groupId: string) => {
     queryClient.invalidateQueries({ queryKey: queryKeys.invitations.list(groupId) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.groups.detail(groupId) });
   },
 
   afterInvitationCancel: (queryClient: QueryClient, groupId: string) => {
     queryClient.invalidateQueries({ queryKey: queryKeys.invitations.list(groupId) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.groups.detail(groupId) });
   },
 
   afterInvitationAccept: (queryClient: QueryClient, groupId: string) => {
