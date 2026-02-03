@@ -89,12 +89,12 @@ pnpm exec wrangler secret put SMTP_FROM      # e.g., noreply@faircount.app
 
 These are configured in `wrangler.toml` and are public (non-sensitive).
 
-| Variable | Default | Production |
-|----------|---------|------------|
-| `APP_URL` | `http://localhost:3000` | `https://faircount.app` |
-| `APP_NAME` | `FairCount` | `FairCount` |
+| Variable | Value in `wrangler.toml` | Local override in `.dev.vars` |
+|----------|--------------------------|-------------------------------|
+| `APP_URL` | `https://faircount.sylvaindenyse.me` | `http://localhost:3000` |
+| `APP_NAME` | `FairCount` | - |
 
-Production values are set in `[env.production]` section of `wrangler.toml`.
+For local development, copy `.dev.vars.example` to `.dev.vars` to override production values.
 
 ## 5. Database Migrations
 

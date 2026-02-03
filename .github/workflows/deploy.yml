@@ -27,6 +27,8 @@ jobs:
 
       - name: Build
         run: pnpm build
+        env:
+          VITE_API_URL: https://api.faircount.sylvaindenyse.me
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
