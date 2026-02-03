@@ -35,6 +35,9 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy dist --project-name=faircount
 
+      - name: Configure D1 Database ID
+        run: sed -i 's/database_id = "local"/database_id = "${{ secrets.CLOUDFLARE_D1_DATABASE_ID }}"/' wrangler.toml
+
       - name: Deploy Worker
         uses: cloudflare/wrangler-action@v3
         with:
