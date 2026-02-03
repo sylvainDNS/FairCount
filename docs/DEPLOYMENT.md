@@ -1,161 +1,124 @@
 # Deployment Guide
 
-This guide explains how to deploy FairCount to Cloudflare.
+## Quick Reference: Where to Configure What
 
-## Prerequisites
+| What | Where | When used |
+|------|-------|-----------|
+| `CLOUDFLARE_API_TOKEN` | GitHub Secrets | Deploy time |
+| `CLOUDFLARE_ACCOUNT_ID` | GitHub Secrets | Deploy time |
+| `CLOUDFLARE_D1_DATABASE_ID` | GitHub Secrets | Deploy time |
+| `APP_URL` | GitHub Variables | Deploy time (injected into Worker) |
+| `API_URL` | GitHub Variables | Build time (frontend) |
+| `AUTH_SECRET` | Cloudflare Secrets | Runtime (Worker) |
+| `SMTP_*` | Cloudflare Secrets | Runtime (Worker) |
 
-- Cloudflare account
-- GitHub repository with Actions enabled
-- Domain configured (optional)
+## Step-by-Step Setup
 
-## Architecture
-
-- **Frontend**: Cloudflare Pages (`faircount`)
-- **Backend**: Cloudflare Worker (`faircount-api`)
-- **Database**: Cloudflare D1 (`faircount-db`)
-- **Storage**: Cloudflare R2 (`faircount-storage`) - optional
-
-## 1. Create Cloudflare Resources
-
-### D1 Database
+### 1. Create Cloudflare Resources
 
 ```bash
+# D1 Database
 pnpm exec wrangler d1 create faircount-db
-```
+# → Save the database_id
 
-Save the `database_id` for later.
-
-### Pages Project
-
-```bash
+# Pages Project
 pnpm exec wrangler pages project create faircount
 ```
 
-### R2 Bucket (optional)
+### 2. Configure GitHub (Settings → Secrets and variables → Actions)
+
+#### Secrets (sensitive)
+
+| Name | Value |
+|------|-------|
+| `CLOUDFLARE_API_TOKEN` | [Create token](https://dash.cloudflare.com/profile/api-tokens) |
+| `CLOUDFLARE_ACCOUNT_ID` | Dashboard → Overview → Account ID |
+| `CLOUDFLARE_D1_DATABASE_ID` | UUID from step 1 |
+
+#### Variables (non-sensitive)
+
+| Name | Value | Description |
+|------|-------|-------------|
+| `APP_URL` | `https://faircount.sylvaindenyse.me` | Frontend URL (for CORS) |
+| `API_URL` | `https://api.faircount.sylvaindenyse.me` | API URL (for frontend) |
+
+### 3. Configure Cloudflare Worker Secrets
+
+These are runtime secrets used by the Worker. Run these commands:
 
 ```bash
-pnpm exec wrangler r2 bucket create faircount-storage
-```
-
-## 2. Configure GitHub Secrets
-
-Go to your GitHub repository → **Settings** → **Secrets and variables** → **Actions**.
-
-Add these secrets:
-
-| Secret | Description | How to get it |
-|--------|-------------|---------------|
-| `CLOUDFLARE_API_TOKEN` | API token for deployments | [Create token](https://dash.cloudflare.com/profile/api-tokens) |
-| `CLOUDFLARE_ACCOUNT_ID` | Your Cloudflare account ID | Dashboard → Workers & Pages → Account ID |
-| `CLOUDFLARE_D1_DATABASE_ID` | D1 database UUID | From `wrangler d1 create` output |
-
-### API Token Permissions
-
-Create a custom token with these permissions:
-
-- **Account** → Cloudflare Pages: Edit
-- **Account** → Workers Scripts: Edit
-- **Account** → D1: Edit (if running migrations in CI)
-- **Account** → Workers R2 Storage: Edit (if using R2)
-
-## 3. Configure Cloudflare Worker Secrets
-
-These secrets are stored in Cloudflare (not GitHub) and used at runtime by the Worker.
-
-```bash
-# Authentication (generate with: openssl rand -base64 32)
 pnpm exec wrangler secret put AUTH_SECRET
+# → Paste output of: openssl rand -base64 32
 
-# SMTP Configuration
-pnpm exec wrangler secret put SMTP_HOST      # e.g., smtp.protonmail.ch
-pnpm exec wrangler secret put SMTP_PORT      # e.g., 587
-pnpm exec wrangler secret put SMTP_USER      # e.g., noreply@faircount.app
-pnpm exec wrangler secret put SMTP_PASS      # your SMTP password
-pnpm exec wrangler secret put SMTP_FROM      # e.g., noreply@faircount.app
+pnpm exec wrangler secret put SMTP_HOST
+# → e.g., smtp.protonmail.ch
+
+pnpm exec wrangler secret put SMTP_PORT
+# → e.g., 587
+
+pnpm exec wrangler secret put SMTP_USER
+# → e.g., noreply@faircount.app
+
+pnpm exec wrangler secret put SMTP_PASS
+# → Your SMTP password
+
+pnpm exec wrangler secret put SMTP_FROM
+# → e.g., noreply@faircount.app
 ```
 
-### Secrets Reference
+### 4. Deploy
 
-| Secret | Description | Example |
-|--------|-------------|---------|
-| `AUTH_SECRET` | Session encryption key (32+ chars) | `openssl rand -base64 32` |
-| `SMTP_HOST` | SMTP server hostname | `smtp.protonmail.ch` |
-| `SMTP_PORT` | SMTP server port | `587` |
-| `SMTP_USER` | SMTP username/email | `noreply@faircount.app` |
-| `SMTP_PASS` | SMTP password | - |
-| `SMTP_FROM` | Sender email address | `noreply@faircount.app` |
-
-## 4. Environment Variables
-
-These are configured in `wrangler.toml` and are public (non-sensitive).
-
-| Variable | Value in `wrangler.toml` | Local override in `.dev.vars` |
-|----------|--------------------------|-------------------------------|
-| `APP_URL` | `https://faircount.sylvaindenyse.me` | `http://localhost:3000` |
-| `APP_NAME` | `FairCount` | - |
-
-For local development, copy `.dev.vars.example` to `.dev.vars` to override production values.
-
-## 5. Database Migrations
-
-### Run migrations manually
-
-```bash
-# Local
-pnpm db:migrate
-
-# Production
-pnpm exec wrangler d1 migrations apply faircount-db --remote
-```
-
-### Run migrations in CI (optional)
-
-Add this step to `.github/workflows/deploy.yml` before deploying the Worker:
-
-```yaml
-- name: Run D1 Migrations
-  uses: cloudflare/wrangler-action@v3
-  with:
-    apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-    accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-    command: d1 migrations apply faircount-db --remote
-```
-
-## 6. Deploy
-
-Push to `main` branch to trigger automatic deployment:
+Push to `main` to trigger deployment:
 
 ```bash
 git push origin main
 ```
 
-Or deploy manually:
+## Local Development
+
+For local development, you only need `.dev.vars`:
 
 ```bash
-# Build frontend
-pnpm build
+cp .dev.vars.example .dev.vars
+# Edit .dev.vars with your local values
+```
 
-# Deploy Pages
-pnpm exec wrangler pages deploy dist --project-name=faircount
+The `wrangler.toml` already has local defaults (`APP_URL = http://localhost:3000`).
 
-# Deploy Worker
-pnpm exec wrangler deploy
+## Summary
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    LOCAL DEVELOPMENT                         │
+├─────────────────────────────────────────────────────────────┤
+│  wrangler.toml     → APP_URL, APP_NAME (localhost values)   │
+│  .dev.vars         → AUTH_SECRET, SMTP_* (local secrets)    │
+│  pnpm dev          → Frontend on :3000                      │
+│  pnpm worker:dev   → Worker on :8787                        │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│                      PRODUCTION                              │
+├─────────────────────────────────────────────────────────────┤
+│  GitHub Secrets    → CLOUDFLARE_* (deploy credentials)      │
+│  GitHub Variables  → APP_URL, API_URL (injected at deploy)  │
+│  Cloudflare Secrets→ AUTH_SECRET, SMTP_* (runtime secrets)  │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ## Troubleshooting
 
 ### "Project not found" error
-Create the Pages project first: `wrangler pages project create faircount`
+Create the Pages project: `wrangler pages project create faircount`
 
-### "binding DB of type d1 must have a valid id" error
-Set the `CLOUDFLARE_D1_DATABASE_ID` GitHub secret with your D1 database ID.
+### "binding DB must have a valid id" error
+Add `CLOUDFLARE_D1_DATABASE_ID` to GitHub Secrets.
 
-### "Authentication error" for R2
-Either add R2 permissions to your API token, or comment out the R2 section in `wrangler.toml` if not using storage yet.
+### Frontend calls localhost:8787 in production
+Add `API_URL` to GitHub Variables (not Secrets).
 
-### SMTP errors
-Verify your SMTP credentials are correct. Test locally first with Mailpit:
-```bash
-docker compose up -d
-# Access Mailpit UI at http://localhost:8025
-```
+### CORS errors
+Check `APP_URL` in GitHub Variables matches your frontend domain exactly.
+
+### Authentication/magic link emails not sent
+Verify Cloudflare Worker secrets are set: `wrangler secret list`

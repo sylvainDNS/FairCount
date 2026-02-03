@@ -19,8 +19,8 @@ migrations_dir = "drizzle/migrations"
 # binding = "STORAGE"
 # bucket_name = "faircount-storage"
 
-# Environment variables (secrets should be set via wrangler secret)
-# Note: These are production values. Local dev uses .dev.vars overrides.
+# Environment variables
+# Note: These are LOCAL values. Production values are injected by GitHub Actions.
 [vars]
-APP_URL = "https://faircount.sylvaindenyse.me"
+APP_URL = "http://localhost:3000"
 APP_NAME = "FairCount"

@@ -28,7 +28,7 @@ jobs:
       - name: Build
         run: pnpm build
         env:
-          VITE_API_URL: https://api.faircount.sylvaindenyse.me
+          VITE_API_URL: ${{ vars.API_URL }}
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
@@ -37,8 +37,10 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy dist --project-name=faircount
 
-      - name: Configure D1 Database ID
-        run: sed -i 's/database_id = "local"/database_id = "${{ secrets.CLOUDFLARE_D1_DATABASE_ID }}"/' wrangler.toml
+      - name: Configure Worker for production
+        run: |
+          sed -i 's|database_id = "local"|database_id = "${{ secrets.CLOUDFLARE_D1_DATABASE_ID }}"|' wrangler.toml
+          sed -i 's|APP_URL = "http://localhost:3000"|APP_URL = "${{ vars.APP_URL }}"|' wrangler.toml
 
       - name: Deploy Worker
         uses: cloudflare/wrangler-action@v3
