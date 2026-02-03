@@ -8,12 +8,12 @@ import type {
 
 export const groupsApi = {
   list: async (): Promise<GroupListItem[] | { error: string }> => {
-    const res = await fetchWithAuth('/api/groups');
+    const res = await fetchWithAuth('/groups');
     return res.json();
   },
 
   create: async (data: CreateGroupFormData): Promise<{ id: string } | { error: string }> => {
-    const res = await fetchWithAuth('/api/groups', {
+    const res = await fetchWithAuth('/groups', {
       method: 'POST',
       body: JSON.stringify(data),
     });
@@ -21,7 +21,7 @@ export const groupsApi = {
   },
 
   get: async (id: string): Promise<GroupWithMembers | { error: string }> => {
-    const res = await fetchWithAuth(`/api/groups/${id}`);
+    const res = await fetchWithAuth(`/groups/${id}`);
     return res.json();
   },
 
@@ -29,7 +29,7 @@ export const groupsApi = {
     id: string,
     data: UpdateGroupFormData,
   ): Promise<{ success: boolean } | { error: string }> => {
-    const res = await fetchWithAuth(`/api/groups/${id}`, {
+    const res = await fetchWithAuth(`/groups/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
     });
@@ -37,7 +37,7 @@ export const groupsApi = {
   },
 
   delete: async (id: string): Promise<{ success: boolean } | { error: string }> => {
-    const res = await fetchWithAuth(`/api/groups/${id}`, {
+    const res = await fetchWithAuth(`/groups/${id}`, {
       method: 'DELETE',
     });
     return res.json();
@@ -46,14 +46,14 @@ export const groupsApi = {
   archive: async (
     id: string,
   ): Promise<{ success: boolean; isArchived: boolean } | { error: string }> => {
-    const res = await fetchWithAuth(`/api/groups/${id}/archive`, {
+    const res = await fetchWithAuth(`/groups/${id}/archive`, {
       method: 'POST',
     });
     return res.json();
   },
 
   leave: async (id: string): Promise<{ success: boolean } | { error: string }> => {
-    const res = await fetchWithAuth(`/api/groups/${id}/leave`, {
+    const res = await fetchWithAuth(`/groups/${id}/leave`, {
       method: 'POST',
     });
     return res.json();

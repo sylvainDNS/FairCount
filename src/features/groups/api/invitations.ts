@@ -3,7 +3,7 @@ import type { InvitationDetails, InvitationInfo } from '../types';
 
 export const invitationsApi = {
   send: async (groupId: string, email: string): Promise<{ id: string } | { error: string }> => {
-    const res = await fetchWithAuth(`/api/groups/${groupId}/invite`, {
+    const res = await fetchWithAuth(`/groups/${groupId}/invite`, {
       method: 'POST',
       body: JSON.stringify({ email }),
     });
@@ -11,7 +11,7 @@ export const invitationsApi = {
   },
 
   list: async (groupId: string): Promise<InvitationInfo[]> => {
-    const res = await fetchWithAuth(`/api/groups/${groupId}/invitations`);
+    const res = await fetchWithAuth(`/groups/${groupId}/invitations`);
     if (!res.ok) {
       return [];
     }
@@ -22,7 +22,7 @@ export const invitationsApi = {
     groupId: string,
     invitationId: string,
   ): Promise<{ success: boolean } | { error: string }> => {
-    const res = await fetchWithAuth(`/api/groups/${groupId}/invitations/${invitationId}`, {
+    const res = await fetchWithAuth(`/groups/${groupId}/invitations/${invitationId}`, {
       method: 'DELETE',
     });
     return res.json();
@@ -32,19 +32,19 @@ export const invitationsApi = {
     groupId: string,
     invitationId: string,
   ): Promise<{ success: boolean } | { error: string }> => {
-    const res = await fetchWithAuth(`/api/groups/${groupId}/invitations/${invitationId}/resend`, {
+    const res = await fetchWithAuth(`/groups/${groupId}/invitations/${invitationId}/resend`, {
       method: 'POST',
     });
     return res.json();
   },
 
   getByToken: async (token: string): Promise<InvitationDetails | { error: string }> => {
-    const res = await fetchApi(`/api/invitations/${token}`);
+    const res = await fetchApi(`/invitations/${token}`);
     return res.json();
   },
 
   accept: async (token: string): Promise<{ groupId: string } | { error: string }> => {
-    const res = await fetchWithAuth(`/api/invitations/${token}/accept`, {
+    const res = await fetchWithAuth(`/invitations/${token}/accept`, {
       method: 'POST',
     });
     return res.json();

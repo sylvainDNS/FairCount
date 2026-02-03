@@ -23,6 +23,8 @@ export const createAuth = ({ db, env }: CreateAuthOptions) => {
       },
     }),
     baseURL: env.APP_URL,
+    basePath: '/auth',
+    trustedOrigins: [env.FRONTEND_URL],
     secret: env.AUTH_SECRET,
     appName: env.APP_NAME,
     emailAndPassword: {

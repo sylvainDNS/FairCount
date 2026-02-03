@@ -10,6 +10,7 @@ export interface Env {
   STORAGE: R2Bucket;
   // Environment variables
   APP_URL: string;
+  FRONTEND_URL: string;
   APP_NAME: string;
   // Secrets
   SMTP_HOST: string;

@@ -5,20 +5,42 @@ import type { AppEnv } from '../types';
 export const authRoutes = new Hono<AppEnv>();
 
 // All auth routes are handled by better-auth
+// Redirects are rewritten to FRONTEND_URL since API and frontend are on different domains
 authRoutes.all('/*', async (c) => {
   const auth = c.get('auth');
   const response = await auth.handler(c.req.raw);
 
-  // Handle magic link verification errors - redirect to error page
-  // Note: successful verification returns 302 redirect, so we only intercept actual errors (4xx/5xx)
   const pathname = new URL(c.req.url).pathname;
-  if (pathname.includes('/magic-link/verify') && response.status >= 400) {
-    const errorUrl = new URL('/auth/error', c.env.APP_URL);
-    // 410 Gone = token expired, other 4xx/5xx = invalid token
-    const errorType =
-      response.status === 410 ? MAGIC_LINK_ERRORS.EXPIRED_TOKEN : MAGIC_LINK_ERRORS.INVALID_TOKEN;
-    errorUrl.searchParams.set('error', errorType);
-    return Response.redirect(errorUrl.toString(), 302);
+
+  // Handle magic link verification redirects
+  if (pathname.includes('/magic-link/verify')) {
+    // Error - redirect to error page
+    if (response.status >= 400) {
+      const errorUrl = new URL('/auth/error', c.env.FRONTEND_URL);
+      const errorType =
+        response.status === 410 ? MAGIC_LINK_ERRORS.EXPIRED_TOKEN : MAGIC_LINK_ERRORS.INVALID_TOKEN;
+      errorUrl.searchParams.set('error', errorType);
+      return Response.redirect(errorUrl.toString(), 302);
+    }
+
+    // Success - rewrite redirect to frontend, keeping cookies
+    if (response.status === 302) {
+      const location = response.headers.get('Location');
+      if (location) {
+        const redirectUrl = new URL(location);
+        const frontendUrl = new URL(redirectUrl.pathname + redirectUrl.search, c.env.FRONTEND_URL);
+
+        const headers = new Headers();
+        headers.set('Location', frontendUrl.toString());
+        // Copy session cookies
+        const setCookie = response.headers.get('Set-Cookie');
+        if (setCookie) {
+          headers.set('Set-Cookie', setCookie);
+        }
+
+        return new Response(null, { status: 302, headers });
+      }
+    }
   }
 
   return response;

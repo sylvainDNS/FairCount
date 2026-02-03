@@ -23,14 +23,14 @@ export const expensesApi = {
     if (params?.search) searchParams.set('search', params.search);
 
     const query = searchParams.toString();
-    const url = `/api/groups/${groupId}/expenses${query ? `?${query}` : ''}`;
+    const url = `/groups/${groupId}/expenses${query ? `?${query}` : ''}`;
 
     const res = await fetchWithAuth(url);
     return res.json();
   },
 
   get: async (groupId: string, expenseId: string): Promise<ExpenseDetail | { error: string }> => {
-    const res = await fetchWithAuth(`/api/groups/${groupId}/expenses/${expenseId}`);
+    const res = await fetchWithAuth(`/groups/${groupId}/expenses/${expenseId}`);
     return res.json();
   },
 
@@ -38,7 +38,7 @@ export const expensesApi = {
     groupId: string,
     data: CreateExpenseFormData,
   ): Promise<{ id: string } | { error: string }> => {
-    const res = await fetchWithAuth(`/api/groups/${groupId}/expenses`, {
+    const res = await fetchWithAuth(`/groups/${groupId}/expenses`, {
       method: 'POST',
       body: JSON.stringify(data),
     });
@@ -50,7 +50,7 @@ export const expensesApi = {
     expenseId: string,
     data: UpdateExpenseFormData,
   ): Promise<{ success: boolean } | { error: string }> => {
-    const res = await fetchWithAuth(`/api/groups/${groupId}/expenses/${expenseId}`, {
+    const res = await fetchWithAuth(`/groups/${groupId}/expenses/${expenseId}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
     });
@@ -61,7 +61,7 @@ export const expensesApi = {
     groupId: string,
     expenseId: string,
   ): Promise<{ success: boolean } | { error: string }> => {
-    const res = await fetchWithAuth(`/api/groups/${groupId}/expenses/${expenseId}`, {
+    const res = await fetchWithAuth(`/groups/${groupId}/expenses/${expenseId}`, {
       method: 'DELETE',
     });
     return res.json();

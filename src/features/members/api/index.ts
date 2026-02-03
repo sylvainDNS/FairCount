@@ -3,7 +3,7 @@ import type { MemberWithCoefficient, UpdateMemberFormData } from '../types';
 
 export const membersApi = {
   list: async (groupId: string): Promise<MemberWithCoefficient[] | { error: string }> => {
-    const res = await fetchWithAuth(`/api/groups/${groupId}/members`);
+    const res = await fetchWithAuth(`/groups/${groupId}/members`);
     return res.json();
   },
 
@@ -11,7 +11,7 @@ export const membersApi = {
     groupId: string,
     memberId: string,
   ): Promise<MemberWithCoefficient | { error: string }> => {
-    const res = await fetchWithAuth(`/api/groups/${groupId}/members/${memberId}`);
+    const res = await fetchWithAuth(`/groups/${groupId}/members/${memberId}`);
     return res.json();
   },
 
@@ -20,7 +20,7 @@ export const membersApi = {
     memberId: string,
     data: UpdateMemberFormData,
   ): Promise<{ success: boolean } | { error: string }> => {
-    const res = await fetchWithAuth(`/api/groups/${groupId}/members/${memberId}`, {
+    const res = await fetchWithAuth(`/groups/${groupId}/members/${memberId}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
     });
@@ -31,7 +31,7 @@ export const membersApi = {
     groupId: string,
     memberId: string,
   ): Promise<{ success: boolean } | { error: string }> => {
-    const res = await fetchWithAuth(`/api/groups/${groupId}/members/${memberId}`, {
+    const res = await fetchWithAuth(`/groups/${groupId}/members/${memberId}`, {
       method: 'DELETE',
     });
     return res.json();
@@ -41,7 +41,7 @@ export const membersApi = {
     groupId: string,
     data: UpdateMemberFormData,
   ): Promise<{ success: boolean } | { error: string }> => {
-    const res = await fetchWithAuth(`/api/groups/${groupId}/members/me`, {
+    const res = await fetchWithAuth(`/groups/${groupId}/members/me`, {
       method: 'PATCH',
       body: JSON.stringify(data),
     });

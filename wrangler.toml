@@ -19,11 +19,23 @@ migrations_dir = "drizzle/migrations"
 # binding = "STORAGE"
 # bucket_name = "faircount-storage"
 
-# Environment variables
-# Note: These are LOCAL values. Production values are injected by GitHub Actions.
+# Environment variables (local development)
 [vars]
-APP_URL = "http://localhost:3000"
+APP_URL = "http://localhost:8787"
+FRONTEND_URL = "http://localhost:3000"
 APP_NAME = "FairCount"
+
+# Production environment
+[env.production.vars]
+APP_URL = "https://api.sylvaindenyse.me"
+FRONTEND_URL = "https://faircount.sylvaindenyse.me"
+APP_NAME = "FairCount"
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "faircount-db"
+database_id = "26b8846d-90ed-4933-b505-01b8868fb053"
+migrations_dir = "drizzle/migrations"
 
 # Observability - persist logs across deployments
 [observability]
