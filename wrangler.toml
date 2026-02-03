@@ -19,6 +19,9 @@ migrations_dir = "drizzle/migrations"
 binding = "STORAGE"
 bucket_name = "faircount-storage"
 
+# Pages configuration
+pages_build_output_dir = "dist"
+
 # Environment variables (secrets should be set via wrangler secret)
 [vars]
 APP_URL = "http://localhost:3000"
