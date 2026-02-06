@@ -27,6 +27,12 @@ export const createAuth = ({ db, env }: CreateAuthOptions) => {
     trustedOrigins: [env.FRONTEND_URL],
     secret: env.AUTH_SECRET,
     appName: env.APP_NAME,
+    advanced: {
+      crossSubDomainCookies: {
+        enabled: true,
+        domain: new URL(env.FRONTEND_URL).hostname,
+      },
+    },
     emailAndPassword: {
       enabled: false,
     },

@@ -29,7 +29,7 @@ BUILD_DATE = ""
 
 # Production environment
 [env.production.vars]
-APP_URL = "https://api.sylvaindenyse.me"
+APP_URL = "https://api.faircount.sylvaindenyse.me"
 FRONTEND_URL = "https://faircount.sylvaindenyse.me"
 APP_NAME = "FairCount"
 
