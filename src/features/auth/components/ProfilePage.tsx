@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AppVersion } from '@/shared/components/AppVersion';
 import { Button, Spinner, TextInput } from '@/shared/components';
 import { useAuth } from '../hooks/useAuth';
 import { AUTH_ERROR_MESSAGES, type AuthError } from '../types';
@@ -121,17 +122,16 @@ export const ProfilePage = () => {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 rounded-xl border border-red-200 dark:border-red-900/50">
-        <div className="p-4">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">
-            Zone de danger
-          </h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-            Actions irréversibles sur votre compte
-          </p>
-          <Button type="button" variant="danger" onClick={handleLogout}>
-            Se déconnecter
-          </Button>
+      <div className="md:hidden space-y-4">
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="w-full py-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
+        >
+          Se déconnecter
+        </button>
+        <div className="text-center">
+          <AppVersion />
         </div>
       </div>
     </div>

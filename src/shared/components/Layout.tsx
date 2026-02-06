@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/features/auth';
 import { AppVersion } from './AppVersion';
 import { BottomNav } from './BottomNav';
 
@@ -12,9 +13,6 @@ export const Layout = ({ children }: LayoutProps) => {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <main className="pb-20 md:pb-0 md:pl-64">
         <div className="max-w-2xl mx-auto px-4 py-6">{children ?? <Outlet />}</div>
-        <div className="md:hidden text-center pb-4">
-          <AppVersion />
-        </div>
       </main>
 
       {/* Bottom nav for mobile */}
@@ -31,6 +29,14 @@ export const Layout = ({ children }: LayoutProps) => {
 };
 
 const DesktopSidebar = () => {
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
+
   return (
     <div className="flex flex-col h-full">
       <div className="p-6 border-b border-slate-200 dark:border-slate-800">
@@ -45,7 +51,14 @@ const DesktopSidebar = () => {
         </ul>
       </nav>
 
-      <div className="p-4 border-t border-slate-200 dark:border-slate-800">
+      <div className="p-4 border-t border-slate-200 dark:border-slate-800 space-y-3">
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="w-full text-left text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
+        >
+          Se déconnecter
+        </button>
         <AppVersion />
       </div>
     </div>
