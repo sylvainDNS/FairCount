@@ -1,3 +1,4 @@
+export { AppVersion } from './AppVersion';
 export { Badge } from './Badge';
 export { BottomNav } from './BottomNav';
 export { Button } from './Button';

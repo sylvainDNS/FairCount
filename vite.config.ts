@@ -1,8 +1,12 @@
+import { execSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
+
+const gitSha = process.env.VITE_GIT_SHA || execSync('git rev-parse HEAD').toString().trim();
+const buildDate = process.env.VITE_BUILD_DATE || new Date().toISOString();
 
 export default defineConfig({
   plugins: [
@@ -50,6 +54,10 @@ export default defineConfig({
   },
   server: {
     port: 3000,
+  },
+  define: {
+    __GIT_SHA__: JSON.stringify(gitSha),
+    __BUILD_DATE__: JSON.stringify(buildDate),
   },
   build: {
     outDir: 'dist',

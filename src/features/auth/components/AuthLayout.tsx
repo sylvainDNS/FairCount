@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { AppVersion } from '@/shared/components/AppVersion';
 
 interface AuthLayoutProps {
   readonly children: ReactNode;
@@ -15,6 +16,9 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
         <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
           {children}
         </div>
+        <p className="text-center mt-6">
+          <AppVersion />
+        </p>
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/features/auth';
+import { AppVersion } from '@/shared/components/AppVersion';
 import { Loading } from '@/shared/components/Loading';
 import { ConceptSection } from './ConceptSection';
 import { FeaturesSection } from './FeaturesSection';
@@ -26,6 +27,9 @@ export const LandingPage = () => {
       {/* Footer */}
       <footer className="py-8 px-4 text-center text-sm text-slate-500 dark:text-slate-400">
         <p>FairCount — Partage équitable des dépenses</p>
+        <p className="mt-2">
+          <AppVersion />
+        </p>
       </footer>
     </div>
   );

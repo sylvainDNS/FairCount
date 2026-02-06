@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
+import { AppVersion } from './AppVersion';
 import { BottomNav } from './BottomNav';
 
 interface LayoutProps {
@@ -11,6 +12,9 @@ export const Layout = ({ children }: LayoutProps) => {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <main className="pb-20 md:pb-0 md:pl-64">
         <div className="max-w-2xl mx-auto px-4 py-6">{children ?? <Outlet />}</div>
+        <div className="md:hidden text-center pb-4">
+          <AppVersion />
+        </div>
       </main>
 
       {/* Bottom nav for mobile */}
@@ -40,6 +44,10 @@ const DesktopSidebar = () => {
           <SidebarLink to="/profile" label="Profil" />
         </ul>
       </nav>
+
+      <div className="p-4 border-t border-slate-200 dark:border-slate-800">
+        <AppVersion />
+      </div>
     </div>
   );
 };

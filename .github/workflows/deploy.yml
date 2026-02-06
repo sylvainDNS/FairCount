@@ -29,6 +29,8 @@ jobs:
         run: pnpm build
         env:
           VITE_API_URL: https://api.sylvaindenyse.me
+          VITE_GIT_SHA: ${{ github.sha }}
+          VITE_BUILD_DATE: ${{ github.event.head_commit.timestamp }}
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
@@ -42,4 +44,4 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy --env production
+          command: deploy --env production --var GIT_SHA:${{ github.sha }} --var BUILD_DATE:${{ github.event.head_commit.timestamp }}

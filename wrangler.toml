@@ -24,6 +24,8 @@ migrations_dir = "drizzle/migrations"
 APP_URL = "http://localhost:8787"
 FRONTEND_URL = "http://localhost:3000"
 APP_NAME = "FairCount"
+GIT_SHA = "dev"
+BUILD_DATE = ""
 
 # Production environment
 [env.production.vars]

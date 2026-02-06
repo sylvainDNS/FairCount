@@ -12,6 +12,9 @@ export interface Env {
   APP_URL: string;
   FRONTEND_URL: string;
   APP_NAME: string;
+  // Build info (injected by CI)
+  GIT_SHA?: string;
+  BUILD_DATE?: string;
   // Secrets
   SMTP_HOST: string;
   SMTP_PORT: string;
