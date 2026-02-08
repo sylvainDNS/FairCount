@@ -25,6 +25,7 @@ export const queryKeys = {
     byGroup: (groupId: string) => [...queryKeys.invitations.all, 'group', groupId] as const,
     list: (groupId: string) => [...queryKeys.invitations.byGroup(groupId), 'list'] as const,
     byToken: (token: string) => [...queryKeys.invitations.all, 'token', token] as const,
+    pending: () => [...queryKeys.invitations.all, 'pending'] as const,
   },
 
   // Members

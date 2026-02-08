@@ -89,6 +89,18 @@ export interface InvitationDetails {
   readonly expiresAt: Date;
 }
 
+export interface PendingInvitation {
+  readonly id: string;
+  readonly token: string;
+  readonly group: {
+    readonly id: string;
+    readonly name: string;
+  };
+  readonly inviterName: string;
+  readonly createdAt: Date;
+  readonly expiresAt: Date;
+}
+
 // Error types
 export type GroupError =
   | CommonError
@@ -100,6 +112,7 @@ export type GroupError =
   | 'ALREADY_MEMBER'
   | 'INVITATION_NOT_FOUND'
   | 'INVITATION_EXPIRED'
+  | 'FORBIDDEN'
   | 'CANNOT_LEAVE_ALONE';
 
 export const GROUP_ERROR_MESSAGES = {
@@ -112,6 +125,7 @@ export const GROUP_ERROR_MESSAGES = {
   ALREADY_MEMBER: 'Cette personne est déjà membre du groupe',
   INVITATION_NOT_FOUND: 'Invitation introuvable',
   INVITATION_EXPIRED: 'Cette invitation a expiré',
+  FORBIDDEN: "Vous n'êtes pas autorisé à effectuer cette action",
   CANNOT_LEAVE_ALONE: 'Vous ne pouvez pas quitter un groupe dont vous êtes le seul membre',
 } as const satisfies Record<GroupError, string>;
 

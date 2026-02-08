@@ -1,4 +1,4 @@
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, desc, eq, gt, isNull, sql } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { API_ERROR_CODES } from '@/shared/constants/errors';
 import * as schema from '../../db/schema';
@@ -8,6 +8,50 @@ import * as memberHandlers from '../services/members';
 import type { AppEnv } from '../types';
 
 export const invitationsRoutes = new Hono<AppEnv>();
+
+// GET /api/invitations/pending - List pending invitations for the authenticated user
+invitationsRoutes.get('/pending', authMiddleware, async (c) => {
+  const db = c.get('db');
+  const user = c.get('user');
+
+  const invitations = await db
+    .select({
+      id: schema.groupInvitations.id,
+      token: schema.groupInvitations.token,
+      groupId: schema.groups.id,
+      groupName: schema.groups.name,
+      inviterName: schema.users.name,
+      inviterEmail: schema.users.email,
+      createdAt: schema.groupInvitations.createdAt,
+      expiresAt: schema.groupInvitations.expiresAt,
+    })
+    .from(schema.groupInvitations)
+    .innerJoin(schema.groups, eq(schema.groupInvitations.groupId, schema.groups.id))
+    .innerJoin(schema.users, eq(schema.groupInvitations.createdBy, schema.users.id))
+    .where(
+      and(
+        eq(sql`lower(${schema.groupInvitations.email})`, user.email.toLowerCase()),
+        isNull(schema.groupInvitations.acceptedAt),
+        isNull(schema.groupInvitations.declinedAt),
+        gt(schema.groupInvitations.expiresAt, new Date()),
+      ),
+    )
+    .orderBy(desc(schema.groupInvitations.createdAt));
+
+  return c.json(
+    invitations.map((inv) => ({
+      id: inv.id,
+      token: inv.token,
+      group: {
+        id: inv.groupId,
+        name: inv.groupName,
+      },
+      inviterName: inv.inviterName || inv.inviterEmail,
+      createdAt: inv.createdAt,
+      expiresAt: inv.expiresAt,
+    })),
+  );
+});
 
 // GET /api/invitations/:token - Get invitation details (public - no auth required)
 invitationsRoutes.get('/:token', async (c) => {
@@ -25,6 +69,7 @@ invitationsRoutes.get('/:token', async (c) => {
       email: schema.groupInvitations.email,
       expiresAt: schema.groupInvitations.expiresAt,
       acceptedAt: schema.groupInvitations.acceptedAt,
+      declinedAt: schema.groupInvitations.declinedAt,
       groupName: schema.groups.name,
       inviterName: schema.users.name,
       inviterEmail: schema.users.email,
@@ -38,7 +83,7 @@ invitationsRoutes.get('/:token', async (c) => {
     return c.json({ error: API_ERROR_CODES.INVITATION_NOT_FOUND }, 404);
   }
 
-  if (invitation.acceptedAt) {
+  if (invitation.acceptedAt || invitation.declinedAt) {
     return c.json({ error: API_ERROR_CODES.INVITATION_NOT_FOUND }, 404);
   }
 
@@ -67,12 +112,16 @@ invitationsRoutes.post('/:token/accept', authMiddleware, async (c) => {
     return c.json({ error: API_ERROR_CODES.NOT_FOUND }, 404);
   }
 
-  // Find valid invitation (must not be accepted yet)
+  // Find valid invitation (must not be accepted or declined)
   const [invitation] = await db
     .select()
     .from(schema.groupInvitations)
     .where(
-      and(eq(schema.groupInvitations.token, token), isNull(schema.groupInvitations.acceptedAt)),
+      and(
+        eq(schema.groupInvitations.token, token),
+        isNull(schema.groupInvitations.acceptedAt),
+        isNull(schema.groupInvitations.declinedAt),
+      ),
     );
 
   if (!invitation) {
@@ -177,4 +226,71 @@ invitationsRoutes.post('/:token/accept', authMiddleware, async (c) => {
   await memberHandlers.recalculateCoefficients(db, invitation.groupId);
 
   return c.json({ groupId: invitation.groupId });
+});
+
+// POST /api/invitations/:token/decline - Decline invitation (auth required)
+invitationsRoutes.post('/:token/decline', authMiddleware, async (c) => {
+  const db = c.get('db');
+  const user = c.get('user');
+  const token = c.req.param('token');
+
+  if (!token || !isValidUUID(token)) {
+    return c.json({ error: API_ERROR_CODES.NOT_FOUND }, 404);
+  }
+
+  // Find valid invitation (must not be accepted or declined)
+  const [invitation] = await db
+    .select()
+    .from(schema.groupInvitations)
+    .where(
+      and(
+        eq(schema.groupInvitations.token, token),
+        isNull(schema.groupInvitations.acceptedAt),
+        isNull(schema.groupInvitations.declinedAt),
+      ),
+    );
+
+  if (!invitation) {
+    return c.json({ error: API_ERROR_CODES.INVITATION_NOT_FOUND }, 404);
+  }
+
+  const expiresAt = new Date(invitation.expiresAt);
+  if (expiresAt < new Date()) {
+    return c.json({ error: API_ERROR_CODES.INVITATION_EXPIRED }, 400);
+  }
+
+  // Verify the invitation belongs to the authenticated user
+  if (invitation.email.toLowerCase() !== user.email.toLowerCase()) {
+    return c.json({ error: API_ERROR_CODES.FORBIDDEN }, 403);
+  }
+
+  const now = new Date();
+
+  // Mark invitation as declined and remove pending member in batch
+  await db.batch([
+    db
+      .update(schema.groupInvitations)
+      .set({ declinedAt: now })
+      .where(
+        and(
+          eq(schema.groupInvitations.id, invitation.id),
+          isNull(schema.groupInvitations.declinedAt),
+        ),
+      ),
+    // Remove the pending member (only if not linked to a user account)
+    db
+      .delete(schema.groupMembers)
+      .where(
+        and(
+          eq(schema.groupMembers.groupId, invitation.groupId),
+          eq(schema.groupMembers.email, invitation.email),
+          isNull(schema.groupMembers.userId),
+        ),
+      ),
+  ]);
+
+  // Recalculate coefficients after removing pending member
+  await memberHandlers.recalculateCoefficients(db, invitation.groupId);
+
+  return c.json({ success: true });
 });

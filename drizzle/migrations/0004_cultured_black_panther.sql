@@ -1,0 +1,1 @@
+ALTER TABLE `group_invitations` ADD `declined_at` integer;

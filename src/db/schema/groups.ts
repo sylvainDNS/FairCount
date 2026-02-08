@@ -26,6 +26,7 @@ export const groupInvitations = sqliteTable('group_invitations', {
     .references(() => users.id),
   expiresAt: integer('expires_at', { mode: 'timestamp_ms' }).notNull(),
   acceptedAt: integer('accepted_at', { mode: 'timestamp_ms' }),
+  declinedAt: integer('declined_at', { mode: 'timestamp_ms' }),
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
 });
 
