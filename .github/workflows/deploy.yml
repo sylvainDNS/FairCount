@@ -19,8 +19,8 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          cache: 'pnpm'
+          node-version: "22"
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -44,4 +44,11 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy --env production --var GIT_SHA:${{ github.sha }} --var BUILD_DATE:${{ github.event.head_commit.timestamp }}
+          command: >-
+            deploy --env production
+            --var GIT_SHA:${{ github.sha }}
+            --var BUILD_DATE:${{ github.event.head_commit.timestamp }}
+            --var SMTP_HOST:${{ vars.SMTP_HOST }}
+            --var SMTP_PORT:${{ vars.SMTP_PORT }}
+            --var SMTP_USER:${{ vars.SMTP_USER }}
+            --var SMTP_FROM:${{ vars.SMTP_FROM }}
