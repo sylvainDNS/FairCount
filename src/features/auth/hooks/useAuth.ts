@@ -1,4 +1,5 @@
 import { useCallback, useMemo } from 'react';
+import { fetchWithAuth } from '@/lib/api';
 import { authClient, useSession } from '../../../lib/auth-client';
 import type { AuthError, ProfileFormData, User } from '../types';
 
@@ -54,13 +55,17 @@ export const useAuth = (): UseAuthResult => {
 
   const updateProfile = useCallback(async (data: ProfileFormData): Promise<AuthResult> => {
     try {
-      const result = await authClient.updateUser({
-        name: data.name,
+      const res = await fetchWithAuth('/user/profile', {
+        method: 'PATCH',
+        body: JSON.stringify({ name: data.name }),
       });
 
-      if (result.error) {
+      if (!res.ok) {
         return { success: false, error: 'UNKNOWN_ERROR' };
       }
+
+      // Refresh session so useSession() picks up the updated user data
+      await authClient.getSession();
 
       return { success: true };
     } catch {
