@@ -14,4 +14,5 @@ export { SegmentedControl } from './SegmentedControl';
 export type { SelectItem } from './Select';
 export { Select } from './Select';
 export { Spinner } from './Spinner';
+export { TabsContent, TabsList, TabsRoot, TabsTrigger } from './Tabs';
 export { TextInput } from './TextInput';

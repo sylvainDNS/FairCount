@@ -8,7 +8,7 @@ import { SettlementForm } from './SettlementForm';
 interface SettlementSuggestionsProps {
   readonly groupId: string;
   readonly currency: string;
-  readonly onSettlementCreated: () => void;
+  readonly onSettlementCreated?: (() => void) | undefined;
 }
 
 export const SettlementSuggestions = ({
@@ -22,7 +22,7 @@ export const SettlementSuggestions = ({
   const handleFormSuccess = useCallback(() => {
     setSelectedSuggestion(null);
     refreshSuggestions();
-    onSettlementCreated();
+    onSettlementCreated?.();
   }, [refreshSuggestions, onSettlementCreated]);
 
   // Memoize filtered suggestions
