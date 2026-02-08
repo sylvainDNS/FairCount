@@ -15,7 +15,7 @@ export const MemberCard = ({ member, currency, onUpdateIncome, onRemove }: Membe
   return (
     <Collapsible.Root className="border-b border-slate-200 dark:border-slate-800 last:border-b-0">
       <Collapsible.Trigger className="w-full p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 min-w-0">
           <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center shrink-0">
             <span className="text-slate-600 dark:text-slate-300 font-medium">
               {member.name.charAt(0).toUpperCase()}
