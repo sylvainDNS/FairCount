@@ -51,10 +51,10 @@ export const IncomeForm = ({
     <Dialog.Root open onOpenChange={(details) => !details.open && onCancel()}>
       <Portal>
         <Dialog.Backdrop className="fixed inset-0 bg-black/50 z-50" />
-        <Dialog.Positioner className="fixed inset-0 flex items-center justify-center p-4 z-50">
+        <Dialog.Positioner className="fixed inset-0 z-50 overflow-y-auto sm:flex sm:items-center sm:justify-center sm:p-4">
           <Dialog.Content
             aria-labelledby="income-form-dialog-title"
-            className="bg-white dark:bg-slate-900 rounded-xl p-6 w-full max-w-md shadow-xl"
+            className="bg-white dark:bg-slate-900 p-6 min-h-full sm:min-h-0 sm:rounded-xl sm:w-full sm:max-w-md sm:shadow-xl"
           >
             <Dialog.Title
               id="income-form-dialog-title"
