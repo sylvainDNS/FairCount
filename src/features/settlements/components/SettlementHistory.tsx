@@ -1,7 +1,8 @@
 import { Dialog } from '@ark-ui/react/dialog';
 import { Portal } from '@ark-ui/react/portal';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Button } from '@/shared/components/Button';
+import { SegmentedControl } from '@/shared/components/SegmentedControl';
 import { useInfiniteLoad } from '@/shared/hooks/useInfiniteLoad';
 import { useSettlement } from '../hooks/useSettlement';
 import { useSettlements } from '../hooks/useSettlements';
@@ -30,35 +31,6 @@ export const SettlementHistory = ({ groupId, currency }: SettlementHistoryProps)
   const [settlementToDelete, setSettlementToDelete] = useState<SettlementListItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
-
-  // Tab keyboard navigation
-  const tabsRef = useRef<(HTMLButtonElement | null)[]>([]);
-
-  const handleTabKeyDown = useCallback(
-    (e: React.KeyboardEvent, index: number) => {
-      let newIndex = index;
-
-      if (e.key === 'ArrowRight') {
-        newIndex = (index + 1) % FILTER_KEYS.length;
-      } else if (e.key === 'ArrowLeft') {
-        newIndex = (index - 1 + FILTER_KEYS.length) % FILTER_KEYS.length;
-      } else if (e.key === 'Home') {
-        newIndex = 0;
-      } else if (e.key === 'End') {
-        newIndex = FILTER_KEYS.length - 1;
-      } else {
-        return;
-      }
-
-      e.preventDefault();
-      tabsRef.current[newIndex]?.focus();
-      const filterKey = FILTER_KEYS[newIndex];
-      if (filterKey) {
-        setFilter(filterKey);
-      }
-    },
-    [setFilter],
-  );
 
   // Infinite scroll
   const sentinelRef = useInfiniteLoad<HTMLLIElement>({
@@ -89,33 +61,12 @@ export const SettlementHistory = ({ groupId, currency }: SettlementHistoryProps)
   return (
     <div className="space-y-4">
       {/* Filter tabs */}
-      <div
-        role="tablist"
+      <SegmentedControl
+        items={FILTER_KEYS.map((f) => ({ value: f, label: FILTER_LABELS[f] }))}
+        value={filter}
+        onValueChange={(value) => setFilter(value as SettlementFilter)}
         aria-label="Filtrer les remboursements"
-        className="flex gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg"
-      >
-        {FILTER_KEYS.map((f, index) => (
-          <button
-            key={f}
-            ref={(el) => {
-              tabsRef.current[index] = el;
-            }}
-            type="button"
-            role="tab"
-            aria-selected={filter === f}
-            tabIndex={filter === f ? 0 : -1}
-            onClick={() => setFilter(f)}
-            onKeyDown={(e) => handleTabKeyDown(e, index)}
-            className={`flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-              filter === f
-                ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-            }`}
-          >
-            {FILTER_LABELS[f]}
-          </button>
-        ))}
-      </div>
+      />
 
       {/* Loading state */}
       {isLoading && (

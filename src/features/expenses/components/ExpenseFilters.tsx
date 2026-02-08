@@ -1,7 +1,8 @@
 import { Collapsible } from '@ark-ui/react/collapsible';
-import type { KeyboardEvent } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useMembers } from '@/features/members/hooks/useMembers';
+import { SegmentedControl } from '@/shared/components/SegmentedControl';
+import { Select } from '@/shared/components/Select';
 import { TextInput } from '@/shared/components/TextInput';
 import type { ExpenseFilters as FilterType } from '../types';
 
@@ -85,35 +86,6 @@ export const ExpenseFilters = ({ groupId, filters, onFiltersChange }: ExpenseFil
 
   const hasActiveFilters = filters.startDate || filters.endDate || filters.paidBy || filters.search;
 
-  // Period tab keyboard navigation
-  const periodTabsRef = useRef<(HTMLButtonElement | null)[]>([]);
-
-  const handlePeriodKeyDown = useCallback(
-    (e: KeyboardEvent, index: number) => {
-      let newIndex = index;
-
-      if (e.key === 'ArrowRight') {
-        newIndex = (index + 1) % PERIOD_OPTIONS.length;
-      } else if (e.key === 'ArrowLeft') {
-        newIndex = (index - 1 + PERIOD_OPTIONS.length) % PERIOD_OPTIONS.length;
-      } else if (e.key === 'Home') {
-        newIndex = 0;
-      } else if (e.key === 'End') {
-        newIndex = PERIOD_OPTIONS.length - 1;
-      } else {
-        return;
-      }
-
-      e.preventDefault();
-      periodTabsRef.current[newIndex]?.focus();
-      const option = PERIOD_OPTIONS[newIndex];
-      if (option) {
-        handlePeriodChange(option.value);
-      }
-    },
-    [handlePeriodChange],
-  );
-
   return (
     <Collapsible.Root open={isOpen} onOpenChange={(details) => setIsOpen(details.open)}>
       <div className="flex items-center gap-2">
@@ -168,57 +140,32 @@ export const ExpenseFilters = ({ groupId, filters, onFiltersChange }: ExpenseFil
           >
             Période
           </span>
-          <div
-            role="tablist"
-            aria-labelledby="period-filter-label"
-            className="flex flex-wrap gap-2"
-          >
-            {PERIOD_OPTIONS.map((option, index) => (
-              <button
-                key={option.value}
-                ref={(el) => {
-                  periodTabsRef.current[index] = el;
-                }}
-                type="button"
-                role="tab"
-                aria-selected={periodPreset === option.value}
-                tabIndex={periodPreset === option.value ? 0 : -1}
-                onClick={() => handlePeriodChange(option.value)}
-                onKeyDown={(e) => handlePeriodKeyDown(e, index)}
-                className={`px-3 py-1.5 text-sm rounded-full transition-colors ${
-                  periodPreset === option.value
-                    ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
-                }`}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
+          <SegmentedControl
+            variant="pill"
+            items={PERIOD_OPTIONS}
+            value={periodPreset}
+            onValueChange={(value) => handlePeriodChange(value as PeriodPreset)}
+            aria-label="Période"
+          />
         </div>
 
         {/* Payer filter */}
         <div>
-          <label
-            htmlFor="expense-payer"
-            className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
-          >
+          <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
             Payé par
-          </label>
-          <select
-            id="expense-payer"
+          </span>
+          <Select
+            items={[
+              { value: '', label: 'Tous les membres' },
+              ...members.map((member) => ({
+                value: member.id,
+                label: member.name + (member.isCurrentUser ? ' (vous)' : ''),
+              })),
+            ]}
             value={filters.paidBy ?? ''}
-            onChange={(e) => handlePayerChange(e.target.value)}
-            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Tous les membres</option>
-            {members.map((member) => (
-              <option key={member.id} value={member.id}>
-                {member.name}
-                {member.isCurrentUser ? ' (vous)' : ''}
-              </option>
-            ))}
-          </select>
+            onValueChange={handlePayerChange}
+            aria-label="Filtrer par payeur"
+          />
         </div>
       </Collapsible.Content>
     </Collapsible.Root>

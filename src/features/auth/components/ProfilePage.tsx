@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AppVersion } from '@/shared/components/AppVersion';
 import { Button, Spinner, TextInput } from '@/shared/components';
+import { AppVersion } from '@/shared/components/AppVersion';
 import { useAuth } from '../hooks/useAuth';
 import { AUTH_ERROR_MESSAGES, type AuthError } from '../types';
 

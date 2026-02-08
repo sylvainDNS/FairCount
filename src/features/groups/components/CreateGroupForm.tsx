@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/shared/components/Button';
+import { Select } from '@/shared/components/Select';
 import { TextInput } from '@/shared/components/TextInput';
 import { useGroups } from '../hooks/useGroups';
 import { CURRENCIES, GROUP_ERROR_MESSAGES } from '../types';
@@ -94,25 +95,16 @@ export const CreateGroupForm = () => {
       </div>
 
       <div>
-        <label
-          htmlFor="currency"
-          className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
-        >
+        <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
           Devise
-        </label>
-        <select
-          id="currency"
+        </span>
+        <Select
+          items={CURRENCIES.map((c) => ({ value: c.code, label: c.label }))}
           value={currency}
-          onChange={(e) => setCurrency(e.target.value)}
+          onValueChange={setCurrency}
           disabled={formState === 'loading'}
-          className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
-        >
-          {CURRENCIES.map((c) => (
-            <option key={c.code} value={c.code}>
-              {c.label}
-            </option>
-          ))}
-        </select>
+          aria-label="Devise du groupe"
+        />
       </div>
 
       {formState === 'error' && errorMessage && (

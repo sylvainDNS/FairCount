@@ -3,6 +3,8 @@ import { Portal } from '@ark-ui/react/portal';
 import { useCallback, useEffect, useState } from 'react';
 import { useMembers } from '@/features/members/hooks/useMembers';
 import { Button } from '@/shared/components/Button';
+import { Checkbox } from '@/shared/components/Checkbox';
+import { Select } from '@/shared/components/Select';
 import { TextInput } from '@/shared/components/TextInput';
 import { useExpense } from '../hooks/useExpense';
 import type { CreateExpenseFormData, ExpenseDetail, UpdateExpenseFormData } from '../types';
@@ -301,30 +303,22 @@ export const ExpenseForm = ({
 
               {/* Paid by */}
               <div>
-                <label
-                  htmlFor="expense-paid-by"
-                  className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
-                >
+                <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                   Payé par
-                </label>
-                <select
-                  id="expense-paid-by"
+                </span>
+                <Select
+                  items={members.map((m) => ({
+                    value: m.id,
+                    label: m.name + (m.isCurrentUser ? ' (vous)' : ''),
+                  }))}
                   value={paidBy}
-                  onChange={(e) => setPaidBy(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  onValueChange={setPaidBy}
+                  placeholder="Sélectionner..."
                   disabled={isSubmitting}
-                  required
+                  aria-label="Payé par"
                   aria-invalid={!!error}
                   aria-describedby={error ? 'expense-form-error' : undefined}
-                >
-                  <option value="">Sélectionner...</option>
-                  {members.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.name}
-                      {m.isCurrentUser ? ' (vous)' : ''}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
 
               {/* Participants */}
@@ -338,20 +332,15 @@ export const ExpenseForm = ({
                       key={p.memberId}
                       className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50"
                     >
-                      <input
-                        type="checkbox"
-                        id={`participant-${p.memberId}`}
+                      <Checkbox
                         checked={p.selected}
-                        onChange={() => handleParticipantToggle(p.memberId)}
-                        className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                        onCheckedChange={() => handleParticipantToggle(p.memberId)}
                         disabled={isSubmitting}
-                      />
-                      <label
-                        htmlFor={`participant-${p.memberId}`}
-                        className="flex-1 text-sm text-slate-900 dark:text-white cursor-pointer"
+                        size="sm"
+                        className="flex-1"
                       >
                         {p.memberName}
-                      </label>
+                      </Checkbox>
 
                       {p.selected && (
                         <div className="flex items-center gap-2">
