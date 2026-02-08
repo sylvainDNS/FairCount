@@ -21,16 +21,47 @@ export const CURRENCIES = [
 
 export type CurrencyCode = (typeof CURRENCIES)[number]['code'];
 
+// Income frequency
+export type IncomeFrequency = 'annual' | 'monthly';
+
+export const INCOME_FREQUENCIES = [
+  { value: 'annual', label: 'Annuel' },
+  { value: 'monthly', label: 'Mensuel' },
+] as const;
+
+export const INCOME_FREQUENCY_LABELS = {
+  annual: {
+    suffix: '/an',
+    label: 'Revenu annuel',
+    netLabel: 'Revenu annuel net',
+    placeholder: 'Ex: 30000.00',
+    description: 'Conseillé : plus juste car il prend en compte les primes, 13e mois, etc.',
+  },
+  monthly: {
+    suffix: '/mois',
+    label: 'Revenu mensuel',
+    netLabel: 'Revenu mensuel net',
+    placeholder: 'Ex: 2500.00',
+    description: 'Plus simple : basé sur le salaire mensuel net',
+  },
+} as const satisfies Record<IncomeFrequency, unknown>;
+
+export function isIncomeFrequency(value: string): value is IncomeFrequency {
+  return value === 'annual' || value === 'monthly';
+}
+
 // Form data types
 export interface CreateGroupFormData {
   readonly name: string;
   readonly description?: string | undefined;
   readonly currency?: string | undefined;
+  readonly incomeFrequency?: IncomeFrequency | undefined;
 }
 
 export interface UpdateGroupFormData {
   readonly name?: string | undefined;
   readonly description?: string | undefined;
+  readonly incomeFrequency?: IncomeFrequency | undefined;
 }
 
 export interface InviteFormData {
@@ -43,6 +74,7 @@ export interface GroupListItem {
   readonly name: string;
   readonly description: string | null;
   readonly currency: string;
+  readonly incomeFrequency: IncomeFrequency;
   readonly memberCount: number;
   readonly myBalance: number;
   readonly isArchived: boolean;
@@ -54,6 +86,7 @@ export interface GroupWithMembers {
   readonly name: string;
   readonly description: string | null;
   readonly currency: string;
+  readonly incomeFrequency: IncomeFrequency;
   readonly createdBy: string;
   readonly createdAt: Date;
   readonly archivedAt: Date | null;

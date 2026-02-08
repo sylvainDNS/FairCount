@@ -7,6 +7,7 @@ export const groups = sqliteTable('groups', {
   name: text('name').notNull(),
   description: text('description'),
   currency: text('currency').notNull().default('EUR'),
+  incomeFrequency: text('income_frequency').notNull().default('annual'),
   createdBy: text('created_by')
     .notNull()
     .references(() => users.id),

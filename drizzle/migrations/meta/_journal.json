@@ -43,6 +43,13 @@
       "when": 1770503911116,
       "tag": "0005_cultured_black_panther",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1770588174155,
+      "tag": "0006_dapper_la_nuit",
+      "breakpoints": true
     }
   ]
 }

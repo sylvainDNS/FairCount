@@ -1,6 +1,7 @@
 import { Dialog } from '@ark-ui/react/dialog';
 import { Portal } from '@ark-ui/react/portal';
 import { useCallback, useState } from 'react';
+import { INCOME_FREQUENCY_LABELS, type IncomeFrequency } from '@/features/groups';
 import { Button } from '@/shared/components/Button';
 import { TextInput } from '@/shared/components/TextInput';
 
@@ -8,6 +9,7 @@ interface IncomeFormProps {
   readonly memberName: string;
   readonly currentIncome: number;
   readonly currency: string;
+  readonly incomeFrequency: IncomeFrequency;
   readonly onSubmit: (income: number) => Promise<void>;
   readonly onCancel: () => void;
 }
@@ -16,6 +18,7 @@ export const IncomeForm = ({
   memberName,
   currentIncome,
   currency,
+  incomeFrequency,
   onSubmit,
   onCancel,
 }: IncomeFormProps) => {
@@ -74,7 +77,7 @@ export const IncomeForm = ({
                   htmlFor="income"
                   className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
                 >
-                  Revenu mensuel net ({currency})
+                  {INCOME_FREQUENCY_LABELS[incomeFrequency].netLabel} ({currency})
                 </label>
                 <TextInput
                   id="income"
@@ -83,7 +86,7 @@ export const IncomeForm = ({
                   step="0.01"
                   value={income}
                   onChange={(e) => setIncome(e.target.value)}
-                  placeholder="Ex: 2500.00"
+                  placeholder={INCOME_FREQUENCY_LABELS[incomeFrequency].placeholder}
                   disabled={isSubmitting}
                   aria-invalid={!!error}
                   aria-describedby={error ? 'income-error' : undefined}

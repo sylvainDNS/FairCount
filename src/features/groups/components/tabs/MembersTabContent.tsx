@@ -1,19 +1,25 @@
 import { MemberList } from '@/features/members';
+import type { IncomeFrequency } from '../../types';
 import { InviteForm } from '../InviteForm';
 import { PendingInvitations } from '../PendingInvitations';
 
 interface MembersTabContentProps {
   readonly groupId: string;
   readonly currency: string;
+  readonly incomeFrequency: IncomeFrequency;
 }
 
-export const MembersTabContent = ({ groupId, currency }: MembersTabContentProps) => {
+export const MembersTabContent = ({
+  groupId,
+  currency,
+  incomeFrequency,
+}: MembersTabContentProps) => {
   return (
     <>
       {/* Members list */}
       <section className="mb-6">
         <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Membres</h2>
-        <MemberList groupId={groupId} currency={currency} />
+        <MemberList groupId={groupId} currency={currency} incomeFrequency={incomeFrequency} />
       </section>
 
       {/* Invite form */}

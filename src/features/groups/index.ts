@@ -6,4 +6,5 @@ export { GroupsPage } from './components/GroupsPage';
 export { InvitePage } from './components/InvitePage';
 
 // Types (public exports)
-export type { GroupError, GroupListItem, GroupWithMembers } from './types';
+export type { GroupError, GroupListItem, GroupWithMembers, IncomeFrequency } from './types';
+export { INCOME_FREQUENCY_LABELS } from './types';

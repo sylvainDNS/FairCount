@@ -1,4 +1,5 @@
 import { Collapsible } from '@ark-ui/react/collapsible';
+import { INCOME_FREQUENCY_LABELS, type IncomeFrequency } from '@/features/groups';
 import { Badge } from '@/shared/components/Badge';
 import { Button } from '@/shared/components/Button';
 import { formatCurrency } from '@/shared/utils/format';
@@ -7,11 +8,19 @@ import type { MemberWithCoefficient } from '../types';
 interface MemberCardProps {
   readonly member: MemberWithCoefficient;
   readonly currency: string;
+  readonly incomeFrequency: IncomeFrequency;
   readonly onUpdateIncome?: (() => void) | undefined;
   readonly onRemove?: (() => void) | undefined;
 }
 
-export const MemberCard = ({ member, currency, onUpdateIncome, onRemove }: MemberCardProps) => {
+export const MemberCard = ({
+  member,
+  currency,
+  incomeFrequency,
+  onUpdateIncome,
+  onRemove,
+}: MemberCardProps) => {
+  const { suffix: incomeSuffix, label: incomeLabel } = INCOME_FREQUENCY_LABELS[incomeFrequency];
   return (
     <Collapsible.Root className="border-b border-slate-200 dark:border-slate-800 last:border-b-0">
       <Collapsible.Trigger className="w-full p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
@@ -43,7 +52,8 @@ export const MemberCard = ({ member, currency, onUpdateIncome, onRemove }: Membe
             {member.coefficientPercent}%
           </p>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            {formatCurrency(member.income, currency)}/mois
+            {formatCurrency(member.income, currency)}
+            {incomeSuffix}
           </p>
         </div>
       </Collapsible.Trigger>
@@ -51,7 +61,7 @@ export const MemberCard = ({ member, currency, onUpdateIncome, onRemove }: Membe
       <Collapsible.Content className="px-4 pb-4 pt-2 bg-slate-50 dark:bg-slate-800/30 space-y-3">
         <div className="flex items-center justify-between text-sm">
           <span className="text-slate-600 dark:text-slate-400">
-            Revenu mensuel : {formatCurrency(member.income, currency)}
+            {incomeLabel} : {formatCurrency(member.income, currency)}
           </span>
           {onUpdateIncome && (
             <Button type="button" variant="ghost" size="sm" onClick={onUpdateIncome}>

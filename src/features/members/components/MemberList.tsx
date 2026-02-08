@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { INCOME_FREQUENCY_LABELS, type IncomeFrequency } from '@/features/groups';
 import { ConfirmDialog } from '@/shared/components/ConfirmDialog';
 import { formatCurrency } from '@/shared/utils/format';
 import { useMembers } from '../hooks/useMembers';
@@ -9,9 +10,10 @@ import { MemberCard } from './MemberCard';
 interface MemberListProps {
   readonly groupId: string;
   readonly currency: string;
+  readonly incomeFrequency: IncomeFrequency;
 }
 
-export const MemberList = ({ groupId, currency }: MemberListProps) => {
+export const MemberList = ({ groupId, currency, incomeFrequency }: MemberListProps) => {
   const { members, isLoading, updateMember, removeMember } = useMembers(groupId);
   const [editingMember, setEditingMember] = useState<MemberWithCoefficient | null>(null);
   const [memberToRemove, setMemberToRemove] = useState<MemberWithCoefficient | null>(null);
@@ -83,7 +85,8 @@ export const MemberList = ({ groupId, currency }: MemberListProps) => {
               {members.length} membre{members.length > 1 ? 's' : ''}
             </span>
             <span className="text-slate-600 dark:text-slate-400">
-              Total : {formatCurrency(totalIncome, currency)}/mois
+              Total : {formatCurrency(totalIncome, currency)}
+              {INCOME_FREQUENCY_LABELS[incomeFrequency].suffix}
             </span>
           </div>
         </div>
@@ -98,6 +101,7 @@ export const MemberList = ({ groupId, currency }: MemberListProps) => {
               <MemberCard
                 member={member}
                 currency={currency}
+                incomeFrequency={incomeFrequency}
                 onUpdateIncome={() => setEditingMember(member)}
                 onRemove={!member.isCurrentUser ? () => setMemberToRemove(member) : undefined}
               />
@@ -124,6 +128,7 @@ export const MemberList = ({ groupId, currency }: MemberListProps) => {
           memberName={editingMember.name}
           currentIncome={editingMember.income}
           currency={currency}
+          incomeFrequency={incomeFrequency}
           onSubmit={handleIncomeUpdate}
           onCancel={() => setEditingMember(null)}
         />

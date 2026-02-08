@@ -25,11 +25,13 @@ const createGroupSchema = z.object({
   name: z.string().min(1).max(100),
   description: z.string().max(500).optional(),
   currency: z.string().length(3).optional().default('EUR'),
+  incomeFrequency: z.enum(['annual', 'monthly']).optional().default('annual'),
 });
 
 const updateGroupSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   description: z.string().max(500).optional(),
+  incomeFrequency: z.enum(['annual', 'monthly']).optional(),
 });
 
 // List user's groups
@@ -41,6 +43,7 @@ async function listGroups(db: Database, userId: string) {
       name: schema.groups.name,
       description: schema.groups.description,
       currency: schema.groups.currency,
+      incomeFrequency: schema.groups.incomeFrequency,
       archivedAt: schema.groups.archivedAt,
       createdAt: schema.groups.createdAt,
       memberId: schema.groupMembers.id,
@@ -160,6 +163,7 @@ async function listGroups(db: Database, userId: string) {
     name: group.name,
     description: group.description,
     currency: group.currency,
+    incomeFrequency: group.incomeFrequency,
     memberCount: countMap.get(group.id) ?? 0,
     myBalance: balanceByGroup.get(group.id) ?? 0,
     isArchived: group.archivedAt !== null,
@@ -194,6 +198,7 @@ groupsRoutes.post('/', zValidator('json', createGroupSchema), async (c) => {
       name: data.name.trim(),
       description: data.description?.trim() || null,
       currency: data.currency,
+      incomeFrequency: data.incomeFrequency,
       createdBy: user.id,
       createdAt: now,
     }),
@@ -240,6 +245,7 @@ groupRouter.get('/', async (c) => {
     name: group.name,
     description: group.description,
     currency: group.currency,
+    incomeFrequency: group.incomeFrequency,
     createdBy: group.createdBy,
     createdAt: group.createdAt,
     archivedAt: group.archivedAt,
@@ -263,9 +269,14 @@ groupRouter.patch('/', zValidator('json', updateGroupSchema), async (c) => {
   const groupId = c.req.param('id')!;
   const data = c.req.valid('json');
 
-  const updates: { name?: string; description?: string | null } = {};
+  const updates: {
+    name?: string;
+    description?: string | null;
+    incomeFrequency?: 'annual' | 'monthly';
+  } = {};
   if (data.name) updates.name = data.name.trim();
   if (data.description !== undefined) updates.description = data.description?.trim() || null;
+  if (data.incomeFrequency !== undefined) updates.incomeFrequency = data.incomeFrequency;
 
   if (Object.keys(updates).length > 0) {
     await db.update(schema.groups).set(updates).where(eq(schema.groups.id, groupId));

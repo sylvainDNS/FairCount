@@ -87,7 +87,11 @@ export const GroupDetailPage = () => {
           <BalanceTabContent groupId={id} currency={group.currency} />
         </TabsContent>
         <TabsContent value="members">
-          <MembersTabContent groupId={id} currency={group.currency} />
+          <MembersTabContent
+            groupId={id}
+            currency={group.currency}
+            incomeFrequency={group.incomeFrequency}
+          />
         </TabsContent>
       </TabsRoot>
     </div>

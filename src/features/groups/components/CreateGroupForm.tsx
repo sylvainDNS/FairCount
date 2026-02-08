@@ -1,10 +1,18 @@
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/shared/components/Button';
+import { SegmentedControl } from '@/shared/components/SegmentedControl';
 import { Select } from '@/shared/components/Select';
 import { TextInput } from '@/shared/components/TextInput';
 import { useGroups } from '../hooks/useGroups';
-import { CURRENCIES, GROUP_ERROR_MESSAGES } from '../types';
+import {
+  CURRENCIES,
+  GROUP_ERROR_MESSAGES,
+  INCOME_FREQUENCIES,
+  INCOME_FREQUENCY_LABELS,
+  type IncomeFrequency,
+  isIncomeFrequency,
+} from '../types';
 
 type FormState = 'idle' | 'loading' | 'error';
 
@@ -15,6 +23,7 @@ export const CreateGroupForm = () => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [currency, setCurrency] = useState('EUR');
+  const [incomeFrequency, setIncomeFrequency] = useState<IncomeFrequency>('annual');
   const [formState, setFormState] = useState<FormState>('idle');
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -35,6 +44,7 @@ export const CreateGroupForm = () => {
         name: name.trim(),
         description: description.trim() || undefined,
         currency,
+        incomeFrequency,
       });
 
       if (!result.success) {
@@ -45,7 +55,7 @@ export const CreateGroupForm = () => {
 
       navigate(`/groups/${result.data.id}`);
     },
-    [name, description, currency, createGroup, navigate],
+    [name, description, currency, incomeFrequency, createGroup, navigate],
   );
 
   return (
@@ -106,6 +116,23 @@ export const CreateGroupForm = () => {
           aria-label="Devise du groupe"
         />
       </div>
+
+      <fieldset disabled={formState === 'loading'}>
+        <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+          Saisie des revenus
+        </span>
+        <SegmentedControl
+          items={INCOME_FREQUENCIES}
+          value={incomeFrequency}
+          onValueChange={(v) => {
+            if (isIncomeFrequency(v)) setIncomeFrequency(v);
+          }}
+          aria-label="Fréquence de saisie des revenus"
+        />
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
+          {INCOME_FREQUENCY_LABELS[incomeFrequency].description}
+        </p>
+      </fieldset>
 
       {formState === 'error' && errorMessage && (
         <div id="form-error" role="alert" className="text-red-600 dark:text-red-400 text-sm">

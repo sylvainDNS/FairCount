@@ -1,9 +1,17 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/shared/components/Button';
+import { SegmentedControl } from '@/shared/components/SegmentedControl';
 import { TextInput } from '@/shared/components/TextInput';
 import { useGroup } from '../hooks/useGroup';
-import { GROUP_ERROR_MESSAGES, type GroupError } from '../types';
+import {
+  GROUP_ERROR_MESSAGES,
+  type GroupError,
+  INCOME_FREQUENCIES,
+  INCOME_FREQUENCY_LABELS,
+  type IncomeFrequency,
+  isIncomeFrequency,
+} from '../types';
 
 interface GroupSettingsProps {
   readonly groupId: string;
@@ -15,6 +23,7 @@ export const GroupSettings = ({ groupId }: GroupSettingsProps) => {
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [incomeFrequency, setIncomeFrequency] = useState<IncomeFrequency>('annual');
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
@@ -23,6 +32,7 @@ export const GroupSettings = ({ groupId }: GroupSettingsProps) => {
     if (group) {
       setName(group.name);
       setDescription(group.description || '');
+      setIncomeFrequency(group.incomeFrequency);
     }
   }, [group]);
 
@@ -38,6 +48,7 @@ export const GroupSettings = ({ groupId }: GroupSettingsProps) => {
     const result = await updateGroup({
       name: name.trim(),
       description: description.trim() || undefined,
+      incomeFrequency,
     });
 
     setSaving(false);
@@ -47,7 +58,7 @@ export const GroupSettings = ({ groupId }: GroupSettingsProps) => {
         GROUP_ERROR_MESSAGES[result.error as GroupError] || GROUP_ERROR_MESSAGES.UNKNOWN_ERROR,
       );
     }
-  }, [name, description, updateGroup]);
+  }, [name, description, incomeFrequency, updateGroup]);
 
   const handleArchive = useCallback(async () => {
     const result = await archiveGroup();
@@ -79,7 +90,10 @@ export const GroupSettings = ({ groupId }: GroupSettingsProps) => {
     );
   }
 
-  const hasChanges = name !== group.name || description !== (group.description || '');
+  const hasChanges =
+    name !== group.name ||
+    description !== (group.description || '') ||
+    incomeFrequency !== group.incomeFrequency;
 
   return (
     <div className="space-y-6">
@@ -119,6 +133,29 @@ export const GroupSettings = ({ groupId }: GroupSettingsProps) => {
             className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 resize-none"
           />
         </div>
+
+        <fieldset disabled={saving}>
+          <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            Saisie des revenus
+          </span>
+          <SegmentedControl
+            items={INCOME_FREQUENCIES}
+            value={incomeFrequency}
+            onValueChange={(v) => {
+              if (isIncomeFrequency(v)) setIncomeFrequency(v);
+            }}
+            aria-label="Fréquence de saisie des revenus"
+          />
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
+            {INCOME_FREQUENCY_LABELS[incomeFrequency].description}
+          </p>
+          {incomeFrequency !== group.incomeFrequency && (
+            <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+              Attention : les revenus existants ne seront pas convertis. Les membres devront
+              ressaisir leur revenu en {incomeFrequency === 'annual' ? 'annuel' : 'mensuel'}.
+            </p>
+          )}
+        </fieldset>
 
         {errorMessage && <p className="text-red-600 dark:text-red-400 text-sm">{errorMessage}</p>}
 

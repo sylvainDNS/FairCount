@@ -11,7 +11,7 @@ export const groupMembers = sqliteTable('group_members', {
   userId: text('user_id').references(() => users.id), // null si personne non inscrite
   name: text('name').notNull(),
   email: text('email'),
-  income: integer('income').notNull().default(0), // revenu mensuel en centimes
+  income: integer('income').notNull().default(0), // revenu en centimes (mensuel ou annuel selon le groupe)
   coefficient: integer('coefficient').notNull().default(0), // coefficient * 10000 pour precision
   joinedAt: integer('joined_at', { mode: 'timestamp_ms' }).notNull(),
   leftAt: integer('left_at', { mode: 'timestamp_ms' }),
