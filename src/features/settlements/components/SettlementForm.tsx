@@ -89,7 +89,7 @@ export const SettlementForm = ({
               <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
                 De{' '}
                 <span className="font-medium text-slate-700 dark:text-slate-300">
-                  {currentMember.name}
+                  {currentMember.name || currentMember.email || '?'}
                 </span>{' '}
                 vers...
               </p>
@@ -108,7 +108,7 @@ export const SettlementForm = ({
                     <Select
                       items={otherMembers.map((m) => ({
                         value: m.id,
-                        label: m.name,
+                        label: m.name || m.email || '?',
                       }))}
                       value={field.value}
                       onValueChange={field.onChange}

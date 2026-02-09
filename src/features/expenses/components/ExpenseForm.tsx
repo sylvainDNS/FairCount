@@ -76,7 +76,7 @@ export const ExpenseForm = ({
           const existing = participantMap.get(m.id);
           return {
             memberId: m.id,
-            memberName: m.name + (m.isCurrentUser ? ' (vous)' : ''),
+            memberName: (m.name || m.email || '?') + (m.isCurrentUser ? ' (vous)' : ''),
             selected: !!existing,
             customAmount: existing?.customAmount ? String(existing.customAmount / 100) : '',
             useCustomAmount:
@@ -89,7 +89,7 @@ export const ExpenseForm = ({
       replace(
         members.map((m) => ({
           memberId: m.id,
-          memberName: m.name + (m.isCurrentUser ? ' (vous)' : ''),
+          memberName: (m.name || m.email || '?') + (m.isCurrentUser ? ' (vous)' : ''),
           selected: true,
           customAmount: '',
           useCustomAmount: false,
@@ -253,7 +253,7 @@ export const ExpenseForm = ({
                     <Select
                       items={members.map((m) => ({
                         value: m.id,
-                        label: m.name + (m.isCurrentUser ? ' (vous)' : ''),
+                        label: (m.name || m.email || '?') + (m.isCurrentUser ? ' (vous)' : ''),
                       }))}
                       value={field.value}
                       onValueChange={field.onChange}
