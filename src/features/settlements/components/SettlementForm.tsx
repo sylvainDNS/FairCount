@@ -6,7 +6,12 @@ import { Controller, useForm } from 'react-hook-form';
 import { useMembers } from '@/features/members/hooks/useMembers';
 import { type SettlementFormValues, settlementSchema } from '@/lib/schemas/settlement.schema';
 import { Button } from '@/shared/components/Button';
-import { FormField } from '@/shared/components/FormField';
+import {
+  FormField,
+  fieldErrorClasses,
+  fieldLabelClasses,
+  requiredIndicatorClasses,
+} from '@/shared/components/FormField';
 import { Select } from '@/shared/components/Select';
 import { getLocalDateString } from '@/shared/utils/date';
 import { useSettlement } from '../hooks/useSettlement';
@@ -103,9 +108,9 @@ export const SettlementForm = ({
                 invalid={!!errors.toMember}
                 {...(isSubmitting ? { disabled: true } : {})}
               >
-                <Field.Label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                <Field.Label className={fieldLabelClasses}>
                   Destinataire
-                  <Field.RequiredIndicator className="text-red-500 dark:text-red-400 ml-0.5" />
+                  <Field.RequiredIndicator className={requiredIndicatorClasses} />
                 </Field.Label>
                 <Controller
                   name="toMember"
@@ -119,11 +124,11 @@ export const SettlementForm = ({
                       value={field.value}
                       onValueChange={field.onChange}
                       placeholder="Sélectionner un membre"
-                      variant={errors.toMember ? 'error' : 'default'}
+                      invalid={!!errors.toMember}
                     />
                   )}
                 />
-                <Field.ErrorText className="mt-1 text-sm text-red-600 dark:text-red-400">
+                <Field.ErrorText className={fieldErrorClasses}>
                   {errors.toMember?.message}
                 </Field.ErrorText>
               </Field.Root>

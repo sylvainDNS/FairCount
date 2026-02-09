@@ -6,7 +6,12 @@ export { Checkbox } from './Checkbox';
 export { ConfirmDialog } from './ConfirmDialog';
 export { EmptyState, EmptyStateIcons } from './EmptyState';
 export { ErrorBoundary } from './ErrorBoundary';
-export { FormField } from './FormField';
+export {
+  FormField,
+  fieldErrorClasses,
+  fieldLabelClasses,
+  requiredIndicatorClasses,
+} from './FormField';
 export { Layout } from './Layout';
 export { LinkButton } from './LinkButton';
 export { Loading, Skeleton } from './Loading';

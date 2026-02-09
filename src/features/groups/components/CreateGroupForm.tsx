@@ -5,7 +5,12 @@ import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { type CreateGroupFormValues, createGroupSchema } from '@/lib/schemas/group.schema';
 import { Button } from '@/shared/components/Button';
-import { FormField } from '@/shared/components/FormField';
+import {
+  FormField,
+  fieldErrorClasses,
+  fieldLabelClasses,
+  requiredIndicatorClasses,
+} from '@/shared/components/FormField';
 import { SegmentedControl } from '@/shared/components/SegmentedControl';
 import { Select } from '@/shared/components/Select';
 import { useGroups } from '../hooks/useGroups';
@@ -70,36 +75,27 @@ export const CreateGroupForm = () => {
         {...register('name')}
       />
 
-      <div>
-        <label
-          htmlFor="description"
-          className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
-        >
-          Description
-        </label>
-        <textarea
-          id="description"
+      <Field.Root invalid={!!errors.description} {...(isSubmitting ? { disabled: true } : {})}>
+        <Field.Label className={fieldLabelClasses}>Description</Field.Label>
+        <Field.Textarea
           {...register('description')}
           placeholder="Décrivez brièvement ce groupe..."
-          disabled={isSubmitting}
           rows={3}
           className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 resize-none"
         />
-        {errors.description && (
-          <p role="alert" className="mt-1 text-sm text-red-600 dark:text-red-400">
-            {errors.description.message}
-          </p>
-        )}
-      </div>
+        <Field.ErrorText className={fieldErrorClasses}>
+          {errors.description?.message}
+        </Field.ErrorText>
+      </Field.Root>
 
       <Field.Root
         required
         invalid={!!errors.currency}
         {...(isSubmitting ? { disabled: true } : {})}
       >
-        <Field.Label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+        <Field.Label className={fieldLabelClasses}>
           Devise
-          <Field.RequiredIndicator className="text-red-500 dark:text-red-400 ml-0.5" />
+          <Field.RequiredIndicator className={requiredIndicatorClasses} />
         </Field.Label>
         <Controller
           name="currency"
@@ -112,15 +108,13 @@ export const CreateGroupForm = () => {
             />
           )}
         />
-        <Field.ErrorText className="mt-1 text-sm text-red-600 dark:text-red-400">
-          {errors.currency?.message}
-        </Field.ErrorText>
+        <Field.ErrorText className={fieldErrorClasses}>{errors.currency?.message}</Field.ErrorText>
       </Field.Root>
 
       <Fieldset.Root {...(isSubmitting ? { disabled: true } : {})}>
-        <Fieldset.Legend className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+        <Fieldset.Legend className={fieldLabelClasses}>
           Saisie des revenus
-          <span className="text-red-500 dark:text-red-400 ml-0.5" aria-hidden="true">
+          <span className={requiredIndicatorClasses} aria-hidden="true">
             *
           </span>
         </Fieldset.Legend>
