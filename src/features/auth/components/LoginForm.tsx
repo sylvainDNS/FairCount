@@ -1,46 +1,40 @@
-import { useCallback, useState } from 'react';
-import { isValidEmail } from '@/lib/validation';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { type LoginFormValues, loginSchema } from '@/lib/schemas/auth.schema';
 import { Button } from '@/shared/components/Button';
-import { TextInput } from '@/shared/components/TextInput';
+import { FormField } from '@/shared/components/FormField';
 import { useAuth } from '../hooks/useAuth';
 import { AUTH_ERROR_MESSAGES, type AuthError } from '../types';
 
-type FormState = 'idle' | 'loading' | 'success' | 'error';
-
 export const LoginForm = () => {
   const { login } = useAuth();
-  const [email, setEmail] = useState('');
-  const [formState, setFormState] = useState<FormState>('idle');
-  const [errorMessage, setErrorMessage] = useState<string>('');
+  const [showSuccess, setShowSuccess] = useState(false);
 
-  const handleSubmit = useCallback(
-    async (e: React.SubmitEvent) => {
-      e.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: '' },
+  });
 
-      if (!isValidEmail(email)) {
-        setFormState('error');
-        setErrorMessage(AUTH_ERROR_MESSAGES.INVALID_EMAIL);
-        return;
-      }
+  const onSubmit = async (data: LoginFormValues) => {
+    const result = await login(data.email);
 
-      setFormState('loading');
-      setErrorMessage('');
-
-      const result = await login(email);
-
-      if (result.success) {
-        setFormState('success');
-      } else {
-        setFormState('error');
-        setErrorMessage(
+    if (result.success) {
+      setShowSuccess(true);
+    } else {
+      setError('root', {
+        message:
           AUTH_ERROR_MESSAGES[result.error as AuthError] || AUTH_ERROR_MESSAGES.UNKNOWN_ERROR,
-        );
-      }
-    },
-    [email, login],
-  );
+      });
+    }
+  };
 
-  if (formState === 'success') {
+  if (showSuccess) {
     return (
       <div className="text-center py-4">
         <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -67,46 +61,23 @@ export const LoginForm = () => {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label
-          htmlFor="email"
-          className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
-        >
-          Adresse email
-        </label>
-        <TextInput
-          id="email"
-          type="email"
-          value={email}
-          onChange={(e) => {
-            setEmail(e.target.value);
-            if (formState === 'error') {
-              setFormState('idle');
-              setErrorMessage('');
-            }
-          }}
-          placeholder="vous@exemple.com"
-          required
-          disabled={formState === 'loading'}
-          aria-invalid={formState === 'error'}
-          aria-describedby={formState === 'error' ? 'email-error' : undefined}
-        />
-      </div>
+    <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
+      <FormField
+        label="Adresse email"
+        type="email"
+        placeholder="vous@exemple.com"
+        disabled={isSubmitting}
+        error={errors.email}
+        {...register('email')}
+      />
 
-      {formState === 'error' && errorMessage && (
-        <div id="email-error" role="alert" className="text-red-600 dark:text-red-400 text-sm">
-          {errorMessage}
+      {errors.root && (
+        <div id="login-error" role="alert" className="text-red-600 dark:text-red-400 text-sm">
+          {errors.root.message}
         </div>
       )}
 
-      <Button
-        type="submit"
-        fullWidth
-        disabled={!email}
-        loading={formState === 'loading'}
-        loadingText="Envoi en cours..."
-      >
+      <Button type="submit" fullWidth loading={isSubmitting} loadingText="Envoi en cours...">
         Recevoir le lien de connexion
       </Button>
 

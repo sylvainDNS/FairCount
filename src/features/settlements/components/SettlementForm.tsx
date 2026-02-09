@@ -1,10 +1,13 @@
 import { Dialog } from '@ark-ui/react/dialog';
 import { Portal } from '@ark-ui/react/portal';
-import { useCallback, useEffect, useState } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Controller, useForm } from 'react-hook-form';
 import { useMembers } from '@/features/members/hooks/useMembers';
+import { type SettlementFormValues, settlementSchema } from '@/lib/schemas/settlement.schema';
 import { Button } from '@/shared/components/Button';
+import { FormField } from '@/shared/components/FormField';
 import { Select } from '@/shared/components/Select';
-import { TextInput } from '@/shared/components/TextInput';
+import { getLocalDateString } from '@/shared/utils/date';
 import { useSettlement } from '../hooks/useSettlement';
 import type { SettlementSuggestion } from '../types';
 import { SETTLEMENT_ERROR_MESSAGES } from '../types';
@@ -12,7 +15,7 @@ import { SETTLEMENT_ERROR_MESSAGES } from '../types';
 interface SettlementFormProps {
   readonly groupId: string;
   readonly currency: string;
-  readonly suggestion?: SettlementSuggestion;
+  readonly suggestion?: SettlementSuggestion | undefined;
   readonly onSuccess: () => void;
   readonly onCancel: () => void;
 }
@@ -27,84 +30,44 @@ export const SettlementForm = ({
   const { members } = useMembers(groupId);
   const { create } = useSettlement(groupId);
 
-  const [amount, setAmount] = useState(() => {
-    if (suggestion) return String(suggestion.amount / 100);
-    return '';
-  });
-  const [toMember, setToMember] = useState(suggestion?.to.id ?? '');
-  const [date, setDate] = useState(() => {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // Find current member
   const currentMember = members.find((m) => m.isCurrentUser);
-
-  // Filter other members (exclude self)
   const otherMembers = members.filter((m) => !m.isCurrentUser);
 
-  // If suggestion provided, update fields
-  useEffect(() => {
-    if (suggestion) {
-      setAmount(String(suggestion.amount / 100));
-      setToMember(suggestion.to.id);
-    }
-  }, [suggestion]);
-
-  const handleSubmit = useCallback(
-    async (e: React.SubmitEvent) => {
-      e.preventDefault();
-      setError(null);
-
-      // Amount validation
-      const amountValue = Number.parseFloat(amount);
-      if (Number.isNaN(amountValue) || amountValue <= 0) {
-        setError('Veuillez entrer un montant valide');
-        return;
-      }
-
-      // Recipient validation
-      if (!toMember) {
-        setError('Veuillez sélectionner un destinataire');
-        return;
-      }
-
-      // Date validation
-      if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-        setError('Veuillez entrer une date valide');
-        return;
-      }
-
-      setIsSubmitting(true);
-
-      try {
-        const amountInCents = Math.round(amountValue * 100);
-
-        const result = await create({
-          toMember,
-          amount: amountInCents,
-          date,
-        });
-
-        if (!result.success) {
-          setError(SETTLEMENT_ERROR_MESSAGES[result.error]);
-          setIsSubmitting(false);
-          return;
-        }
-
-        onSuccess();
-      } catch {
-        setError('Une erreur est survenue');
-        setIsSubmitting(false);
-      }
+  const {
+    register,
+    handleSubmit,
+    control,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<SettlementFormValues>({
+    resolver: zodResolver(settlementSchema),
+    defaultValues: {
+      amount: suggestion ? String(suggestion.amount / 100) : '',
+      toMember: suggestion?.to.id ?? '',
+      date: getLocalDateString(),
     },
-    [amount, toMember, date, create, onSuccess],
-  );
+  });
+
+  const onSubmit = async (data: SettlementFormValues) => {
+    const amountInCents = Math.round(Number.parseFloat(data.amount) * 100);
+
+    try {
+      const result = await create({
+        toMember: data.toMember,
+        amount: amountInCents,
+        date: data.date,
+      });
+
+      if (!result.success) {
+        setError('root', { message: SETTLEMENT_ERROR_MESSAGES[result.error] });
+        return;
+      }
+
+      onSuccess();
+    } catch {
+      setError('root', { message: 'Une erreur est survenue' });
+    }
+  };
 
   return (
     <Dialog.Root open onOpenChange={(details) => !details.open && onCancel()}>
@@ -132,75 +95,68 @@ export const SettlementForm = ({
               </p>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Recipient */}
+            <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
+              {/* Recipient - Ark UI Select via Controller */}
               <div>
                 <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                   Destinataire
                 </span>
-                <Select
-                  items={otherMembers.map((m) => ({ value: m.id, label: m.name }))}
-                  value={toMember}
-                  onValueChange={setToMember}
-                  placeholder="Sélectionner un membre"
-                  disabled={isSubmitting}
-                  aria-label="Destinataire"
-                  aria-invalid={!!error}
-                  aria-describedby={error ? 'settlement-form-error' : undefined}
+                <Controller
+                  name="toMember"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      items={otherMembers.map((m) => ({
+                        value: m.id,
+                        label: m.name,
+                      }))}
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      placeholder="Sélectionner un membre"
+                      disabled={isSubmitting}
+                      aria-label="Destinataire"
+                      variant={errors.toMember ? 'error' : 'default'}
+                    />
+                  )}
                 />
+                {errors.toMember && (
+                  <p role="alert" className="mt-1 text-sm text-red-600 dark:text-red-400">
+                    {errors.toMember.message}
+                  </p>
+                )}
               </div>
 
               {/* Amount */}
-              <div>
-                <label
-                  htmlFor="settlement-amount"
-                  className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
-                >
-                  Montant ({currency})
-                </label>
-                <TextInput
-                  id="settlement-amount"
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  placeholder="0.00"
-                  disabled={isSubmitting}
-                  required
-                  aria-invalid={!!error}
-                  aria-describedby={error ? 'settlement-form-error' : undefined}
-                />
-              </div>
+              <FormField
+                label={`Montant (${currency})`}
+                id="settlement-amount"
+                type="number"
+                min="0.01"
+                step="0.01"
+                placeholder="0.00"
+                disabled={isSubmitting}
+                error={errors.amount}
+                {...register('amount')}
+              />
 
-              {/* Settlement date */}
-              <div>
-                <label
-                  htmlFor="settlement-date"
-                  className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
-                >
-                  Date
-                </label>
-                <TextInput
-                  id="settlement-date"
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  disabled={isSubmitting}
-                  required
-                  aria-invalid={!!error}
-                  aria-describedby={error ? 'settlement-form-error' : undefined}
-                />
-              </div>
+              {/* Date */}
+              <FormField
+                label="Date"
+                id="settlement-date"
+                type="date"
+                disabled={isSubmitting}
+                error={errors.date}
+                {...register('date')}
+              />
 
               {/* Error */}
-              {error && (
+              {errors.root && (
                 <p
                   id="settlement-form-error"
                   className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg"
                   role="alert"
                 >
-                  {error}
+                  {errors.root.message}
                 </p>
               )}
 
@@ -215,8 +171,13 @@ export const SettlementForm = ({
                 >
                   Annuler
                 </Button>
-                <Button type="submit" variant="primary" disabled={isSubmitting} className="flex-1">
-                  {isSubmitting ? 'Enregistrement...' : 'Enregistrer'}
+                <Button
+                  type="submit"
+                  loading={isSubmitting}
+                  loadingText="Enregistrement..."
+                  className="flex-1"
+                >
+                  Enregistrer
                 </Button>
               </div>
             </form>

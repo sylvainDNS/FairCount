@@ -1,9 +1,11 @@
 import { Dialog } from '@ark-ui/react/dialog';
 import { Portal } from '@ark-ui/react/portal';
-import { useCallback, useState } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
 import { INCOME_FREQUENCY_LABELS, type IncomeFrequency } from '@/features/groups';
+import { type IncomeFormValues, incomeSchema } from '@/lib/schemas/income.schema';
 import { Button } from '@/shared/components/Button';
-import { TextInput } from '@/shared/components/TextInput';
+import { FormField } from '@/shared/components/FormField';
 
 interface IncomeFormProps {
   readonly memberName: string;
@@ -22,33 +24,25 @@ export const IncomeForm = ({
   onSubmit,
   onCancel,
 }: IncomeFormProps) => {
-  const [income, setIncome] = useState(String(currentIncome / 100));
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<IncomeFormValues>({
+    resolver: zodResolver(incomeSchema),
+    defaultValues: { income: String(currentIncome / 100) },
+  });
 
-  const handleSubmit = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
-      const incomeValue = parseFloat(income);
+  const onFormSubmit = async (data: IncomeFormValues) => {
+    const incomeInCents = Math.round(Number.parseFloat(data.income) * 100);
 
-      if (Number.isNaN(incomeValue) || incomeValue < 0) {
-        setError('Veuillez entrer un montant valide');
-        return;
-      }
-
-      const incomeInCents = Math.round(incomeValue * 100);
-      setIsSubmitting(true);
-      setError(null);
-
-      try {
-        await onSubmit(incomeInCents);
-      } catch {
-        setError('Une erreur est survenue');
-        setIsSubmitting(false);
-      }
-    },
-    [income, onSubmit],
-  );
+    try {
+      await onSubmit(incomeInCents);
+    } catch {
+      setError('root', { message: 'Une erreur est survenue' });
+    }
+  };
 
   return (
     <Dialog.Root open onOpenChange={(details) => !details.open && onCancel()}>
@@ -71,35 +65,28 @@ export const IncomeForm = ({
               du calcul des parts.
             </Dialog.Description>
 
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit(onFormSubmit)} noValidate>
               <div className="mb-4">
-                <label
-                  htmlFor="income"
-                  className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
-                >
-                  {INCOME_FREQUENCY_LABELS[incomeFrequency].netLabel} ({currency})
-                </label>
-                <TextInput
+                <FormField
+                  label={`${INCOME_FREQUENCY_LABELS[incomeFrequency].netLabel} (${currency})`}
                   id="income"
                   type="number"
                   min="0"
                   step="0.01"
-                  value={income}
-                  onChange={(e) => setIncome(e.target.value)}
                   placeholder={INCOME_FREQUENCY_LABELS[incomeFrequency].placeholder}
                   disabled={isSubmitting}
-                  aria-invalid={!!error}
-                  aria-describedby={error ? 'income-error' : undefined}
+                  error={errors.income}
+                  {...register('income')}
                 />
               </div>
 
-              {error && (
+              {errors.root && (
                 <p
-                  id="income-error"
+                  id="income-root-error"
                   className="text-sm text-red-600 dark:text-red-400 mb-4"
                   role="alert"
                 >
-                  {error}
+                  {errors.root.message}
                 </p>
               )}
 

@@ -1,11 +1,16 @@
 import { Dialog } from '@ark-ui/react/dialog';
 import { Portal } from '@ark-ui/react/portal';
-import { useCallback, useEffect, useState } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useCallback, useEffect } from 'react';
+import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import { useMembers } from '@/features/members/hooks/useMembers';
+import { type ExpenseFormValues, expenseSchema } from '@/lib/schemas/expense.schema';
 import { Button } from '@/shared/components/Button';
 import { Checkbox } from '@/shared/components/Checkbox';
+import { FormField } from '@/shared/components/FormField';
 import { Select } from '@/shared/components/Select';
 import { TextInput } from '@/shared/components/TextInput';
+import { getLocalDateString } from '@/shared/utils/date';
 import { useExpense } from '../hooks/useExpense';
 import type { CreateExpenseFormData, ExpenseDetail, UpdateExpenseFormData } from '../types';
 import { EXPENSE_ERROR_MESSAGES } from '../types';
@@ -13,17 +18,9 @@ import { EXPENSE_ERROR_MESSAGES } from '../types';
 interface ExpenseFormProps {
   readonly groupId: string;
   readonly currency: string;
-  readonly expense?: ExpenseDetail;
+  readonly expense?: ExpenseDetail | undefined;
   readonly onSuccess: () => void;
   readonly onCancel: () => void;
-}
-
-interface ParticipantState {
-  readonly memberId: string;
-  readonly memberName: string;
-  readonly selected: boolean;
-  readonly customAmount: string;
-  readonly useCustomAmount: boolean;
 }
 
 export const ExpenseForm = ({
@@ -36,21 +33,35 @@ export const ExpenseForm = ({
   const { members } = useMembers(groupId);
   const { create, update } = useExpense(groupId, expense?.id);
 
-  const [amount, setAmount] = useState(expense ? String(expense.amount / 100) : '');
-  const [description, setDescription] = useState(expense?.description ?? '');
-  const [date, setDate] = useState(() => {
-    if (expense?.date) return expense.date;
-    // Use local date to avoid timezone issues with toISOString()
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+  const {
+    register,
+    handleSubmit,
+    control,
+    watch,
+    setValue,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<ExpenseFormValues>({
+    resolver: zodResolver(expenseSchema),
+    defaultValues: {
+      amount: expense ? String(expense.amount / 100) : '',
+      description: expense?.description ?? '',
+      date: expense?.date ?? getLocalDateString(),
+      paidBy: expense?.paidBy.id ?? '',
+      participants: [],
+    },
   });
-  const [paidBy, setPaidBy] = useState(expense?.paidBy.id ?? '');
-  const [participants, setParticipants] = useState<ParticipantState[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+
+  const {
+    fields,
+    replace,
+    update: updateField,
+  } = useFieldArray({
+    control,
+    name: 'participants',
+  });
+
+  const watchedParticipants = watch('participants');
 
   // Initialize participants from members
   useEffect(() => {
@@ -60,7 +71,7 @@ export const ExpenseForm = ({
       // Edit mode: use existing participants
       const participantMap = new Map(expense.participants.map((p) => [p.memberId, p]));
 
-      setParticipants(
+      replace(
         members.map((m) => {
           const existing = participantMap.get(m.id);
           return {
@@ -75,7 +86,7 @@ export const ExpenseForm = ({
       );
     } else {
       // Create mode: select all by default
-      setParticipants(
+      replace(
         members.map((m) => ({
           memberId: m.id,
           memberName: m.name + (m.isCurrentUser ? ' (vous)' : ''),
@@ -87,138 +98,97 @@ export const ExpenseForm = ({
 
       // Set default payer to current user
       const currentUser = members.find((m) => m.isCurrentUser);
-      if (currentUser && !paidBy) {
-        setPaidBy(currentUser.id);
+      if (currentUser) {
+        setValue('paidBy', currentUser.id);
       }
     }
-  }, [members, expense, paidBy]);
+  }, [members, expense, replace, setValue]);
 
-  const handleParticipantToggle = useCallback((memberId: string) => {
-    setParticipants((prev) =>
-      prev.map((p) =>
-        p.memberId === memberId
-          ? { ...p, selected: !p.selected, customAmount: '', useCustomAmount: false }
-          : p,
-      ),
-    );
-  }, []);
-
-  const handleCustomAmountToggle = useCallback((memberId: string) => {
-    setParticipants((prev) =>
-      prev.map((p) =>
-        p.memberId === memberId
-          ? { ...p, useCustomAmount: !p.useCustomAmount, customAmount: '' }
-          : p,
-      ),
-    );
-  }, []);
-
-  const handleCustomAmountChange = useCallback((memberId: string, value: string) => {
-    setParticipants((prev) =>
-      prev.map((p) => (p.memberId === memberId ? { ...p, customAmount: value } : p)),
-    );
-  }, []);
-
-  const handleSubmit = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
-      setError(null);
-
-      const amountValue = Number.parseFloat(amount);
-      if (Number.isNaN(amountValue) || amountValue <= 0) {
-        setError('Veuillez entrer un montant valide');
-        return;
-      }
-
-      if (!description.trim()) {
-        setError('Veuillez entrer une description');
-        return;
-      }
-
-      if (!paidBy) {
-        setError('Veuillez sélectionner qui a payé');
-        return;
-      }
-
-      const selectedParticipants = participants.filter((p) => p.selected);
-      if (selectedParticipants.length === 0) {
-        setError('Veuillez sélectionner au moins un participant');
-        return;
-      }
-
-      // Calculate custom amounts total
-      const amountInCents = Math.round(amountValue * 100);
-      let customAmountsTotal = 0;
-
-      const participantData = selectedParticipants.map((p) => {
-        let customAmount: number | null = null;
-
-        if (p.useCustomAmount && p.customAmount) {
-          const customValue = Number.parseFloat(p.customAmount);
-          if (!Number.isNaN(customValue) && customValue >= 0) {
-            customAmount = Math.round(customValue * 100);
-            customAmountsTotal += customAmount;
-          }
-        }
-
-        return {
-          memberId: p.memberId,
-          customAmount,
-        };
+  const handleParticipantToggle = useCallback(
+    (index: number) => {
+      const current = watchedParticipants[index];
+      if (!current) return;
+      updateField(index, {
+        memberId: current.memberId,
+        memberName: current.memberName,
+        selected: !current.selected,
+        customAmount: '',
+        useCustomAmount: false,
       });
-
-      if (customAmountsTotal > amountInCents) {
-        setError('Les montants personnalisés dépassent le total de la dépense');
-        return;
-      }
-
-      setIsSubmitting(true);
-
-      try {
-        if (expense) {
-          // Update
-          const updateData: UpdateExpenseFormData = {
-            amount: amountInCents,
-            description: description.trim(),
-            date,
-            paidBy,
-            participants: participantData,
-          };
-
-          const result = await update(updateData);
-
-          if (!result.success) {
-            setError(EXPENSE_ERROR_MESSAGES[result.error]);
-            setIsSubmitting(false);
-            return;
-          }
-        } else {
-          // Create
-          const createData: CreateExpenseFormData = {
-            amount: amountInCents,
-            description: description.trim(),
-            date,
-            paidBy,
-            participants: participantData,
-          };
-
-          const result = await create(createData);
-
-          if (!result.success) {
-            setError(EXPENSE_ERROR_MESSAGES[result.error]);
-            setIsSubmitting(false);
-            return;
-          }
-        }
-
-        onSuccess();
-      } catch {
-        setError('Une erreur est survenue');
-        setIsSubmitting(false);
-      }
     },
-    [amount, description, date, paidBy, participants, expense, create, update, onSuccess],
+    [watchedParticipants, updateField],
   );
+
+  const handleCustomAmountToggle = useCallback(
+    (index: number) => {
+      const current = watchedParticipants[index];
+      if (!current) return;
+      updateField(index, {
+        memberId: current.memberId,
+        memberName: current.memberName,
+        selected: current.selected,
+        useCustomAmount: !current.useCustomAmount,
+        customAmount: '',
+      });
+    },
+    [watchedParticipants, updateField],
+  );
+
+  const onSubmit = async (data: ExpenseFormValues) => {
+    const amountInCents = Math.round(Number.parseFloat(data.amount) * 100);
+
+    const selectedParticipants = data.participants.filter((p) => p.selected);
+    const participantData = selectedParticipants.map((p) => {
+      let customAmount: number | null = null;
+
+      if (p.useCustomAmount && p.customAmount) {
+        const customValue = Number.parseFloat(p.customAmount);
+        if (!Number.isNaN(customValue) && customValue >= 0) {
+          customAmount = Math.round(customValue * 100);
+        }
+      }
+
+      return { memberId: p.memberId, customAmount };
+    });
+
+    try {
+      if (expense) {
+        const updateData: UpdateExpenseFormData = {
+          amount: amountInCents,
+          description: data.description.trim(),
+          date: data.date,
+          paidBy: data.paidBy,
+          participants: participantData,
+        };
+
+        const result = await update(updateData);
+
+        if (!result.success) {
+          setError('root', { message: EXPENSE_ERROR_MESSAGES[result.error] });
+          return;
+        }
+      } else {
+        const createData: CreateExpenseFormData = {
+          amount: amountInCents,
+          description: data.description.trim(),
+          date: data.date,
+          paidBy: data.paidBy,
+          participants: participantData,
+        };
+
+        const result = await create(createData);
+
+        if (!result.success) {
+          setError('root', { message: EXPENSE_ERROR_MESSAGES[result.error] });
+          return;
+        }
+      }
+
+      onSuccess();
+    } catch {
+      setError('root', { message: 'Une erreur est survenue' });
+    }
+  };
 
   return (
     <Dialog.Root open onOpenChange={(details) => !details.open && onCancel()}>
@@ -236,89 +206,69 @@ export const ExpenseForm = ({
               {expense ? 'Modifier la dépense' : 'Nouvelle dépense'}
             </Dialog.Title>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
               {/* Amount */}
-              <div>
-                <label
-                  htmlFor="expense-amount"
-                  className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
-                >
-                  Montant ({currency})
-                </label>
-                <TextInput
-                  id="expense-amount"
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  placeholder="0.00"
-                  disabled={isSubmitting}
-                  required
-                  aria-invalid={!!error}
-                  aria-describedby={error ? 'expense-form-error' : undefined}
-                />
-              </div>
+              <FormField
+                label={`Montant (${currency})`}
+                id="expense-amount"
+                type="number"
+                min="0.01"
+                step="0.01"
+                placeholder="0.00"
+                disabled={isSubmitting}
+                error={errors.amount}
+                {...register('amount')}
+              />
 
               {/* Description */}
-              <div>
-                <label
-                  htmlFor="expense-description"
-                  className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
-                >
-                  Description
-                </label>
-                <TextInput
-                  id="expense-description"
-                  type="text"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Ex: Courses, Restaurant..."
-                  disabled={isSubmitting}
-                  required
-                  aria-invalid={!!error}
-                  aria-describedby={error ? 'expense-form-error' : undefined}
-                />
-              </div>
+              <FormField
+                label="Description"
+                id="expense-description"
+                type="text"
+                placeholder="Ex: Courses, Restaurant..."
+                disabled={isSubmitting}
+                error={errors.description}
+                {...register('description')}
+              />
 
               {/* Date */}
-              <div>
-                <label
-                  htmlFor="expense-date"
-                  className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
-                >
-                  Date
-                </label>
-                <TextInput
-                  id="expense-date"
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  disabled={isSubmitting}
-                  required
-                  aria-invalid={!!error}
-                  aria-describedby={error ? 'expense-form-error' : undefined}
-                />
-              </div>
+              <FormField
+                label="Date"
+                id="expense-date"
+                type="date"
+                disabled={isSubmitting}
+                error={errors.date}
+                {...register('date')}
+              />
 
-              {/* Paid by */}
+              {/* Paid by - Ark UI Select via Controller */}
               <div>
                 <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                   Payé par
                 </span>
-                <Select
-                  items={members.map((m) => ({
-                    value: m.id,
-                    label: m.name + (m.isCurrentUser ? ' (vous)' : ''),
-                  }))}
-                  value={paidBy}
-                  onValueChange={setPaidBy}
-                  placeholder="Sélectionner..."
-                  disabled={isSubmitting}
-                  aria-label="Payé par"
-                  aria-invalid={!!error}
-                  aria-describedby={error ? 'expense-form-error' : undefined}
+                <Controller
+                  name="paidBy"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      items={members.map((m) => ({
+                        value: m.id,
+                        label: m.name + (m.isCurrentUser ? ' (vous)' : ''),
+                      }))}
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      placeholder="Sélectionner..."
+                      disabled={isSubmitting}
+                      aria-label="Payé par"
+                      variant={errors.paidBy ? 'error' : 'default'}
+                    />
+                  )}
                 />
+                {errors.paidBy && (
+                  <p role="alert" className="mt-1 text-sm text-red-600 dark:text-red-400">
+                    {errors.paidBy.message}
+                  </p>
+                )}
               </div>
 
               {/* Participants */}
@@ -327,63 +277,74 @@ export const ExpenseForm = ({
                   Participants
                 </legend>
                 <div className="space-y-2 max-h-48 overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-lg p-2">
-                  {participants.map((p) => (
-                    <div
-                      key={p.memberId}
-                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                    >
-                      <Checkbox
-                        checked={p.selected}
-                        onCheckedChange={() => handleParticipantToggle(p.memberId)}
-                        disabled={isSubmitting}
-                        size="sm"
-                        className="flex-1"
+                  {fields.map((field, index) => {
+                    const participant = watchedParticipants[index];
+                    if (!participant) return null;
+
+                    return (
+                      <div
+                        key={field.id}
+                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50"
                       >
-                        {p.memberName}
-                      </Checkbox>
+                        <Checkbox
+                          checked={participant.selected}
+                          onCheckedChange={() => handleParticipantToggle(index)}
+                          disabled={isSubmitting}
+                          size="sm"
+                          className="flex-1"
+                        >
+                          {participant.memberName}
+                        </Checkbox>
 
-                      {p.selected && (
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleCustomAmountToggle(p.memberId)}
-                            className={`text-xs px-2 py-1 rounded transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 disabled:opacity-50 ${
-                              p.useCustomAmount
-                                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
-                            }`}
-                            disabled={isSubmitting}
-                          >
-                            {p.useCustomAmount ? 'Montant fixe' : 'Part équitable'}
-                          </button>
-
-                          {p.useCustomAmount && (
-                            <TextInput
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              value={p.customAmount}
-                              onChange={(e) => handleCustomAmountChange(p.memberId, e.target.value)}
-                              fullWidth={false}
-                              className="w-20 px-2 py-1 text-sm"
-                              placeholder="0.00"
+                        {participant.selected && (
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleCustomAmountToggle(index)}
+                              className={`text-xs px-2 py-1 rounded transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 disabled:opacity-50 ${
+                                participant.useCustomAmount
+                                  ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                              }`}
                               disabled={isSubmitting}
-                            />
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                            >
+                              {participant.useCustomAmount ? 'Montant fixe' : 'Part équitable'}
+                            </button>
+
+                            {participant.useCustomAmount && (
+                              <TextInput
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                fullWidth={false}
+                                className="w-20 px-2 py-1 text-sm"
+                                placeholder="0.00"
+                                disabled={isSubmitting}
+                                {...register(`participants.${index}.customAmount`)}
+                              />
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
+                {errors.participants && (
+                  <p role="alert" className="mt-1 text-sm text-red-600 dark:text-red-400">
+                    {errors.participants.root?.message ??
+                      errors.participants.message ??
+                      'Erreur dans les participants'}
+                  </p>
+                )}
               </fieldset>
 
-              {error && (
+              {errors.root && (
                 <p
                   id="expense-form-error"
                   className="text-sm text-red-600 dark:text-red-400"
                   role="alert"
                 >
-                  {error}
+                  {errors.root.message}
                 </p>
               )}
 

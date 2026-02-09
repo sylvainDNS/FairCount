@@ -1,7 +1,9 @@
-import { useCallback, useState } from 'react';
-import { isValidEmail } from '@/lib/validation';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { type InviteFormValues, inviteSchema } from '@/lib/schemas/group.schema';
 import { Button } from '@/shared/components/Button';
-import { TextInput } from '@/shared/components/TextInput';
+import { FormField } from '@/shared/components/FormField';
 import { useInvitations } from '../hooks/useInvitations';
 import { GROUP_ERROR_MESSAGES, type GroupError } from '../types';
 
@@ -10,98 +12,62 @@ interface InviteFormProps {
   readonly onSuccess?: (() => void) | undefined;
 }
 
-type FormState = 'idle' | 'loading' | 'success' | 'error';
-
 export const InviteForm = ({ groupId, onSuccess }: InviteFormProps) => {
   const { sendInvitation } = useInvitations(groupId);
+  const [showSuccess, setShowSuccess] = useState(false);
 
-  const [email, setEmail] = useState('');
-  const [formState, setFormState] = useState<FormState>('idle');
-  const [errorMessage, setErrorMessage] = useState('');
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<InviteFormValues>({
+    resolver: zodResolver(inviteSchema),
+    defaultValues: { email: '' },
+  });
 
-  const handleSubmit = useCallback(
-    async (e: React.SubmitEvent) => {
-      e.preventDefault();
+  const onSubmit = async (data: InviteFormValues) => {
+    const result = await sendInvitation(data.email);
 
-      if (!isValidEmail(email)) {
-        setFormState('error');
-        setErrorMessage('Adresse email invalide');
-        return;
-      }
-
-      setFormState('loading');
-      setErrorMessage('');
-
-      const result = await sendInvitation(email);
-
-      if (result.success) {
-        setFormState('success');
-        setEmail('');
-        onSuccess?.();
-        setTimeout(() => setFormState('idle'), 3000);
-      } else {
-        setFormState('error');
-        setErrorMessage(
+    if (result.success) {
+      setShowSuccess(true);
+      reset();
+      onSuccess?.();
+      setTimeout(() => setShowSuccess(false), 3000);
+    } else {
+      setError('root', {
+        message:
           GROUP_ERROR_MESSAGES[result.error as GroupError] || GROUP_ERROR_MESSAGES.UNKNOWN_ERROR,
-        );
-      }
-    },
-    [email, sendInvitation, onSuccess],
-  );
+      });
+    }
+  };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label
-          htmlFor="invite-email"
-          className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
-        >
-          Adresse email
-        </label>
-        <TextInput
-          id="invite-email"
-          type="email"
-          value={email}
-          onChange={(e) => {
-            setEmail(e.target.value);
-            if (formState !== 'idle') {
-              setFormState('idle');
-              setErrorMessage('');
-            }
-          }}
-          placeholder="email@exemple.com"
-          required
-          disabled={formState === 'loading'}
-          aria-describedby={
-            formState === 'error'
-              ? 'invite-error'
-              : formState === 'success'
-                ? 'invite-success'
-                : undefined
-          }
-          aria-invalid={formState === 'error'}
-        />
-      </div>
+    <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
+      <FormField
+        label="Adresse email"
+        id="invite-email"
+        type="email"
+        placeholder="email@exemple.com"
+        disabled={isSubmitting}
+        error={errors.email}
+        {...register('email')}
+      />
 
-      {formState === 'error' && errorMessage && (
+      {errors.root && (
         <div id="invite-error" role="alert" className="text-red-600 dark:text-red-400 text-sm">
-          {errorMessage}
+          {errors.root.message}
         </div>
       )}
 
-      {formState === 'success' && (
+      {showSuccess && (
         <output id="invite-success" className="text-green-600 dark:text-green-400 text-sm">
           Invitation envoyée avec succès
         </output>
       )}
 
-      <Button
-        type="submit"
-        fullWidth
-        disabled={!email}
-        loading={formState === 'loading'}
-        loadingText="Envoi en cours..."
-      >
+      <Button type="submit" fullWidth loading={isSubmitting} loadingText="Envoi en cours...">
         Envoyer l'invitation
       </Button>
     </form>
