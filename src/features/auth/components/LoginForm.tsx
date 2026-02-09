@@ -66,6 +66,7 @@ export const LoginForm = () => {
         label="Adresse email"
         type="email"
         placeholder="vous@exemple.com"
+        required
         disabled={isSubmitting}
         error={errors.email}
         {...register('email')}

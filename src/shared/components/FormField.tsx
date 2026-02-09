@@ -1,4 +1,5 @@
-import { forwardRef, useId } from 'react';
+import { Field } from '@ark-ui/react/field';
+import { forwardRef } from 'react';
 import type { FieldError } from 'react-hook-form';
 import { TextInput, type TextInputProps } from './TextInput';
 
@@ -9,35 +10,25 @@ interface FormFieldProps extends TextInputProps {
 }
 
 export const FormField = forwardRef<HTMLInputElement, FormFieldProps>(
-  ({ label, error, required, id, ...props }, ref) => {
-    const reactId = useId();
-    const fieldId = id ?? reactId;
-    const errorId = `${fieldId}-error`;
-
+  ({ label, error, required, id, disabled, ...rest }, ref) => {
     return (
-      <div>
-        <label
-          htmlFor={fieldId}
-          className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
-        >
+      <Field.Root
+        {...(id ? { id } : {})}
+        {...(required ? { required } : {})}
+        invalid={!!error}
+        {...(disabled ? { disabled } : {})}
+      >
+        <Field.Label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
           {label}
-          {required && ' *'}
-        </label>
-        <TextInput
-          ref={ref}
-          id={fieldId}
-          variant={error ? 'error' : 'default'}
-          aria-invalid={!!error}
-          {...(required ? { 'aria-required': true } : {})}
-          {...(error ? { 'aria-describedby': errorId } : {})}
-          {...props}
-        />
-        {error && (
-          <p id={errorId} role="alert" className="mt-1 text-sm text-red-600 dark:text-red-400">
-            {error.message}
-          </p>
-        )}
-      </div>
+          <Field.RequiredIndicator className="text-slate-500 dark:text-slate-400 ml-0.5" />
+        </Field.Label>
+        <Field.Input asChild>
+          <TextInput ref={ref} variant={error ? 'error' : 'default'} {...rest} />
+        </Field.Input>
+        <Field.ErrorText className="mt-1 text-sm text-red-600 dark:text-red-400">
+          {error?.message}
+        </Field.ErrorText>
+      </Field.Root>
     );
   },
 );

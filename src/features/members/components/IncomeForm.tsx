@@ -74,6 +74,7 @@ export const IncomeForm = ({
                   min="0"
                   step="0.01"
                   placeholder={INCOME_FREQUENCY_LABELS[incomeFrequency].placeholder}
+                  required
                   disabled={isSubmitting}
                   error={errors.income}
                   {...register('income')}

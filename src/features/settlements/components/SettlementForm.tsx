@@ -1,4 +1,5 @@
 import { Dialog } from '@ark-ui/react/dialog';
+import { Field } from '@ark-ui/react/field';
 import { Portal } from '@ark-ui/react/portal';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Controller, useForm } from 'react-hook-form';
@@ -97,10 +98,15 @@ export const SettlementForm = ({
 
             <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
               {/* Recipient - Ark UI Select via Controller */}
-              <div>
-                <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <Field.Root
+                required
+                invalid={!!errors.toMember}
+                {...(isSubmitting ? { disabled: true } : {})}
+              >
+                <Field.Label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                   Destinataire
-                </span>
+                  <Field.RequiredIndicator className="text-red-500 dark:text-red-400 ml-0.5" />
+                </Field.Label>
                 <Controller
                   name="toMember"
                   control={control}
@@ -113,18 +119,14 @@ export const SettlementForm = ({
                       value={field.value}
                       onValueChange={field.onChange}
                       placeholder="Sélectionner un membre"
-                      disabled={isSubmitting}
-                      aria-label="Destinataire"
                       variant={errors.toMember ? 'error' : 'default'}
                     />
                   )}
                 />
-                {errors.toMember && (
-                  <p role="alert" className="mt-1 text-sm text-red-600 dark:text-red-400">
-                    {errors.toMember.message}
-                  </p>
-                )}
-              </div>
+                <Field.ErrorText className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {errors.toMember?.message}
+                </Field.ErrorText>
+              </Field.Root>
 
               {/* Amount */}
               <FormField
@@ -134,6 +136,7 @@ export const SettlementForm = ({
                 min="0.01"
                 step="0.01"
                 placeholder="0.00"
+                required
                 disabled={isSubmitting}
                 error={errors.amount}
                 {...register('amount')}
@@ -144,6 +147,7 @@ export const SettlementForm = ({
                 label="Date"
                 id="settlement-date"
                 type="date"
+                required
                 disabled={isSubmitting}
                 error={errors.date}
                 {...register('date')}

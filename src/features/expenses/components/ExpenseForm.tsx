@@ -1,4 +1,6 @@
 import { Dialog } from '@ark-ui/react/dialog';
+import { Field } from '@ark-ui/react/field';
+import { Fieldset } from '@ark-ui/react/fieldset';
 import { Portal } from '@ark-ui/react/portal';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useCallback, useEffect } from 'react';
@@ -215,6 +217,7 @@ export const ExpenseForm = ({
                 min="0.01"
                 step="0.01"
                 placeholder="0.00"
+                required
                 disabled={isSubmitting}
                 error={errors.amount}
                 {...register('amount')}
@@ -226,6 +229,7 @@ export const ExpenseForm = ({
                 id="expense-description"
                 type="text"
                 placeholder="Ex: Courses, Restaurant..."
+                required
                 disabled={isSubmitting}
                 error={errors.description}
                 {...register('description')}
@@ -236,16 +240,22 @@ export const ExpenseForm = ({
                 label="Date"
                 id="expense-date"
                 type="date"
+                required
                 disabled={isSubmitting}
                 error={errors.date}
                 {...register('date')}
               />
 
               {/* Paid by - Ark UI Select via Controller */}
-              <div>
-                <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <Field.Root
+                required
+                invalid={!!errors.paidBy}
+                {...(isSubmitting ? { disabled: true } : {})}
+              >
+                <Field.Label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                   Payé par
-                </span>
+                  <Field.RequiredIndicator className="text-red-500 dark:text-red-400 ml-0.5" />
+                </Field.Label>
                 <Controller
                   name="paidBy"
                   control={control}
@@ -258,24 +268,27 @@ export const ExpenseForm = ({
                       value={field.value}
                       onValueChange={field.onChange}
                       placeholder="Sélectionner..."
-                      disabled={isSubmitting}
-                      aria-label="Payé par"
                       variant={errors.paidBy ? 'error' : 'default'}
                     />
                   )}
                 />
-                {errors.paidBy && (
-                  <p role="alert" className="mt-1 text-sm text-red-600 dark:text-red-400">
-                    {errors.paidBy.message}
-                  </p>
-                )}
-              </div>
+                <Field.ErrorText className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {errors.paidBy?.message}
+                </Field.ErrorText>
+              </Field.Root>
 
               {/* Participants */}
-              <fieldset className="border-0 p-0 m-0">
-                <legend className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              <Fieldset.Root
+                invalid={!!errors.participants}
+                {...(isSubmitting ? { disabled: true } : {})}
+                className="border-0 p-0 m-0"
+              >
+                <Fieldset.Legend className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                   Participants
-                </legend>
+                  <span className="text-red-500 dark:text-red-400 ml-0.5" aria-hidden="true">
+                    *
+                  </span>
+                </Fieldset.Legend>
                 <div className="space-y-2 max-h-48 overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-lg p-2">
                   {fields.map((field, index) => {
                     const participant = watchedParticipants[index];
@@ -329,14 +342,12 @@ export const ExpenseForm = ({
                     );
                   })}
                 </div>
-                {errors.participants && (
-                  <p role="alert" className="mt-1 text-sm text-red-600 dark:text-red-400">
-                    {errors.participants.root?.message ??
-                      errors.participants.message ??
-                      'Erreur dans les participants'}
-                  </p>
-                )}
-              </fieldset>
+                <Fieldset.ErrorText className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {errors.participants?.root?.message ??
+                    errors.participants?.message ??
+                    'Erreur dans les participants'}
+                </Fieldset.ErrorText>
+              </Fieldset.Root>
 
               {errors.root && (
                 <p

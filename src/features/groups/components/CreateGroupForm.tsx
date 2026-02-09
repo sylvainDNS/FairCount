@@ -1,3 +1,5 @@
+import { Field } from '@ark-ui/react/field';
+import { Fieldset } from '@ark-ui/react/fieldset';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
@@ -90,10 +92,15 @@ export const CreateGroupForm = () => {
         )}
       </div>
 
-      <div>
-        <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+      <Field.Root
+        required
+        invalid={!!errors.currency}
+        {...(isSubmitting ? { disabled: true } : {})}
+      >
+        <Field.Label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
           Devise
-        </span>
+          <Field.RequiredIndicator className="text-red-500 dark:text-red-400 ml-0.5" />
+        </Field.Label>
         <Controller
           name="currency"
           control={control}
@@ -102,17 +109,21 @@ export const CreateGroupForm = () => {
               items={CURRENCIES.map((c) => ({ value: c.code, label: c.label }))}
               value={field.value}
               onValueChange={field.onChange}
-              disabled={isSubmitting}
-              aria-label="Devise du groupe"
             />
           )}
         />
-      </div>
+        <Field.ErrorText className="mt-1 text-sm text-red-600 dark:text-red-400">
+          {errors.currency?.message}
+        </Field.ErrorText>
+      </Field.Root>
 
-      <fieldset disabled={isSubmitting}>
-        <span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+      <Fieldset.Root {...(isSubmitting ? { disabled: true } : {})}>
+        <Fieldset.Legend className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
           Saisie des revenus
-        </span>
+          <span className="text-red-500 dark:text-red-400 ml-0.5" aria-hidden="true">
+            *
+          </span>
+        </Fieldset.Legend>
         <Controller
           name="incomeFrequency"
           control={control}
@@ -127,10 +138,10 @@ export const CreateGroupForm = () => {
             />
           )}
         />
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
+        <Fieldset.HelperText className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
           {INCOME_FREQUENCY_LABELS[incomeFrequency].description}
-        </p>
-      </fieldset>
+        </Fieldset.HelperText>
+      </Fieldset.Root>
 
       {errors.root && (
         <div id="form-error" role="alert" className="text-red-600 dark:text-red-400 text-sm">

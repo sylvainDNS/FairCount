@@ -50,6 +50,7 @@ export const InviteForm = ({ groupId, onSuccess }: InviteFormProps) => {
         id="invite-email"
         type="email"
         placeholder="email@exemple.com"
+        required
         disabled={isSubmitting}
         error={errors.email}
         {...register('email')}
