@@ -47,18 +47,22 @@ export async function listSettlements(
     conditions.push(cursorCondition);
   }
 
-  // Query with joins for names
+  // Settlements reference groupMembers twice (fromMember + toMember), requiring
+  // table aliases. Drizzle ORM for SQLite does not support native aliasing,
+  // so raw SQL aliases (fm/tm/fu/tu) are used here.
+  // IMPORTANT: If column names in the schema change, these raw references
+  // must be updated manually.
   const results = await ctx.db
     .select({
       settlement: schema.settlements,
-      fromName: sql<string>`fm.name`.as('fromName'),
-      fromUserId: sql<string | null>`fm.user_id`.as('fromUserId'),
-      toName: sql<string>`tm.name`.as('toName'),
-      toUserId: sql<string | null>`tm.user_id`.as('toUserId'),
+      fromName: sql<string>`coalesce(fu.name, fm.name)`.as('fromName'),
+      toName: sql<string>`coalesce(tu.name, tm.name)`.as('toName'),
     })
     .from(schema.settlements)
     .innerJoin(sql`${schema.groupMembers} as fm`, sql`fm.id = ${schema.settlements.fromMember}`)
+    .leftJoin(sql`${schema.users} as fu`, sql`fu.id = fm.user_id`)
     .innerJoin(sql`${schema.groupMembers} as tm`, sql`tm.id = ${schema.settlements.toMember}`)
+    .leftJoin(sql`${schema.users} as tu`, sql`tu.id = tm.user_id`)
     .where(and(...conditions))
     .orderBy(desc(schema.settlements.createdAt))
     .limit(limit + 1);

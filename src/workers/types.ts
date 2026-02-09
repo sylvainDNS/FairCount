@@ -1,6 +1,5 @@
 import type { D1Database, R2Bucket } from '@cloudflare/workers-types';
 import type { Database } from '../db';
-import type * as schema from '../db/schema';
 import type { Auth } from '../lib/auth';
 
 export interface Env {
@@ -30,6 +29,19 @@ export interface AuthenticatedUser {
   email: string;
 }
 
+export interface GroupMembership {
+  id: string;
+  groupId: string;
+  userId: string | null;
+  /** Computed via COALESCE(users.name, group_members.name) -- requires LEFT JOIN on users */
+  name: string;
+  email: string | null;
+  income: number;
+  coefficient: number;
+  joinedAt: Date;
+  leftAt: Date | null;
+}
+
 export interface AppEnv {
   Bindings: Env;
   Variables: {
@@ -37,6 +49,6 @@ export interface AppEnv {
     auth: Auth;
     user: AuthenticatedUser;
     session: { id: string; expiresAt: Date };
-    membership: typeof schema.groupMembers.$inferSelect;
+    membership: GroupMembership;
   };
 }

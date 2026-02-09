@@ -5,6 +5,7 @@ import { calculateShares } from './shared/share-calculation';
 import {
   activeGroupMembersCondition,
   buildCursorCondition,
+  memberDisplayName,
   sqlInClause,
 } from './shared/sql-helpers';
 
@@ -123,10 +124,11 @@ export async function listExpenses(
   let query = ctx.db
     .select({
       expense: schema.expenses,
-      payerName: schema.groupMembers.name,
+      payerName: memberDisplayName,
     })
     .from(schema.expenses)
     .innerJoin(schema.groupMembers, eq(schema.expenses.paidBy, schema.groupMembers.id))
+    .leftJoin(schema.users, eq(schema.groupMembers.userId, schema.users.id))
     .where(and(...conditions))
     .orderBy(desc(schema.expenses.createdAt))
     .limit(limit + 1);
@@ -136,10 +138,11 @@ export async function listExpenses(
     query = ctx.db
       .select({
         expense: schema.expenses,
-        payerName: schema.groupMembers.name,
+        payerName: memberDisplayName,
       })
       .from(schema.expenses)
       .innerJoin(schema.groupMembers, eq(schema.expenses.paidBy, schema.groupMembers.id))
+      .leftJoin(schema.users, eq(schema.groupMembers.userId, schema.users.id))
       .where(
         and(
           ...conditions,
@@ -217,8 +220,9 @@ export async function listExpenses(
   const creatorIdsInClause = sqlInClause(schema.groupMembers.id, creatorIds);
   const creators = creatorIdsInClause
     ? await ctx.db
-        .select({ id: schema.groupMembers.id, name: schema.groupMembers.name })
+        .select({ id: schema.groupMembers.id, name: memberDisplayName })
         .from(schema.groupMembers)
+        .leftJoin(schema.users, eq(schema.groupMembers.userId, schema.users.id))
         .where(creatorIdsInClause)
     : [];
   const creatorNames = new Map(creators.map((c) => [c.id, c.name]));
@@ -262,10 +266,11 @@ export async function getExpense(ctx: ExpenseContext, expenseId: string): Promis
   const [result] = await ctx.db
     .select({
       expense: schema.expenses,
-      payerName: schema.groupMembers.name,
+      payerName: memberDisplayName,
     })
     .from(schema.expenses)
     .innerJoin(schema.groupMembers, eq(schema.expenses.paidBy, schema.groupMembers.id))
+    .leftJoin(schema.users, eq(schema.groupMembers.userId, schema.users.id))
     .where(
       and(
         eq(schema.expenses.id, expenseId),
@@ -282,11 +287,12 @@ export async function getExpense(ctx: ExpenseContext, expenseId: string): Promis
   const participants = await ctx.db
     .select({
       participant: schema.expenseParticipants,
-      memberName: schema.groupMembers.name,
+      memberName: memberDisplayName,
       memberUserId: schema.groupMembers.userId,
     })
     .from(schema.expenseParticipants)
     .innerJoin(schema.groupMembers, eq(schema.expenseParticipants.memberId, schema.groupMembers.id))
+    .leftJoin(schema.users, eq(schema.groupMembers.userId, schema.users.id))
     .where(eq(schema.expenseParticipants.expenseId, expenseId));
 
   // Get member coefficients
@@ -306,8 +312,9 @@ export async function getExpense(ctx: ExpenseContext, expenseId: string): Promis
 
   // Get creator name
   const [creator] = await ctx.db
-    .select({ name: schema.groupMembers.name, userId: schema.groupMembers.userId })
+    .select({ name: memberDisplayName, userId: schema.groupMembers.userId })
     .from(schema.groupMembers)
+    .leftJoin(schema.users, eq(schema.groupMembers.userId, schema.users.id))
     .where(eq(schema.groupMembers.id, result.expense.createdBy));
 
   const isCreator = result.expense.createdBy === ctx.currentMemberId;

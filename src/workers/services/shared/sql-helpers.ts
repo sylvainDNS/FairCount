@@ -3,6 +3,18 @@ import type { SQLiteColumn } from 'drizzle-orm/sqlite-core';
 import * as schema from '@/db/schema';
 
 /**
+ * SQL expression that resolves a member's display name:
+ * - Linked members (userId != null): uses users.name
+ * - Pending members (userId == null): falls back to group_members.name
+ *
+ * Requires a LEFT JOIN on schema.users via groupMembers.userId.
+ *
+ * Typed as `string` (non-null) because group_members.name is NOT NULL,
+ * so COALESCE always returns a value even when users.name is null.
+ */
+export const memberDisplayName = sql<string>`coalesce(${schema.users.name}, ${schema.groupMembers.name})`;
+
+/**
  * Build SQL IN clause for a list of IDs.
  * Returns undefined if the list is empty (caller should handle this case).
  *

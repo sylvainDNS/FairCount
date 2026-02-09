@@ -1,5 +1,7 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
 import { fetchWithAuth } from '@/lib/api';
+import { invalidations } from '@/lib/query-invalidations';
 import { authClient, useSession } from '../../../lib/auth-client';
 import type { AuthError, ProfileFormData, User } from '../types';
 
@@ -16,6 +18,7 @@ interface UseAuthResult {
 
 export const useAuth = (): UseAuthResult => {
   const { data: session, isPending } = useSession();
+  const queryClient = useQueryClient();
 
   const user = useMemo((): User | null => {
     if (!session?.user) return null;
@@ -53,25 +56,31 @@ export const useAuth = (): UseAuthResult => {
     await authClient.signOut();
   }, []);
 
-  const updateProfile = useCallback(async (data: ProfileFormData): Promise<AuthResult> => {
-    try {
-      const res = await fetchWithAuth('/user/profile', {
-        method: 'PATCH',
-        body: JSON.stringify({ name: data.name }),
-      });
+  const updateProfile = useCallback(
+    async (data: ProfileFormData): Promise<AuthResult> => {
+      try {
+        const res = await fetchWithAuth('/user/profile', {
+          method: 'PATCH',
+          body: JSON.stringify({ name: data.name }),
+        });
 
-      if (!res.ok) {
+        if (!res.ok) {
+          return { success: false, error: 'UNKNOWN_ERROR' };
+        }
+
+        // Refresh session so useSession() picks up the updated user data
+        await authClient.getSession();
+
+        // Invalidate all caches that contain member names
+        invalidations.afterProfileUpdate(queryClient);
+
+        return { success: true };
+      } catch {
         return { success: false, error: 'UNKNOWN_ERROR' };
       }
-
-      // Refresh session so useSession() picks up the updated user data
-      await authClient.getSession();
-
-      return { success: true };
-    } catch {
-      return { success: false, error: 'UNKNOWN_ERROR' };
-    }
-  }, []);
+    },
+    [queryClient],
+  );
 
   return {
     user,

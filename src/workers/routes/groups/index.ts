@@ -7,6 +7,7 @@ import type { Database } from '../../../db';
 import * as schema from '../../../db/schema';
 import { authMiddleware, membershipMiddleware } from '../../middleware';
 import { calculateShares } from '../../services/shared/share-calculation';
+import { memberDisplayName } from '../../services/shared/sql-helpers';
 import type { AppEnv } from '../../types';
 import { balancesRoutes } from './balances';
 import { expensesRoutes } from './expenses';
@@ -234,8 +235,17 @@ groupRouter.get('/', async (c) => {
   }
 
   const members = await db
-    .select()
+    .select({
+      id: schema.groupMembers.id,
+      name: memberDisplayName,
+      email: schema.groupMembers.email,
+      userId: schema.groupMembers.userId,
+      income: schema.groupMembers.income,
+      coefficient: schema.groupMembers.coefficient,
+      joinedAt: schema.groupMembers.joinedAt,
+    })
     .from(schema.groupMembers)
+    .leftJoin(schema.users, eq(schema.groupMembers.userId, schema.users.id))
     .where(and(eq(schema.groupMembers.groupId, groupId), isNull(schema.groupMembers.leftAt)));
 
   const myMember = members.find((m) => m.userId === user.id);

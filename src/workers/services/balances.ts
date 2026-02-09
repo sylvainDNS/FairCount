@@ -6,7 +6,7 @@ import {
   verifyBalancesIntegrity,
 } from './shared/balance-calculation';
 import { calculateShares } from './shared/share-calculation';
-import { activeGroupMembersCondition, sqlInClause } from './shared/sql-helpers';
+import { activeGroupMembersCondition, memberDisplayName, sqlInClause } from './shared/sql-helpers';
 
 interface BalanceContext extends BaseBalanceContext {
   readonly userId: string;
@@ -38,10 +38,11 @@ export async function getMyBalance(ctx: BalanceContext): Promise<Response> {
   const myExpenses = await ctx.db
     .select({
       expense: schema.expenses,
-      payerName: schema.groupMembers.name,
+      payerName: memberDisplayName,
     })
     .from(schema.expenses)
     .innerJoin(schema.groupMembers, eq(schema.expenses.paidBy, schema.groupMembers.id))
+    .leftJoin(schema.users, eq(schema.groupMembers.userId, schema.users.id))
     .where(
       and(
         eq(schema.expenses.groupId, ctx.groupId),
@@ -106,11 +107,12 @@ export async function getMyBalance(ctx: BalanceContext): Promise<Response> {
   const sentSettlements = await ctx.db
     .select({
       settlement: schema.settlements,
-      receiverName: schema.groupMembers.name,
+      receiverName: memberDisplayName,
       receiverId: schema.groupMembers.id,
     })
     .from(schema.settlements)
     .innerJoin(schema.groupMembers, eq(schema.settlements.toMember, schema.groupMembers.id))
+    .leftJoin(schema.users, eq(schema.groupMembers.userId, schema.users.id))
     .where(
       and(
         eq(schema.settlements.groupId, ctx.groupId),
@@ -121,11 +123,12 @@ export async function getMyBalance(ctx: BalanceContext): Promise<Response> {
   const receivedSettlements = await ctx.db
     .select({
       settlement: schema.settlements,
-      senderName: schema.groupMembers.name,
+      senderName: memberDisplayName,
       senderId: schema.groupMembers.id,
     })
     .from(schema.settlements)
     .innerJoin(schema.groupMembers, eq(schema.settlements.fromMember, schema.groupMembers.id))
+    .leftJoin(schema.users, eq(schema.groupMembers.userId, schema.users.id))
     .where(
       and(
         eq(schema.settlements.groupId, ctx.groupId),
@@ -194,10 +197,11 @@ export async function getGroupStats(ctx: BalanceContext, period?: string): Promi
   const expenses = await ctx.db
     .select({
       expense: schema.expenses,
-      payerName: schema.groupMembers.name,
+      payerName: memberDisplayName,
     })
     .from(schema.expenses)
     .innerJoin(schema.groupMembers, eq(schema.expenses.paidBy, schema.groupMembers.id))
+    .leftJoin(schema.users, eq(schema.groupMembers.userId, schema.users.id))
     .where(and(...conditions));
 
   // Calculate stats by member

@@ -1,6 +1,7 @@
 import { and, count, eq, isNull } from 'drizzle-orm';
 import type { Database } from '@/db';
 import * as schema from '@/db/schema';
+import { memberDisplayName } from './shared/sql-helpers';
 
 interface MemberContext {
   readonly db: Database;
@@ -43,8 +44,17 @@ export async function recalculateCoefficients(db: Database, groupId: string): Pr
 // List all members
 export async function listMembers(ctx: MemberContext): Promise<Response> {
   const members = await ctx.db
-    .select()
+    .select({
+      id: schema.groupMembers.id,
+      name: memberDisplayName,
+      email: schema.groupMembers.email,
+      userId: schema.groupMembers.userId,
+      income: schema.groupMembers.income,
+      coefficient: schema.groupMembers.coefficient,
+      joinedAt: schema.groupMembers.joinedAt,
+    })
     .from(schema.groupMembers)
+    .leftJoin(schema.users, eq(schema.groupMembers.userId, schema.users.id))
     .where(and(eq(schema.groupMembers.groupId, ctx.groupId), isNull(schema.groupMembers.leftAt)))
     .orderBy(schema.groupMembers.joinedAt);
 
@@ -71,8 +81,17 @@ export async function listMembers(ctx: MemberContext): Promise<Response> {
 // Get member details
 export async function getMember(ctx: MemberContext, memberId: string): Promise<Response> {
   const [member] = await ctx.db
-    .select()
+    .select({
+      id: schema.groupMembers.id,
+      name: memberDisplayName,
+      email: schema.groupMembers.email,
+      userId: schema.groupMembers.userId,
+      income: schema.groupMembers.income,
+      coefficient: schema.groupMembers.coefficient,
+      joinedAt: schema.groupMembers.joinedAt,
+    })
     .from(schema.groupMembers)
+    .leftJoin(schema.users, eq(schema.groupMembers.userId, schema.users.id))
     .where(
       and(
         eq(schema.groupMembers.id, memberId),

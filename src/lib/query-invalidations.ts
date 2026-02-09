@@ -6,6 +6,16 @@ import { queryKeys } from './query-keys';
  * Ensures cache consistency after each mutation.
  */
 export const invalidations = {
+  // Profile
+  afterProfileUpdate: (queryClient: QueryClient) => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.groups.all });
+    queryClient.invalidateQueries({ queryKey: queryKeys.members.all });
+    queryClient.invalidateQueries({ queryKey: queryKeys.expenses.all });
+    queryClient.invalidateQueries({ queryKey: queryKeys.balances.all });
+    queryClient.invalidateQueries({ queryKey: queryKeys.settlements.all });
+    queryClient.invalidateQueries({ queryKey: queryKeys.invitations.all });
+  },
+
   // Groups
   afterGroupCreate: (queryClient: QueryClient) => {
     queryClient.invalidateQueries({ queryKey: queryKeys.groups.list() });

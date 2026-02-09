@@ -2,7 +2,7 @@ import { and, eq, isNull } from 'drizzle-orm';
 import type { Database } from '@/db';
 import * as schema from '@/db/schema';
 import { calculateShares } from './share-calculation';
-import { activeGroupMembersCondition, sqlInClause } from './sql-helpers';
+import { activeGroupMembersCondition, memberDisplayName, sqlInClause } from './sql-helpers';
 
 export interface BalanceContext {
   readonly db: Database;
@@ -32,11 +32,12 @@ export async function calculateGroupBalances(ctx: BalanceContext): Promise<Membe
   const members = await ctx.db
     .select({
       id: schema.groupMembers.id,
-      name: schema.groupMembers.name,
+      name: memberDisplayName,
       userId: schema.groupMembers.userId,
       coefficient: schema.groupMembers.coefficient,
     })
     .from(schema.groupMembers)
+    .leftJoin(schema.users, eq(schema.groupMembers.userId, schema.users.id))
     .where(activeGroupMembersCondition(ctx.groupId));
 
   const memberCoefficients = new Map(members.map((m) => [m.id, m.coefficient]));

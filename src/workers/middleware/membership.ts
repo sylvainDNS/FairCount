@@ -2,7 +2,8 @@ import { and, eq, isNull } from 'drizzle-orm';
 import { createMiddleware } from 'hono/factory';
 import { HTTPException } from 'hono/http-exception';
 import { API_ERROR_CODES } from '@/shared/constants/errors';
-import { groupMembers } from '../../db/schema';
+import { groupMembers, users } from '../../db/schema';
+import { memberDisplayName } from '../services/shared/sql-helpers';
 import type { AppEnv } from '../types';
 
 export const membershipMiddleware = createMiddleware<AppEnv>(async (c, next) => {
@@ -15,8 +16,19 @@ export const membershipMiddleware = createMiddleware<AppEnv>(async (c, next) => 
   }
 
   const [member] = await db
-    .select()
+    .select({
+      id: groupMembers.id,
+      groupId: groupMembers.groupId,
+      userId: groupMembers.userId,
+      name: memberDisplayName,
+      email: groupMembers.email,
+      income: groupMembers.income,
+      coefficient: groupMembers.coefficient,
+      joinedAt: groupMembers.joinedAt,
+      leftAt: groupMembers.leftAt,
+    })
     .from(groupMembers)
+    .leftJoin(users, eq(groupMembers.userId, users.id))
     .where(
       and(
         eq(groupMembers.groupId, groupId),
