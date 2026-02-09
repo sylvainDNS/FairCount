@@ -24,7 +24,6 @@ const VALID_ERRORS = [
   'ALREADY_MEMBER',
   'INVITATION_NOT_FOUND',
   'INVITATION_EXPIRED',
-  'CANNOT_LEAVE_ALONE',
 ] as const;
 
 export const useGroups = (): UseGroupsResult => {

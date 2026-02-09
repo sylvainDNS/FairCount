@@ -25,6 +25,7 @@ export const GroupSettings = ({ groupId }: GroupSettingsProps) => {
   const [description, setDescription] = useState('');
   const [incomeFrequency, setIncomeFrequency] = useState<IncomeFrequency>('annual');
   const [saving, setSaving] = useState(false);
+  const [leaving, setLeaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
 
@@ -70,6 +71,7 @@ export const GroupSettings = ({ groupId }: GroupSettingsProps) => {
   }, [archiveGroup]);
 
   const handleLeave = useCallback(async () => {
+    setLeaving(true);
     const result = await leaveGroup();
     if (result.success) {
       navigate('/groups');
@@ -77,6 +79,7 @@ export const GroupSettings = ({ groupId }: GroupSettingsProps) => {
       setErrorMessage(
         GROUP_ERROR_MESSAGES[result.error as GroupError] || GROUP_ERROR_MESSAGES.UNKNOWN_ERROR,
       );
+      setLeaving(false);
     }
     setShowLeaveConfirm(false);
   }, [leaveGroup, navigate]);
@@ -194,7 +197,9 @@ export const GroupSettings = ({ groupId }: GroupSettingsProps) => {
           <div>
             <p className="font-medium text-slate-900 dark:text-white">Quitter le groupe</p>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Vous ne pourrez plus accéder aux dépenses
+              {group.memberCount === 1
+                ? 'Vous êtes le dernier membre. Quitter supprimera définitivement le groupe et toutes ses données.'
+                : 'Vous ne pourrez plus accéder aux dépenses'}
             </p>
           </div>
           {showLeaveConfirm ? (
@@ -207,7 +212,14 @@ export const GroupSettings = ({ groupId }: GroupSettingsProps) => {
               >
                 Annuler
               </Button>
-              <Button type="button" variant="danger" size="sm" onClick={handleLeave}>
+              <Button
+                type="button"
+                variant="danger"
+                size="sm"
+                onClick={handleLeave}
+                loading={leaving}
+                loadingText="..."
+              >
                 Confirmer
               </Button>
             </div>

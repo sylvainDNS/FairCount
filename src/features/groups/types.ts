@@ -145,8 +145,7 @@ export type GroupError =
   | 'ALREADY_MEMBER'
   | 'INVITATION_NOT_FOUND'
   | 'INVITATION_EXPIRED'
-  | 'FORBIDDEN'
-  | 'CANNOT_LEAVE_ALONE';
+  | 'FORBIDDEN';
 
 export const GROUP_ERROR_MESSAGES = {
   ...COMMON_ERROR_MESSAGES,
@@ -159,7 +158,6 @@ export const GROUP_ERROR_MESSAGES = {
   INVITATION_NOT_FOUND: 'Invitation introuvable',
   INVITATION_EXPIRED: 'Cette invitation a expiré',
   FORBIDDEN: "Vous n'êtes pas autorisé à effectuer cette action",
-  CANNOT_LEAVE_ALONE: 'Vous ne pouvez pas quitter un groupe dont vous êtes le seul membre',
 } as const satisfies Record<GroupError, string>;
 
 // API result type alias

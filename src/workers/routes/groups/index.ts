@@ -350,7 +350,9 @@ groupRouter.post('/leave', async (c) => {
     .where(and(eq(schema.groupMembers.groupId, groupId), isNull(schema.groupMembers.leftAt)));
 
   if ((memberCount?.count ?? 0) <= 1) {
-    return c.json({ error: API_ERROR_CODES.CANNOT_LEAVE_ALONE }, 400);
+    // Last member leaving: delete the group (cascades to all related data)
+    await db.delete(schema.groups).where(eq(schema.groups.id, groupId));
+    return c.json({ success: true });
   }
 
   await db
