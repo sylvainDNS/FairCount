@@ -130,7 +130,7 @@ export async function listExpenses(
     .innerJoin(schema.groupMembers, eq(schema.expenses.paidBy, schema.groupMembers.id))
     .leftJoin(schema.users, eq(schema.groupMembers.userId, schema.users.id))
     .where(and(...conditions))
-    .orderBy(desc(schema.expenses.createdAt))
+    .orderBy(desc(schema.expenses.date), desc(schema.expenses.createdAt))
     .limit(limit + 1);
 
   // Add participant filter using subquery
@@ -159,7 +159,7 @@ export async function listExpenses(
           ),
         ),
       )
-      .orderBy(desc(schema.expenses.createdAt))
+      .orderBy(desc(schema.expenses.date), desc(schema.expenses.createdAt))
       .limit(limit + 1);
   }
 
