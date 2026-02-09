@@ -29,6 +29,8 @@ export const expenseSchema = z
   .refine(
     (data) => {
       const amountInCents = Math.round(Number.parseFloat(data.amount) * 100);
+      // Skip cross-field check when amount is invalid — field-level validation handles it
+      if (Number.isNaN(amountInCents) || amountInCents <= 0) return true;
       const customTotal = data.participants
         .filter((p) => p.selected && p.useCustomAmount && p.customAmount)
         .reduce((sum, p) => {
