@@ -155,7 +155,7 @@ async function listGroups(db: Database, userId: string) {
       { settlementsPaid: 0, settlementsReceived: 0 },
     );
 
-    const netBalance = totalPaid - totalOwed - settlementsPaid + settlementsReceived;
+    const netBalance = totalPaid - totalOwed + settlementsPaid - settlementsReceived;
     balanceByGroup.set(groupId, netBalance);
   }
 
