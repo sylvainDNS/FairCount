@@ -19,8 +19,17 @@ interface ExpenseListProps {
 }
 
 export const ExpenseList = ({ groupId, currency }: ExpenseListProps) => {
-  const { expenses, isLoading, isLoadingMore, hasMore, filters, setFilters, loadMore, refresh } =
-    useExpenses(groupId);
+  const {
+    expenses,
+    isLoading,
+    isFetching,
+    isLoadingMore,
+    hasMore,
+    filters,
+    setFilters,
+    loadMore,
+    refresh,
+  } = useExpenses(groupId);
 
   const [selectedExpense, setSelectedExpense] = useState<ExpenseSummary | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -78,12 +87,25 @@ export const ExpenseList = ({ groupId, currency }: ExpenseListProps) => {
     }
   }, [expenseToDelete, groupId, refresh]);
 
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Dépenses</h2>
-        </div>
+  return (
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Dépenses</h2>
+        {!isLoading && (
+          <Button type="button" size="sm" onClick={() => setShowCreateForm(true)}>
+            + Ajouter
+          </Button>
+        )}
+      </div>
+
+      {/* Filters */}
+      {!isLoading && (
+        <ExpenseFilters groupId={groupId} filters={filters} onFiltersChange={setFilters} />
+      )}
+
+      {/* Expense list */}
+      {isLoading ? (
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
           <div>
             {[1, 2, 3, 4, 5].map((i) => (
@@ -105,27 +127,9 @@ export const ExpenseList = ({ groupId, currency }: ExpenseListProps) => {
             ))}
           </div>
         </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Dépenses</h2>
-        <Button type="button" size="sm" onClick={() => setShowCreateForm(true)}>
-          + Ajouter
-        </Button>
-      </div>
-
-      {/* Filters */}
-      <ExpenseFilters groupId={groupId} filters={filters} onFiltersChange={setFilters} />
-
-      {/* Expense list */}
-      {expenses.length === 0 ? (
+      ) : expenses.length === 0 ? (
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
-          {Object.keys(filters).length > 0 ? (
+          {filters.startDate || filters.endDate || filters.paidBy || filters.search ? (
             <EmptyState
               icon={<EmptyStateIcons.Search />}
               title="Aucun résultat"
@@ -141,7 +145,9 @@ export const ExpenseList = ({ groupId, currency }: ExpenseListProps) => {
           )}
         </div>
       ) : (
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+        <div
+          className={`bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden transition-opacity ${isFetching && !isLoadingMore ? 'opacity-60' : 'opacity-100'}`}
+        >
           <ul>
             {expenses.map((expense) => (
               <li key={expense.id}>

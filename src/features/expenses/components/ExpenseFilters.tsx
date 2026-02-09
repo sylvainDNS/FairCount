@@ -66,16 +66,16 @@ export const ExpenseFilters = ({ groupId, filters, onFiltersChange }: ExpenseFil
         endDate = undefined;
       }
 
-      onFiltersChange({ ...filters, startDate, endDate });
+      onFiltersChange({ ...filtersRef.current, startDate, endDate });
     },
-    [filters, onFiltersChange],
+    [onFiltersChange],
   );
 
   const handlePayerChange = useCallback(
     (paidBy: string) => {
-      onFiltersChange({ ...filters, paidBy: paidBy || undefined });
+      onFiltersChange({ ...filtersRef.current, paidBy: paidBy || undefined });
     },
-    [filters, onFiltersChange],
+    [onFiltersChange],
   );
 
   const handleClearFilters = useCallback(() => {
@@ -159,7 +159,8 @@ export const ExpenseFilters = ({ groupId, filters, onFiltersChange }: ExpenseFil
               { value: '', label: 'Tous les membres' },
               ...members.map((member) => ({
                 value: member.id,
-                label: member.name + (member.isCurrentUser ? ' (vous)' : ''),
+                label:
+                  (member.name || member.email || '?') + (member.isCurrentUser ? ' (vous)' : ''),
               })),
             ]}
             value={filters.paidBy ?? ''}

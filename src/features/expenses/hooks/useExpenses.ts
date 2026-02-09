@@ -1,4 +1,4 @@
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { throwIfError, toTypedError } from '@/lib/api-error';
 import { queryKeys } from '@/lib/query-keys';
@@ -13,6 +13,7 @@ import {
 interface UseExpensesResult {
   readonly expenses: ExpenseSummary[];
   readonly isLoading: boolean;
+  readonly isFetching: boolean;
   readonly isLoadingMore: boolean;
   readonly error: ExpenseError | null;
   readonly hasMore: boolean;
@@ -25,28 +26,38 @@ interface UseExpensesResult {
 export const useExpenses = (groupId: string): UseExpensesResult => {
   const [filters, setFiltersState] = useState<ExpenseFilters>({});
 
-  const { data, isLoading, isFetchingNextPage, error, hasNextPage, fetchNextPage, refetch } =
-    useInfiniteQuery({
-      queryKey: queryKeys.expenses.infinite(groupId, filters),
-      queryFn: async ({ pageParam }) => {
-        const result = await expensesApi.list(groupId, {
-          ...filters,
-          ...(pageParam !== undefined && { cursor: pageParam }),
-          limit: 20,
-        });
-        return throwIfError(result);
-      },
-      initialPageParam: undefined as string | undefined,
-      getNextPageParam: (lastPage) =>
-        lastPage.hasMore ? (lastPage.nextCursor ?? undefined) : undefined,
-      enabled: !!groupId,
-    });
+  const {
+    data,
+    isLoading,
+    isFetching,
+    isFetchingNextPage,
+    error,
+    hasNextPage,
+    fetchNextPage,
+    refetch,
+  } = useInfiniteQuery({
+    queryKey: queryKeys.expenses.infinite(groupId, filters),
+    queryFn: async ({ pageParam }) => {
+      const result = await expensesApi.list(groupId, {
+        ...filters,
+        ...(pageParam !== undefined && { cursor: pageParam }),
+        limit: 20,
+      });
+      return throwIfError(result);
+    },
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? (lastPage.nextCursor ?? undefined) : undefined,
+    enabled: !!groupId,
+    placeholderData: keepPreviousData,
+  });
 
   const expenses = data?.pages.flatMap((page) => page.expenses) ?? [];
 
   return {
     expenses,
     isLoading,
+    isFetching,
     isLoadingMore: isFetchingNextPage,
     error: error ? toTypedError(error, VALID_EXPENSE_ERRORS) : null,
     hasMore: hasNextPage ?? false,
