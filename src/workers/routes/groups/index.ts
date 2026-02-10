@@ -3,6 +3,7 @@ import { and, count, eq, inArray, isNull } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { API_ERROR_CODES } from '@/shared/constants/errors';
+import { resolveInitialMemberName } from '../../services/shared/sql-helpers';
 import type { Database } from '../../../db';
 import * as schema from '../../../db/schema';
 import { authMiddleware, membershipMiddleware } from '../../middleware';
@@ -190,7 +191,7 @@ groupsRoutes.post('/', zValidator('json', createGroupSchema), async (c) => {
   const groupId = crypto.randomUUID();
   const memberId = crypto.randomUUID();
   const now = new Date();
-  const memberName = user.name || user.email.split('@')[0] || user.email;
+  const memberName = resolveInitialMemberName(user.name, user.email);
 
   // Use batch for atomic operations
   await db.batch([

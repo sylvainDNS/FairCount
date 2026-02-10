@@ -21,7 +21,7 @@ interface UseExpenseFormParams {
 }
 
 export function formatMemberName(member: MemberWithCoefficient): string {
-  return (member.name || member.email || '?') + (member.isCurrentUser ? ' (vous)' : '');
+  return member.name + (member.isCurrentUser ? ' (vous)' : '');
 }
 
 export const useExpenseForm = ({

@@ -4,6 +4,7 @@ import { useMembers } from '@/features/members/hooks/useMembers';
 import { SegmentedControl } from '@/shared/components/SegmentedControl';
 import { Select } from '@/shared/components/Select';
 import { TextInput } from '@/shared/components/TextInput';
+import { formatMemberName } from '../hooks/useExpenseForm';
 import type { ExpenseFilters as FilterType } from '../types';
 
 interface ExpenseFiltersProps {
@@ -159,8 +160,7 @@ export const ExpenseFilters = ({ groupId, filters, onFiltersChange }: ExpenseFil
               { value: '', label: 'Tous les membres' },
               ...members.map((member) => ({
                 value: member.id,
-                label:
-                  (member.name || member.email || '?') + (member.isCurrentUser ? ' (vous)' : ''),
+                label: formatMemberName(member),
               })),
             ]}
             value={filters.paidBy ?? ''}

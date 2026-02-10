@@ -5,6 +5,7 @@ import * as schema from '../../db/schema';
 import { isValidUUID } from '../../lib/validation';
 import { authMiddleware } from '../middleware';
 import * as memberHandlers from '../services/members';
+import { resolveInitialMemberName } from '../services/shared/sql-helpers';
 import type { AppEnv } from '../types';
 
 export const invitationsRoutes = new Hono<AppEnv>();
@@ -150,7 +151,7 @@ invitationsRoutes.post('/:token/accept', authMiddleware, async (c) => {
   }
 
   const now = new Date();
-  const memberName = user.name || user.email.split('@')[0] || user.email;
+  const memberName = resolveInitialMemberName(user.name, user.email);
 
   // Find existing member created when invitation was sent (by email)
   const [pendingMember] = await db

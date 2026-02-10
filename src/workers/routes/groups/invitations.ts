@@ -7,6 +7,7 @@ import * as schema from '../../../db/schema';
 import { isValidUUID } from '../../../lib/validation';
 import * as memberHandlers from '../../services/members';
 import { sendInvitationEmail } from '../../services/shared/email';
+import { resolveInitialMemberName } from '../../services/shared/sql-helpers';
 import type { AppEnv } from '../../types';
 
 export const invitationsRoutes = new Hono<AppEnv>();
@@ -95,7 +96,7 @@ invitationsRoutes.post('/invite', zValidator('json', sendInvitationSchema), asyn
   const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
   // Use name from data or derive from email
-  const memberName = data.name?.trim() || email.split('@')[0] || email;
+  const memberName = resolveInitialMemberName(data.name, email);
 
   await db.batch([
     db.insert(schema.groupInvitations).values({

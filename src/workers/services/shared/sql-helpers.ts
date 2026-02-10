@@ -4,15 +4,23 @@ import * as schema from '@/db/schema';
 
 /**
  * SQL expression that resolves a member's display name:
- * - Linked members (userId != null): uses users.name
- * - Pending members (userId == null): falls back to group_members.name
+ * 1. users.name (from profile, if non-empty)
+ * 2. group_members.name (set at join time, if non-empty)
+ * 3. group_members.email (always set for linked members)
+ * 4. '?' (safety net — should never be reached)
  *
+ * NULLIF converts empty strings to NULL so COALESCE skips them.
  * Requires a LEFT JOIN on schema.users via groupMembers.userId.
- *
- * Typed as `string` (non-null) because group_members.name is NOT NULL,
- * so COALESCE always returns a value even when users.name is null.
  */
-export const memberDisplayName = sql<string>`coalesce(${schema.users.name}, ${schema.groupMembers.name})`;
+export const memberDisplayName = sql<string>`coalesce(nullif(${schema.users.name}, ''), nullif(${schema.groupMembers.name}, ''), ${schema.groupMembers.email}, '?')`;
+
+/**
+ * Resolve a member's initial display name at write time (insert into group_members).
+ * Uses the user's profile name, falling back to the local part of the email.
+ */
+export function resolveInitialMemberName(name: string | null | undefined, email: string): string {
+  return name?.trim() || email.split('@')[0] || email;
+}
 
 /**
  * Build SQL IN clause for a list of IDs.
