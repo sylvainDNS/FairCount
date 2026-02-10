@@ -11,7 +11,7 @@ export const LoginPage = () => {
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      navigate('/');
+      navigate('/groups', { replace: true });
     }
   }, [isLoading, isAuthenticated, navigate]);
 

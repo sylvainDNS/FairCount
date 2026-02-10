@@ -1,15 +1,30 @@
+import { lazy, Suspense } from 'react';
 import type { RouteObject } from 'react-router-dom';
-import { AuthErrorPage, LoginPage, ProfilePage } from '@/features/auth';
-import {
-  CreateGroupPage,
-  GroupDetailPage,
-  GroupSettingsPage,
-  GroupsPage,
-  InvitePage,
-} from '@/features/groups';
+// Landing page - eagerly loaded (static, no auth dependency)
 import { LandingPage } from '@/features/landing';
 import { Layout } from '@/shared/components/Layout';
+import { Loading } from '@/shared/components/Loading';
 import { ProtectedRoute } from '@/shared/components/ProtectedRoute';
+
+// Auth pages chunk
+const LoginPage = lazy(() => import('@/features/auth').then((m) => ({ default: m.LoginPage })));
+const AuthErrorPage = lazy(() =>
+  import('@/features/auth').then((m) => ({ default: m.AuthErrorPage })),
+);
+
+// App pages chunk
+const GroupsPage = lazy(() => import('@/features/groups').then((m) => ({ default: m.GroupsPage })));
+const CreateGroupPage = lazy(() =>
+  import('@/features/groups').then((m) => ({ default: m.CreateGroupPage })),
+);
+const GroupDetailPage = lazy(() =>
+  import('@/features/groups').then((m) => ({ default: m.GroupDetailPage })),
+);
+const GroupSettingsPage = lazy(() =>
+  import('@/features/groups').then((m) => ({ default: m.GroupSettingsPage })),
+);
+const InvitePage = lazy(() => import('@/features/groups').then((m) => ({ default: m.InvitePage })));
+const ProfilePage = lazy(() => import('@/features/auth').then((m) => ({ default: m.ProfilePage })));
 
 const NotFoundPage = () => {
   return (
@@ -20,6 +35,8 @@ const NotFoundPage = () => {
   );
 };
 
+const SuspenseFallback = <Loading fullPage message="Chargement..." />;
+
 export const routes = [
   {
     path: '/',
@@ -27,15 +44,27 @@ export const routes = [
   },
   {
     path: '/login',
-    element: <LoginPage />,
+    element: (
+      <Suspense fallback={SuspenseFallback}>
+        <LoginPage />
+      </Suspense>
+    ),
   },
   {
     path: '/auth/error',
-    element: <AuthErrorPage />,
+    element: (
+      <Suspense fallback={SuspenseFallback}>
+        <AuthErrorPage />
+      </Suspense>
+    ),
   },
   {
     path: '/invite/:token',
-    element: <InvitePage />,
+    element: (
+      <Suspense fallback={SuspenseFallback}>
+        <InvitePage />
+      </Suspense>
+    ),
   },
   {
     element: <ProtectedRoute />,
@@ -43,11 +72,46 @@ export const routes = [
       {
         element: <Layout />,
         children: [
-          { path: 'groups', element: <GroupsPage /> },
-          { path: 'groups/new', element: <CreateGroupPage /> },
-          { path: 'groups/:id', element: <GroupDetailPage /> },
-          { path: 'groups/:id/settings', element: <GroupSettingsPage /> },
-          { path: 'profile', element: <ProfilePage /> },
+          {
+            path: 'groups',
+            element: (
+              <Suspense fallback={SuspenseFallback}>
+                <GroupsPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: 'groups/new',
+            element: (
+              <Suspense fallback={SuspenseFallback}>
+                <CreateGroupPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: 'groups/:id',
+            element: (
+              <Suspense fallback={SuspenseFallback}>
+                <GroupDetailPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: 'groups/:id/settings',
+            element: (
+              <Suspense fallback={SuspenseFallback}>
+                <GroupSettingsPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: 'profile',
+            element: (
+              <Suspense fallback={SuspenseFallback}>
+                <ProfilePage />
+              </Suspense>
+            ),
+          },
           { path: '*', element: <NotFoundPage /> },
         ],
       },

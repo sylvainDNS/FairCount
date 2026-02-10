@@ -1,23 +1,9 @@
-import { Navigate } from 'react-router-dom';
-import { useAuth } from '@/features/auth';
 import { AppVersion } from '@/shared/components/AppVersion';
-import { Loading } from '@/shared/components/Loading';
 import { ConceptSection } from './ConceptSection';
 import { FeaturesSection } from './FeaturesSection';
 import { HeroSection } from './HeroSection';
 
 export const LandingPage = () => {
-  const { isAuthenticated, isLoading } = useAuth();
-
-  // Redirect authenticated users to groups
-  if (isLoading) {
-    return <Loading fullPage message="Chargement..." />;
-  }
-
-  if (isAuthenticated) {
-    return <Navigate to="/groups" replace />;
-  }
-
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <HeroSection />

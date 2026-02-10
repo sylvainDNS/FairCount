@@ -39,7 +39,7 @@ export const useAuth = (): UseAuthResult => {
     try {
       const result = await authClient.signIn.magicLink({
         email,
-        callbackURL: '/',
+        callbackURL: '/groups',
       });
 
       if (result.error) {
