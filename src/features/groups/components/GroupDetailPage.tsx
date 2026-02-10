@@ -72,13 +72,11 @@ export const GroupDetailPage = () => {
         }}
         lazyMount
       >
-        <div className="sticky top-0 z-10 bg-slate-50 dark:bg-slate-950 -mx-4 px-4 pb-4">
-          <TabsList aria-label="Sections du groupe">
-            <TabsTrigger value="expenses">Dépenses</TabsTrigger>
-            <TabsTrigger value="balance">Équilibre</TabsTrigger>
-            <TabsTrigger value="members">Membres</TabsTrigger>
-          </TabsList>
-        </div>
+        <TabsList className="mb-4" aria-label="Sections du groupe">
+          <TabsTrigger value="expenses">Dépenses</TabsTrigger>
+          <TabsTrigger value="balance">Équilibre</TabsTrigger>
+          <TabsTrigger value="members">Membres</TabsTrigger>
+        </TabsList>
 
         <TabsContent value="expenses">
           <ExpensesTabContent groupId={id} currency={group.currency} />
