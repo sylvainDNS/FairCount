@@ -114,65 +114,11 @@ interface ExpenseParticipant {
 
 ### Calcul de la Part Équitable
 
-Approche fonctionnelle avec immutabilité :
-
-```typescript
-interface ExpenseShare {
-  readonly memberId: string;
-  readonly amount: number; // Ce que la personne doit payer
-}
-
-const calculateShares = (
-  expense: Expense,
-  participants: readonly ExpenseParticipant[],
-  members: readonly GroupMember[]
-): readonly ExpenseShare[] => {
-  // Récupérer les coefficients normalisés des personnes concernées
-  const relevantMembers = members.filter((m) =>
-    participants.some((p) => p.memberId === m.id)
-  );
-  const coefficients = calculateCoefficients(relevantMembers);
-
-  const rawShares = participants.map((participant) => ({
-    memberId: participant.memberId,
-    amount:
-      participant.customAmount !== null
-        ? participant.customAmount
-        : Math.round(expense.amount * (coefficients.get(participant.memberId) ?? 0)),
-  }));
-
-  // Ajustement pour que le total = montant exact (gestion des arrondis)
-  return adjustForRounding(rawShares, expense.amount);
-};
-```
+Les parts sont calculées proportionnellement aux coefficients des personnes concernées. Si un montant personnalisé est défini, il est utilisé à la place du calcul automatique.
 
 ### Gestion des Arrondis
 
-Pour éviter les erreurs de centimes dues aux arrondis :
-
-```typescript
-const adjustForRounding = (
-  shares: readonly ExpenseShare[],
-  totalAmount: number
-): readonly ExpenseShare[] => {
-  const currentTotal = shares.reduce((sum, s) => sum + s.amount, 0);
-  const diff = totalAmount - currentTotal;
-
-  if (diff === 0) return shares;
-
-  // Trouver la personne avec le plus gros montant
-  const maxIndex = shares.reduce(
-    (maxIdx, share, idx) =>
-      share.amount > shares[maxIdx].amount ? idx : maxIdx,
-    0
-  );
-
-  // Retourner un nouveau tableau avec l'ajustement
-  return shares.map((share, idx) =>
-    idx === maxIndex ? { ...share, amount: share.amount + diff } : share
-  );
-};
-```
+Pour éviter les erreurs de centimes dues aux arrondis, la différence entre le total des parts calculées et le montant de la dépense est ajoutée à la personne avec la plus grosse part.
 
 ---
 
@@ -208,34 +154,6 @@ const adjustForRounding = (
 - Filtre par période (semaine, mois, année, personnalisé)
 - Filtre par personne
 - Barre de recherche
-
----
-
-## États et Hooks
-
-### `useExpenses`
-```typescript
-interface UseExpenses {
-  readonly expenses: readonly Expense[];
-  readonly isLoading: boolean;
-  readonly hasMore: boolean;
-  readonly filters: ExpenseFilters;
-  setFilters: (filters: ExpenseFilters) => void;
-  loadMore: () => Promise<void>;
-  refetch: () => Promise<void>;
-}
-```
-
-### `useExpense`
-```typescript
-interface UseExpense {
-  readonly expense: ExpenseWithShares | null;
-  readonly isLoading: boolean;
-  createExpense: (data: CreateExpenseInput) => Promise<Expense>;
-  updateExpense: (data: UpdateExpenseInput) => Promise<void>;
-  deleteExpense: () => Promise<void>;
-}
-```
 
 ---
 

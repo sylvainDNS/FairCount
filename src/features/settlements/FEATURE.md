@@ -84,68 +84,7 @@ interface SuggestedSettlement {
 
 ### Algorithme d'Optimisation
 
-L'objectif est de minimiser le nombre de transactions tout en équilibrant tous les soldes.
-
-```typescript
-const suggestSettlements = (
-  balances: readonly Balance[]
-): readonly SuggestedSettlement[] => {
-  // Séparer créditeurs (solde > 0) et débiteurs (solde < 0)
-  const debtors = balances
-    .filter((b) => b.balance < 0)
-    .map((b) => ({ memberId: b.memberId, memberName: b.memberName, remaining: Math.abs(b.balance) }))
-    .sort((a, b) => b.remaining - a.remaining);
-
-  const creditors = balances
-    .filter((b) => b.balance > 0)
-    .map((b) => ({ memberId: b.memberId, memberName: b.memberName, remaining: b.balance }))
-    .sort((a, b) => b.remaining - a.remaining);
-
-  return computeSettlements(debtors, creditors, []);
-};
-
-// Fonction récursive pure (pas de mutation)
-const computeSettlements = (
-  debtors: readonly { memberId: string; memberName: string; remaining: number }[],
-  creditors: readonly { memberId: string; memberName: string; remaining: number }[],
-  accumulated: readonly SuggestedSettlement[]
-): readonly SuggestedSettlement[] => {
-  // Filtrer les personnes avec solde restant
-  const activeDebtors = debtors.filter((d) => d.remaining > 0);
-  const activeCreditors = creditors.filter((c) => c.remaining > 0);
-
-  if (activeDebtors.length === 0 || activeCreditors.length === 0) {
-    return accumulated;
-  }
-
-  const [debtor, ...restDebtors] = activeDebtors;
-  const [creditor, ...restCreditors] = activeCreditors;
-
-  const amount = Math.min(debtor.remaining, creditor.remaining);
-
-  const newSettlement: SuggestedSettlement = {
-    fromMember: { id: debtor.memberId, name: debtor.memberName } as GroupMember,
-    toMember: { id: creditor.memberId, name: creditor.memberName } as GroupMember,
-    amount,
-  };
-
-  const updatedDebtors = [
-    { ...debtor, remaining: debtor.remaining - amount },
-    ...restDebtors,
-  ];
-
-  const updatedCreditors = [
-    { ...creditor, remaining: creditor.remaining - amount },
-    ...restCreditors,
-  ];
-
-  return computeSettlements(
-    updatedDebtors,
-    updatedCreditors,
-    [...accumulated, newSettlement]
-  );
-};
-```
+L'objectif est de minimiser le nombre de transactions tout en équilibrant tous les soldes. L'algorithme sépare les créditeurs (solde > 0) et débiteurs (solde < 0), triés par montant décroissant, puis apparie itérativement le plus gros débiteur avec le plus gros créditeur.
 
 ### Exemple d'optimisation
 
@@ -188,31 +127,6 @@ const computeSettlements = (
 
 ---
 
-## États et Hooks
-
-### `useSettlements`
-```typescript
-interface UseSettlements {
-  readonly settlements: readonly Settlement[];
-  readonly suggested: readonly SuggestedSettlement[];
-  readonly isLoading: boolean;
-  recordSettlement: (fromMember: string, toMember: string, amount: number) => Promise<void>;
-  deleteSettlement: (settlementId: string) => Promise<void>;
-}
-```
-
-### `useMySettlements`
-```typescript
-interface UseMySettlements {
-  readonly toPay: readonly SuggestedSettlement[];   // Ce que je dois payer
-  readonly toReceive: readonly SuggestedSettlement[]; // Ce que je dois recevoir
-  readonly totalToPay: number;
-  readonly totalToReceive: number;
-}
-```
-
----
-
 ## Workflow
 
 ```
@@ -252,32 +166,4 @@ Pas de confirmation nécessaire : la confiance entre membres du groupe est prés
 
 ## Intégration avec les Soldes
 
-Le calcul des soldes prend en compte les remboursements :
-
-```typescript
-const calculateBalances = (
-  members: readonly GroupMember[],
-  expenses: readonly Expense[],
-  settlements: readonly Settlement[]
-): readonly Balance[] => {
-  // ... calcul des soldes basé sur les dépenses ...
-
-  // Appliquer les remboursements
-  return balancesAfterExpenses.map((balance) => {
-    const paid = settlements
-      .filter((s) => s.fromMember === balance.memberId)
-      .reduce((sum, s) => sum + s.amount, 0);
-
-    const received = settlements
-      .filter((s) => s.toMember === balance.memberId)
-      .reduce((sum, s) => sum + s.amount, 0);
-
-    return {
-      ...balance,
-      settlementsPaid: paid,
-      settlementsReceived: received,
-      netBalance: balance.balance - paid + received,
-    };
-  });
-};
-```
+Le calcul des soldes prend en compte les remboursements : pour chaque personne, les montants envoyés et reçus via les remboursements sont appliqués au solde brut (payé - dû) pour obtenir le solde net.

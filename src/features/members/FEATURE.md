@@ -24,11 +24,10 @@ Gestion des personnes membres d'un groupe, incluant leurs informations de revenu
 **Afin que** ma part soit calculée équitablement
 
 #### Critères d'acceptation
-- [ ] Champ de saisie du revenu mensuel
+- [ ] Champ de saisie du revenu (annuel ou mensuel selon la configuration du groupe)
 - [ ] Les revenus sont visibles par toutes les personnes du groupe (transparence)
 - [ ] Calcul automatique du coefficient
 - [ ] Possibilité de modifier à tout moment
-- [ ] Notification aux autres membres en cas de modification
 
 ### US-MBR-03: Ajouter une personne non inscrite
 **En tant que** membre d'un groupe
@@ -85,27 +84,7 @@ interface GroupMember {
 
 ### Calcul des Coefficients
 
-Les coefficients sont calculés automatiquement à partir des revenus déclarés.
-
-Approche fonctionnelle avec immutabilité :
-
-```typescript
-const calculateCoefficients = (
-  members: readonly GroupMember[]
-): ReadonlyMap<string, number> => {
-  const activeMembers = members.filter((m) => m.leftAt === null);
-  const totalIncome = activeMembers.reduce((sum, m) => sum + m.income, 0);
-
-  // Éviter la division par zéro
-  if (totalIncome === 0) {
-    return new Map(activeMembers.map((m) => [m.id, 1 / activeMembers.length]));
-  }
-
-  return new Map(
-    activeMembers.map((m) => [m.id, m.income / totalIncome])
-  );
-};
-```
+Les coefficients sont calculés automatiquement à partir des revenus déclarés. Si le revenu total est 0, les parts sont égales entre toutes les personnes actives.
 
 ### Règles métier
 
@@ -142,30 +121,6 @@ const calculateCoefficients = (
 - Champ email (optionnel)
 - Champ coefficient (obligatoire pour personne non inscrite)
 - Option d'envoyer une invitation
-
----
-
-## États et Hooks
-
-### `useMembers`
-```typescript
-interface UseMembers {
-  readonly members: readonly GroupMember[];
-  readonly isLoading: boolean;
-  readonly myMembership: GroupMember | null;
-  addMember: (data: AddMemberInput) => Promise<void>;
-  removeMember: (memberId: string) => Promise<void>;
-}
-```
-
-### `useMyMembership`
-```typescript
-interface UseMyMembership {
-  readonly membership: GroupMember | null;
-  readonly isLoading: boolean;
-  updateIncome: (income: number) => Promise<void>;
-}
-```
 
 ---
 

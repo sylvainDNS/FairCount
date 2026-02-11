@@ -17,6 +17,7 @@ Permet aux personnes utilisatrices de créer et gérer des groupes de partage de
 - [ ] Formulaire avec nom du groupe (obligatoire)
 - [ ] Description optionnelle
 - [ ] Choix de la devise (EUR par défaut)
+- [ ] Choix de la fréquence de revenu (annuel par défaut, ou mensuel)
 - [ ] La personne créatrice est ajoutée au groupe
 - [ ] Redirection vers le groupe créé
 
@@ -71,7 +72,7 @@ Permet aux personnes utilisatrices de créer et gérer des groupes de partage de
 #### Critères d'acceptation
 - [ ] Confirmation avant de quitter
 - [ ] Avertissement si solde non nul
-- [ ] La dernière personne ne peut pas quitter (le groupe serait supprimé)
+- [ ] Si la personne est la dernière du groupe, le groupe est supprimé (cascade)
 - [ ] Historique des dépenses conservé
 
 ### US-GRP-07: Archiver un groupe
@@ -83,6 +84,19 @@ Permet aux personnes utilisatrices de créer et gérer des groupes de partage de
 - [ ] Confirmation avant archivage
 - [ ] Groupe visible mais non modifiable
 - [ ] Possibilité de désarchiver
+
+### US-GRP-08: Voir et gérer mes invitations en attente
+**En tant que** personne connectée
+**Je veux** voir les invitations en attente depuis mon tableau de bord
+**Afin de** accepter ou décliner sans retourner dans mes emails
+
+#### Critères d'acceptation
+- [ ] Bannière affichée en haut de la page `/groups` si invitations en attente
+- [ ] Chaque invitation affiche le nom du groupe et de l'inviteur·euse
+- [ ] Bouton "Accepter" (ajout immédiat au groupe)
+- [ ] Bouton "Décliner" (invitation marquée comme déclinée)
+- [ ] La bannière disparaît si aucune invitation en attente
+- [ ] Le parcours via lien direct `/invite/:token` reste fonctionnel
 
 ---
 
@@ -98,12 +112,12 @@ Permet aux personnes utilisatrices de créer et gérer des groupes de partage de
 | PATCH | `/api/groups/:id` | Modifier un groupe |
 | DELETE | `/api/groups/:id` | Supprimer un groupe (si vide) |
 | POST | `/api/groups/:id/archive` | Archiver/désarchiver |
-| POST | `/api/groups/:id/invite` | Envoyer une invitation par email |
-| GET | `/api/groups/:id/invitations` | Liste des invitations en attente |
+| GET | `/api/groups/:id/invitations` | Liste des invitations du groupe |
+| POST | `/api/groups/:id/invitations` | Envoyer une invitation par email |
 | DELETE | `/api/groups/:id/invitations/:invitationId` | Annuler une invitation |
-| POST | `/api/groups/:id/invitations/:invitationId/resend` | Renvoyer une invitation |
-| GET | `/api/invitations/:token` | Aperçu invitation |
+| GET | `/api/invitations/pending` | Invitations en attente de la personne connectée |
 | POST | `/api/invitations/:token/accept` | Accepter l'invitation |
+| POST | `/api/invitations/:token/decline` | Décliner l'invitation |
 | POST | `/api/groups/:id/leave` | Quitter le groupe |
 
 ### Schéma de données
@@ -114,6 +128,7 @@ interface Group {
   name: string;
   description: string | null;
   currency: string; // ISO 4217 (EUR, USD, etc.)
+  incomeFrequency: 'annual' | 'monthly'; // Fréquence de déclaration des revenus
   createdBy: string; // userId
   createdAt: Date;
   archivedAt: Date | null;
@@ -127,6 +142,7 @@ interface GroupInvitation {
   createdBy: string;
   expiresAt: Date;
   acceptedAt: Date | null;
+  declinedAt: Date | null;
   createdAt: Date;
 }
 ```
@@ -182,63 +198,14 @@ interface GroupInvitation {
 
 ---
 
-## États et Hooks
-
-### `useGroups`
-```typescript
-interface UseGroups {
-  readonly groups: readonly Group[];
-  readonly isLoading: boolean;
-  createGroup: (data: CreateGroupInput) => Promise<Group>;
-  refetch: () => Promise<void>;
-}
-```
-
-### `useGroup`
-```typescript
-interface UseGroup {
-  readonly group: Group | null;
-  readonly members: readonly GroupMember[];
-  readonly isLoading: boolean;
-  readonly isMember: boolean;
-  updateGroup: (data: UpdateGroupInput) => Promise<void>;
-  archiveGroup: () => Promise<void>;
-  leaveGroup: () => Promise<void>;
-}
-```
-
-### `useInvitations`
-```typescript
-interface UseInvitations {
-  readonly invitations: readonly GroupInvitation[];
-  readonly isLoading: boolean;
-  sendInvitation: (email: string) => Promise<void>;
-  resendInvitation: (invitationId: string) => Promise<void>;
-  cancelInvitation: (invitationId: string) => Promise<void>;
-}
-```
-
-### `useAcceptInvitation`
-```typescript
-interface UseAcceptInvitation {
-  readonly invitation: GroupInvitation | null;
-  readonly group: Group | null;
-  readonly isLoading: boolean;
-  accept: () => Promise<void>;
-}
-```
-
----
-
 ## Navigation
 
 ```
-/groups                     → Liste des groupes
+/groups                     → Liste des groupes (+ bannière invitations en attente)
 /groups/new                 → Créer un groupe
-/groups/:id                 → Détail d'un groupe (dépenses)
+/groups/:id                 → Détail d'un groupe (onglets : dépenses, soldes, membres)
 /groups/:id/settings        → Paramètres du groupe
-/groups/:id/invite          → Inviter des personnes
-/invitations/:token         → Page d'acceptation d'invitation
+/invite/:token              → Page d'acceptation d'invitation
 ```
 
 ---

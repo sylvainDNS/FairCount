@@ -99,106 +99,16 @@ interface MemberStats {
 
 ### Calcul des Soldes
 
-Approche fonctionnelle avec immutabilité :
+Le solde de chaque personne est calculé à partir de trois éléments :
+1. **Ce qu'elle a payé** (totalPaid) : somme des dépenses où elle est la payeuse
+2. **Ce qu'elle doit** (totalOwed) : somme de ses parts dans toutes les dépenses (selon son coefficient)
+3. **Remboursements** : envoyés (settlementsPaid) et reçus (settlementsReceived)
 
-```typescript
-const createEmptyBalance = (member: GroupMember): Balance => ({
-  memberId: member.id,
-  memberName: member.name,
-  totalPaid: 0,
-  totalOwed: 0,
-  balance: 0,
-  settlementsPaid: 0,
-  settlementsReceived: 0,
-  netBalance: 0,
-});
-
-const calculateBalances = (
-  members: readonly GroupMember[],
-  expenses: readonly Expense[],
-  settlements: readonly Settlement[]
-): readonly Balance[] => {
-  const activeMembers = members.filter((m) => m.leftAt === null);
-  const activeExpenses = expenses.filter((e) => e.deletedAt === null);
-
-  // Calculer les coefficients actuels (toujours à jour)
-  const coefficients = calculateCoefficients(activeMembers);
-
-  // Initialiser les soldes
-  const initialBalances = new Map(
-    activeMembers.map((m) => [m.id, createEmptyBalance(m)])
-  );
-
-  // Réduire les dépenses pour calculer les soldes
-  const balancesAfterExpenses = activeExpenses.reduce((balances, expense) => {
-    const updatedBalances = new Map(balances);
-
-    // Ajouter ce que la personne a payé
-    const payer = updatedBalances.get(expense.paidBy);
-    if (payer) {
-      updatedBalances.set(expense.paidBy, {
-        ...payer,
-        totalPaid: payer.totalPaid + expense.amount,
-      });
-    }
-
-    // Calculer et ajouter les parts (avec coefficients actuels)
-    const shares = calculateShares(expense, activeMembers, coefficients);
-    shares.forEach((share) => {
-      const member = updatedBalances.get(share.memberId);
-      if (member) {
-        updatedBalances.set(share.memberId, {
-          ...member,
-          totalOwed: member.totalOwed + share.amount,
-        });
-      }
-    });
-
-    return updatedBalances;
-  }, initialBalances);
-
-  // Appliquer les remboursements
-  const balancesAfterSettlements = settlements.reduce((balances, settlement) => {
-    const updatedBalances = new Map(balances);
-
-    const payer = updatedBalances.get(settlement.fromMember);
-    if (payer) {
-      updatedBalances.set(settlement.fromMember, {
-        ...payer,
-        settlementsPaid: payer.settlementsPaid + settlement.amount,
-      });
-    }
-
-    const receiver = updatedBalances.get(settlement.toMember);
-    if (receiver) {
-      updatedBalances.set(settlement.toMember, {
-        ...receiver,
-        settlementsReceived: receiver.settlementsReceived + settlement.amount,
-      });
-    }
-
-    return updatedBalances;
-  }, balancesAfterExpenses);
-
-  // Calculer les soldes finaux
-  return Array.from(balancesAfterSettlements.values()).map((balance) => ({
-    ...balance,
-    balance: balance.totalPaid - balance.totalOwed,
-    netBalance: balance.totalPaid - balance.totalOwed - balance.settlementsPaid + balance.settlementsReceived,
-  }));
-};
-```
+Le solde net = totalPaid - totalOwed + settlementsPaid - settlementsReceived
 
 ### Vérification d'Intégrité
 
-La somme de tous les soldes nets doit toujours être égale à 0 :
-
-```typescript
-const verifyBalanceIntegrity = (balances: readonly Balance[]): boolean => {
-  const total = balances.reduce((sum, b) => sum + b.netBalance, 0);
-  return Math.abs(total) < 1; // Tolérance de 1 centime pour les arrondis
-};
-```
+La somme de tous les soldes nets doit toujours être égale à 0 (tolérance de 1 centime pour les arrondis).
 
 ---
 
@@ -230,40 +140,6 @@ const verifyBalanceIntegrity = (balances: readonly Balance[]): boolean => {
 - Sélecteur de période
 - Graphique par personne
 - Évolution temporelle
-
----
-
-## États et Hooks
-
-### `useBalances`
-```typescript
-interface UseBalances {
-  balances: Balance[];
-  myBalance: Balance | null;
-  totalExpenses: number;
-  isLoading: boolean;
-  isValid: boolean; // Intégrité vérifiée
-  refetch: () => Promise<void>;
-}
-```
-
-### `useBalanceDetail`
-```typescript
-interface UseBalanceDetail {
-  detail: BalanceDetail | null;
-  isLoading: boolean;
-}
-```
-
-### `useGroupStats`
-```typescript
-interface UseGroupStats {
-  stats: GroupStats | null;
-  isLoading: boolean;
-  period: 'week' | 'month' | 'year' | 'all';
-  setPeriod: (period: string) => void;
-}
-```
 
 ---
 

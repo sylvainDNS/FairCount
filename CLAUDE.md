@@ -66,9 +66,13 @@ import { LoginPage, useAuth } from '@/features/auth';
 - `@/shared/*` → `./src/shared/*`
 - `@/db/*` → `./src/db/*`
 
-### Backend Structure
-- `src/workers/index.ts` - Main worker entry, routing
-- `src/workers/api/routes/` - API route handlers
+### Backend Structure (Hono)
+- `src/workers/app.ts` - Main Hono app, middleware globaux, montage des routes
+- `src/workers/routes/` - Route handlers Hono
+  - `groups/index.ts` - Routes groupes + sous-routeurs (members, expenses, balances, settlements, invitations, stats)
+  - `auth.ts`, `user.ts`, `health.ts`, `invitations.ts` - Routes top-level
+- `src/workers/middleware/` - Middleware Hono (auth, cors, db, error, membership)
+- `src/workers/services/` - Logique métier et helpers SQL
 - `src/lib/auth.ts` - better-auth server configuration
 - `src/lib/auth-client.ts` - better-auth React client
 - `src/db/schema/` - Drizzle schema definitions
@@ -104,16 +108,43 @@ export * from './components';
 export * from './hooks';
 ```
 
-### Worker Route Handlers
-Routes receive `{ db, auth, env }` context and return `Response`:
+### Routes API (Hono)
+Routes use Hono framework with typed middleware context:
 ```typescript
-export async function handleGroupsRoutes(
-  request: Request,
-  ctx: { db: Database; auth: Auth; env: Env }
-): Promise<Response> {
-  // Route handling
-}
+const groupsRoutes = new Hono<AppEnv>();
+groupsRoutes.use('*', authMiddleware);
+
+groupsRoutes.post('/', zValidator('json', createGroupSchema), async (c) => {
+  const db = c.get('db');
+  const user = c.get('user');
+  const data = c.req.valid('json');
+  // ...
+  return c.json({ id: groupId }, 201);
+});
+
+// Sub-router with membership middleware for /:id routes
+const groupRouter = new Hono<AppEnv>();
+groupRouter.use('*', membershipMiddleware);
+groupsRoutes.route('/:id', groupRouter);
 ```
+
+### State Management (TanStack Query)
+All data fetching uses TanStack Query:
+- **Query keys**: Centralized in `src/lib/query-keys.ts` (hierarchy: feature > scope > params)
+- **Invalidations**: Centralized in `src/lib/query-invalidations.ts`
+- **Client**: Configured in `src/lib/query-client.ts`
+
+### Form Validation (Zod + React Hook Form)
+All forms use React Hook Form with Zod schemas:
+- **Schemas**: `src/lib/schemas/` (auth, group, expense, income, settlement)
+- **Integration**: `zodResolver` from `@hookform/resolvers/zod`
+- **Form fields**: `FormField` component wrapping Ark UI Field
+
+### Code Splitting
+Route-based lazy loading for optimal bundle size:
+- Landing page eagerly loaded
+- All other pages use `React.lazy()` + `Suspense`
+- Routes configured in `src/routes/index.tsx`
 
 ### API Type Safety
 Database types are inferred from Drizzle schema and exported from `src/db/schema/index.ts`. Use these types for API contracts.

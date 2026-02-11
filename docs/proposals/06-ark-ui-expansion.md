@@ -1,5 +1,13 @@
 # Extension de l'utilisation des composants Ark UI
 
+## Statut d'implémentation
+
+- [x] Select (`src/shared/components/Select.tsx`)
+- [x] Checkbox (`src/shared/components/Checkbox.tsx`)
+- [x] Tabs (`src/shared/components/Tabs.tsx`)
+- [ ] NumberInput
+- [ ] Menu/Popover
+
 ## Contexte
 
 ### État actuel du codebase

@@ -143,22 +143,6 @@ L'équipe FairCount
 
 ---
 
-## États et Hooks
-
-### `useAuth`
-```typescript
-interface UseAuth {
-  user: User | null;
-  isLoading: boolean;
-  isAuthenticated: boolean;
-  login: (email: string) => Promise<void>;
-  logout: () => Promise<void>;
-  updateProfile: (data: { name: string }) => Promise<void>;
-}
-```
-
----
-
 ## Gestion des Erreurs
 
 | Code | Message | Cause |
