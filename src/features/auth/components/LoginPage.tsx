@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Spinner } from '@/shared/components';
 import { useAuth } from '../hooks/useAuth';
 import { AuthLayout } from './AuthLayout';
@@ -7,20 +7,27 @@ import { LoginForm } from './LoginForm';
 
 export const LoginPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const { isAuthenticated, isLoading } = useAuth();
+
+  const returnTo =
+    (location.state as { returnTo?: string } | null)?.returnTo ??
+    searchParams.get('returnTo') ??
+    undefined;
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      navigate('/groups', { replace: true });
+      navigate(returnTo ?? '/groups', { replace: true });
     }
-  }, [isLoading, isAuthenticated, navigate]);
+  }, [isLoading, isAuthenticated, navigate, returnTo]);
 
   if (isLoading) {
     return (
       <AuthLayout>
-        <div className="flex items-center justify-center py-8">
+        <output className="flex items-center justify-center py-8" aria-label="Chargement">
           <Spinner size="lg" className="text-blue-500" />
-        </div>
+        </output>
       </AuthLayout>
     );
   }
@@ -31,7 +38,7 @@ export const LoginPage = () => {
 
   return (
     <AuthLayout>
-      <LoginForm />
+      <LoginForm callbackURL={returnTo} />
     </AuthLayout>
   );
 };

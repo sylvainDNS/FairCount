@@ -11,7 +11,7 @@ interface UseAuthResult {
   readonly user: User | null;
   readonly isLoading: boolean;
   readonly isAuthenticated: boolean;
-  readonly login: (email: string) => Promise<AuthResult>;
+  readonly login: (email: string, callbackURL?: string) => Promise<AuthResult>;
   readonly logout: () => Promise<void>;
   readonly updateProfile: (data: ProfileFormData) => Promise<AuthResult>;
 }
@@ -35,11 +35,11 @@ export const useAuth = (): UseAuthResult => {
 
   const isAuthenticated = useMemo(() => !!session?.user, [session]);
 
-  const login = useCallback(async (email: string): Promise<AuthResult> => {
+  const login = useCallback(async (email: string, callbackURL = '/groups'): Promise<AuthResult> => {
     try {
       const result = await authClient.signIn.magicLink({
         email,
-        callbackURL: '/groups',
+        callbackURL,
       });
 
       if (result.error) {

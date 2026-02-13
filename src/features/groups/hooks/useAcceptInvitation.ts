@@ -9,7 +9,7 @@ const VALID_ERRORS = [
   'UNKNOWN_ERROR',
   'INVITATION_NOT_FOUND',
   'INVITATION_EXPIRED',
-  'INVITATION_USED',
+  'FORBIDDEN',
 ] as const;
 
 interface UseAcceptInvitationResult {

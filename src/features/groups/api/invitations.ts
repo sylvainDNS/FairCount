@@ -1,4 +1,4 @@
-import { fetchApi, fetchWithAuth } from '@/lib/api';
+import { fetchWithAuth } from '@/lib/api';
 import type { InvitationDetails, InvitationInfo, PendingInvitation } from '../types';
 
 export const invitationsApi = {
@@ -39,7 +39,7 @@ export const invitationsApi = {
   },
 
   getByToken: async (token: string): Promise<InvitationDetails | { error: string }> => {
-    const res = await fetchApi(`/invitations/${token}`);
+    const res = await fetchWithAuth(`/invitations/${token}`);
     return res.json();
   },
 

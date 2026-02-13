@@ -7,7 +7,11 @@ import { FormField } from '@/shared/components/FormField';
 import { useAuth } from '../hooks/useAuth';
 import { AUTH_ERROR_MESSAGES, type AuthError } from '../types';
 
-export const LoginForm = () => {
+interface LoginFormProps {
+  readonly callbackURL?: string | undefined;
+}
+
+export const LoginForm = ({ callbackURL }: LoginFormProps) => {
   const { login } = useAuth();
   const [showSuccess, setShowSuccess] = useState(false);
 
@@ -22,7 +26,7 @@ export const LoginForm = () => {
   });
 
   const onSubmit = async (data: LoginFormValues) => {
-    const result = await login(data.email);
+    const result = await login(data.email, callbackURL);
 
     if (result.success) {
       setShowSuccess(true);

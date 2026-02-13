@@ -120,6 +120,7 @@ export interface InvitationDetails {
   };
   readonly inviterName: string;
   readonly expiresAt: Date;
+  readonly isForCurrentUser?: boolean | undefined;
 }
 
 export interface PendingInvitation {

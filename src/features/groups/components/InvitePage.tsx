@@ -1,18 +1,19 @@
 import { useCallback, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AuthLayout, useAuth } from '@/features/auth';
-import { Spinner } from '@/shared/components';
+import { Button, Spinner } from '@/shared/components';
 import { useAcceptInvitation } from '../hooks/useAcceptInvitation';
 import { GROUP_ERROR_MESSAGES } from '../types';
 
 export const InvitePage = () => {
   const { token = '' } = useParams<{ token: string }>();
   const navigate = useNavigate();
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
   const { invitation, isLoading, error, accept } = useAcceptInvitation(token);
 
   const [accepting, setAccepting] = useState(false);
   const [acceptError, setAcceptError] = useState<string | null>(null);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   const handleAccept = useCallback(async () => {
     setAccepting(true);
@@ -22,19 +23,29 @@ export const InvitePage = () => {
 
     if (!result.success) {
       setAccepting(false);
-      setAcceptError(GROUP_ERROR_MESSAGES[result.error] || GROUP_ERROR_MESSAGES.UNKNOWN_ERROR);
+      const message =
+        result.error === 'FORBIDDEN'
+          ? 'Cette invitation est destinée à un autre compte'
+          : GROUP_ERROR_MESSAGES[result.error] || GROUP_ERROR_MESSAGES.UNKNOWN_ERROR;
+      setAcceptError(message);
       return;
     }
 
     navigate(`/groups/${result.data.groupId}`);
   }, [accept, navigate]);
 
-  if (authLoading || isLoading) {
+  const handleLogoutAndRetry = useCallback(async () => {
+    setLoggingOut(true);
+    await logout();
+    window.location.assign(`/login?returnTo=${encodeURIComponent(`/invite/${token}`)}`);
+  }, [logout, token]);
+
+  if (authLoading || isLoading || loggingOut) {
     return (
       <AuthLayout>
-        <div className="flex items-center justify-center py-8">
+        <output className="flex items-center justify-center py-8" aria-label="Chargement">
           <Spinner size="lg" className="text-blue-500" />
-        </div>
+        </output>
       </AuthLayout>
     );
   }
@@ -49,13 +60,9 @@ export const InvitePage = () => {
           <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">
             Connectez-vous pour accepter cette invitation
           </p>
-          <button
-            type="button"
-            onClick={() => navigate('/login', { state: { returnTo: `/invite/${token}` } })}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg"
-          >
+          <Button onClick={() => navigate('/login', { state: { returnTo: `/invite/${token}` } })}>
             Se connecter
-          </button>
+          </Button>
         </div>
       </AuthLayout>
     );
@@ -80,6 +87,34 @@ export const InvitePage = () => {
     return null;
   }
 
+  if (invitation.isForCurrentUser === false) {
+    return (
+      <AuthLayout>
+        <div className="text-center py-4">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+            Invitation pour un autre compte
+          </h2>
+          <p className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
+            {invitation.group.name}
+          </p>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">
+            Cette invitation a été envoyée à une autre adresse e-mail que celle de votre compte
+            actuel (
+            <span className="font-medium text-slate-700 dark:text-slate-300">{user?.email}</span>).
+          </p>
+          <div className="flex flex-col gap-3">
+            <Button fullWidth onClick={handleLogoutAndRetry}>
+              Se déconnecter et utiliser un autre compte
+            </Button>
+            <Button variant="ghost" fullWidth onClick={() => navigate('/groups')}>
+              Retour à l'accueil
+            </Button>
+          </div>
+        </div>
+      </AuthLayout>
+    );
+  }
+
   return (
     <AuthLayout>
       <div className="text-center py-4">
@@ -97,14 +132,9 @@ export const InvitePage = () => {
           <p className="text-red-600 dark:text-red-400 text-sm mb-4">{acceptError}</p>
         )}
 
-        <button
-          type="button"
-          onClick={handleAccept}
-          disabled={accepting}
-          className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium rounded-lg transition-colors"
-        >
-          {accepting ? 'Acceptation...' : "Accepter l'invitation"}
-        </button>
+        <Button fullWidth onClick={handleAccept} loading={accepting} loadingText="Acceptation...">
+          Accepter l'invitation
+        </Button>
       </div>
     </AuthLayout>
   );

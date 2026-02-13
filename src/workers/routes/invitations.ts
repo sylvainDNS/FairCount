@@ -93,14 +93,27 @@ invitationsRoutes.get('/:token', async (c) => {
     return c.json({ error: API_ERROR_CODES.INVITATION_EXPIRED }, 400);
   }
 
-  return c.json({
+  const response = {
     group: {
       id: invitation.groupId,
       name: invitation.groupName,
     },
     inviterName: invitation.inviterName || invitation.inviterEmail,
     expiresAt: invitation.expiresAt,
-  });
+  };
+
+  // If the user is authenticated, include whether this invitation is for them
+  const auth = c.get('auth');
+  const session = await auth.api.getSession({ headers: c.req.raw.headers });
+
+  if (session?.user) {
+    return c.json({
+      ...response,
+      isForCurrentUser: invitation.email.toLowerCase() === session.user.email.toLowerCase(),
+    });
+  }
+
+  return c.json(response);
 });
 
 // POST /api/invitations/:token/accept - Accept invitation (auth required)
@@ -132,6 +145,11 @@ invitationsRoutes.post('/:token/accept', authMiddleware, async (c) => {
   const expiresAt = new Date(invitation.expiresAt);
   if (expiresAt < new Date()) {
     return c.json({ error: API_ERROR_CODES.INVITATION_EXPIRED }, 400);
+  }
+
+  // Verify the invitation belongs to the authenticated user
+  if (invitation.email.toLowerCase() !== user.email.toLowerCase()) {
+    return c.json({ error: API_ERROR_CODES.FORBIDDEN }, 403);
   }
 
   // Check if user is already a member (by userId)
