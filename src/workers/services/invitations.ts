@@ -184,6 +184,23 @@ export async function createInvitation(
 }
 
 /**
+ * Rollback a failed invitation creation (e.g. after email send failure).
+ * Deletes the invitation and pending member, then recalculates coefficients.
+ */
+export async function rollbackInvitation(
+  db: Database,
+  groupId: string,
+  invitationId: string,
+  memberId: string,
+): Promise<void> {
+  await db.batch([
+    db.delete(schema.groupInvitations).where(eq(schema.groupInvitations.id, invitationId)),
+    db.delete(schema.groupMembers).where(eq(schema.groupMembers.id, memberId)),
+  ]);
+  await recalculateCoefficients(db, groupId);
+}
+
+/**
  * Accept an invitation: link the pending member to the user account.
  * Verifies email ownership and prevents duplicate membership.
  */

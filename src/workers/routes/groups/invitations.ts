@@ -52,13 +52,19 @@ invitationsRoutes.post('/invite', zValidator('json', sendInvitationSchema), asyn
     memberName: data.name,
   });
 
-  // Send invitation email
-  await sendInvitationEmail(env, {
-    to: email,
-    groupName: group.name,
-    inviterName: user.name ?? user.email,
-    inviteUrl: `${env.FRONTEND_URL}/invite/${token}`,
-  });
+  // Send invitation email - rollback DB on failure
+  try {
+    await sendInvitationEmail(env, {
+      to: email,
+      groupName: group.name,
+      inviterName: user.name ?? user.email,
+      inviteUrl: `${env.FRONTEND_URL}/invite/${token}`,
+    });
+  } catch (error) {
+    console.error('Failed to send invitation email:', error);
+    await invitationService.rollbackInvitation(db, groupId, invitationId, memberId);
+    return c.json({ error: API_ERROR_CODES.EMAIL_SEND_FAILED }, 500);
+  }
 
   return c.json({ id: invitationId, memberId }, 201);
 });
@@ -145,12 +151,17 @@ invitationsRoutes.post('/:invitationId/resend', async (c) => {
     return c.json({ error: API_ERROR_CODES.GROUP_NOT_FOUND }, 404);
   }
 
-  await sendInvitationEmail(env, {
-    to: refreshResult.email,
-    groupName: group.name,
-    inviterName: user.name ?? user.email,
-    inviteUrl: `${env.FRONTEND_URL}/invite/${refreshResult.token}`,
-  });
+  try {
+    await sendInvitationEmail(env, {
+      to: refreshResult.email,
+      groupName: group.name,
+      inviterName: user.name ?? user.email,
+      inviteUrl: `${env.FRONTEND_URL}/invite/${refreshResult.token}`,
+    });
+  } catch (error) {
+    console.error('Failed to resend invitation email:', error);
+    return c.json({ error: API_ERROR_CODES.EMAIL_SEND_FAILED }, 500);
+  }
 
   return c.json({ success: true });
 });

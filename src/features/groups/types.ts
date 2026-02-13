@@ -146,7 +146,8 @@ export type GroupError =
   | 'ALREADY_MEMBER'
   | 'INVITATION_NOT_FOUND'
   | 'INVITATION_EXPIRED'
-  | 'FORBIDDEN';
+  | 'FORBIDDEN'
+  | 'EMAIL_SEND_FAILED';
 
 export const GROUP_ERROR_MESSAGES = {
   ...COMMON_ERROR_MESSAGES,
@@ -159,6 +160,7 @@ export const GROUP_ERROR_MESSAGES = {
   INVITATION_NOT_FOUND: 'Invitation introuvable',
   INVITATION_EXPIRED: 'Cette invitation a expiré',
   FORBIDDEN: "Vous n'êtes pas autorisé à effectuer cette action",
+  EMAIL_SEND_FAILED: "L'envoi de l'email a échoué. Veuillez réessayer.",
 } as const satisfies Record<GroupError, string>;
 
 // API result type alias

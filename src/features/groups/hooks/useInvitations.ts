@@ -22,6 +22,7 @@ const VALID_ERRORS = [
   'ALREADY_INVITED',
   'ALREADY_MEMBER',
   'INVITATION_NOT_FOUND',
+  'EMAIL_SEND_FAILED',
 ] as const;
 
 export const useInvitations = (groupId: string): UseInvitationsResult => {
@@ -57,6 +58,7 @@ export const useInvitations = (groupId: string): UseInvitationsResult => {
       const data = throwIfError(result);
       return data;
     },
+    onSuccess: () => invalidations.afterInvitationResend(queryClient, groupId),
   });
 
   const sendInvitation = async (email: string): Promise<GroupResult> => {
