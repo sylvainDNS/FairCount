@@ -128,7 +128,7 @@ invitationsRoutes.post('/invite', zValidator('json', sendInvitationSchema), asyn
     to: email,
     groupName: group.name,
     inviterName: user.name ?? user.email,
-    inviteUrl: `${env.APP_URL}/invite/${token}`,
+    inviteUrl: `${env.FRONTEND_URL}/invite/${token}`,
   });
 
   return c.json({ id: invitationId, memberId }, 201);
@@ -266,7 +266,7 @@ invitationsRoutes.post('/:invitationId/resend', async (c) => {
     to: invitation.email,
     groupName: group.name,
     inviterName: user.name ?? user.email,
-    inviteUrl: `${env.APP_URL}/invite/${newToken}`,
+    inviteUrl: `${env.FRONTEND_URL}/invite/${newToken}`,
   });
 
   return c.json({ success: true });
