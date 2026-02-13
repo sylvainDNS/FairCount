@@ -59,7 +59,7 @@ invitationsRoutes.get('/:token', async (c) => {
   const result = await invitationService.findValidInvitation(db, token);
 
   if ('error' in result) {
-    return c.json({ error: result.error }, result.status as 400 | 404);
+    return c.json({ error: result.error }, result.status);
   }
 
   const { invitation } = result;
@@ -108,13 +108,13 @@ invitationsRoutes.post('/:token/accept', authMiddleware, async (c) => {
   const validationResult = await invitationService.findValidInvitation(db, token);
 
   if ('error' in validationResult) {
-    return c.json({ error: validationResult.error }, validationResult.status as 400 | 404);
+    return c.json({ error: validationResult.error }, validationResult.status);
   }
 
   const result = await invitationService.acceptInvitation(db, validationResult.invitation, user);
 
   if ('error' in result) {
-    return c.json({ error: result.error }, result.status as 400 | 403 | 404 | 500);
+    return c.json({ error: result.error }, result.status);
   }
 
   return c.json({ groupId: result.groupId });
@@ -129,13 +129,13 @@ invitationsRoutes.post('/:token/decline', authMiddleware, async (c) => {
   const validationResult = await invitationService.findValidInvitation(db, token);
 
   if ('error' in validationResult) {
-    return c.json({ error: validationResult.error }, validationResult.status as 400 | 404);
+    return c.json({ error: validationResult.error }, validationResult.status);
   }
 
   const result = await invitationService.declineInvitation(db, validationResult.invitation, user);
 
   if ('error' in result) {
-    return c.json({ error: result.error }, result.status as 403);
+    return c.json({ error: result.error }, result.status);
   }
 
   return c.json({ success: true });

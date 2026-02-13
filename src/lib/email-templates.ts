@@ -1,12 +1,24 @@
+// ── Helpers ─────────────────────────────────────────────────────────
+
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // ── Layout helpers ──────────────────────────────────────────────────
 
 function ctaButton(href: string, label: string): string {
   return `<p style="text-align: center; margin: 32px 0;">
-    <a href="${href}" style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: 500;">${label}</a>
+    <a href="${escapeHtml(href)}" style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: 500;">${escapeHtml(label)}</a>
   </p>`;
 }
 
 function wrapHtml(appName: string, bodyHtml: string): string {
+  const safe = escapeHtml(appName);
   return `<!DOCTYPE html>
 <html>
 <head>
@@ -14,10 +26,10 @@ function wrapHtml(appName: string, bodyHtml: string): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <h1 style="color: #1a1a1a; font-size: 24px; margin-bottom: 24px;">${appName}</h1>
+  <h1 style="color: #1a1a1a; font-size: 24px; margin-bottom: 24px;">${safe}</h1>
   ${bodyHtml}
   <hr style="border: none; border-top: 1px solid #eee; margin: 32px 0;">
-  <p style="color: #999; font-size: 12px;">L'équipe ${appName}</p>
+  <p style="color: #999; font-size: 12px;">L'équipe ${safe}</p>
 </body>
 </html>`;
 }
@@ -81,7 +93,7 @@ L'équipe ${appName}`,
     html: wrapHtml(
       appName,
       `<p>Bonjour,</p>
-  <p><strong>${inviterName}</strong> vous invite à rejoindre le groupe <strong>"${groupName}"</strong>.</p>
+  <p><strong>${escapeHtml(inviterName)}</strong> vous invite à rejoindre le groupe <strong>"${escapeHtml(groupName)}"</strong>.</p>
   ${ctaButton(inviteUrl, "Accepter l'invitation")}
   <p style="color: #666; font-size: 14px;">Ce lien expire dans 7 jours.</p>`,
     ),

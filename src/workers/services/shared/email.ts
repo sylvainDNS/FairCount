@@ -1,12 +1,12 @@
 import { WorkerMailer } from 'worker-mailer';
+import { invitationEmail } from '@/lib/email-templates';
 import type { Env } from '../../types';
-import { invitationEmail } from './email-templates';
 
 /**
  * Create a connected SMTP mailer instance.
  * Shared between magic link and invitation email sending.
  */
-export async function createMailer(env: Env) {
+export async function createMailer(env: Env): ReturnType<typeof WorkerMailer.connect> {
   const port = parseInt(env.SMTP_PORT, 10) || 1025;
 
   return WorkerMailer.connect({

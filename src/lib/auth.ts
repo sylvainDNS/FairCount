@@ -4,8 +4,8 @@ import { magicLink } from 'better-auth/plugins';
 import type { Database } from '../db';
 import * as schema from '../db/schema';
 import { createMailer } from '../workers/services/shared/email';
-import { magicLinkEmail } from '../workers/services/shared/email-templates';
 import type { Env } from '../workers/types';
+import { magicLinkEmail } from './email-templates';
 
 interface CreateAuthOptions {
   readonly db: Database;

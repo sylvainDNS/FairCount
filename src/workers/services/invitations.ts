@@ -12,7 +12,7 @@ import { resolveInitialMemberName } from './shared/sql-helpers';
 interface InvitationUser {
   readonly id: string;
   readonly email: string;
-  readonly name: string | null;
+  readonly name?: string | null | undefined;
 }
 
 interface MembershipConflict {
@@ -39,6 +39,8 @@ type InvitationError =
   | typeof API_ERROR_CODES.ALREADY_MEMBER
   | typeof API_ERROR_CODES.INTERNAL_ERROR;
 
+type ErrorStatus = 400 | 403 | 404 | 500;
+
 // ── Validation ─────────────────────────────────────────────────────
 
 /**
@@ -48,7 +50,7 @@ type InvitationError =
 export async function findValidInvitation(
   db: Database,
   token: string,
-): Promise<{ invitation: GroupInvitation } | { error: InvitationError; status: number }> {
+): Promise<{ invitation: GroupInvitation } | { error: InvitationError; status: ErrorStatus }> {
   if (!token || !isValidUUID(token)) {
     return { error: API_ERROR_CODES.NOT_FOUND, status: 404 };
   }
@@ -126,6 +128,7 @@ export async function checkMembershipConflicts(
         eq(schema.groupInvitations.groupId, groupId),
         eq(schema.groupInvitations.email, email),
         isNull(schema.groupInvitations.acceptedAt),
+        isNull(schema.groupInvitations.declinedAt),
         gt(schema.groupInvitations.expiresAt, new Date()),
       ),
     );
@@ -208,7 +211,7 @@ export async function acceptInvitation(
   db: Database,
   invitation: GroupInvitation,
   user: InvitationUser,
-): Promise<AcceptResult | { error: InvitationError; status: number }> {
+): Promise<AcceptResult | { error: InvitationError; status: ErrorStatus }> {
   // Verify the invitation belongs to the authenticated user
   if (invitation.email.toLowerCase() !== user.email.toLowerCase()) {
     return { error: API_ERROR_CODES.FORBIDDEN, status: 403 };
@@ -277,7 +280,7 @@ export async function acceptInvitation(
     .where(eq(schema.groupInvitations.id, invitation.id));
 
   if (!updated?.acceptedAt) {
-    return { error: API_ERROR_CODES.INVITATION_NOT_FOUND, status: 404 };
+    return { error: API_ERROR_CODES.ALREADY_MEMBER, status: 400 };
   }
 
   await recalculateCoefficients(db, invitation.groupId);
@@ -293,7 +296,7 @@ export async function declineInvitation(
   db: Database,
   invitation: GroupInvitation,
   user: InvitationUser,
-): Promise<{ success: true } | { error: InvitationError; status: number }> {
+): Promise<{ success: true } | { error: InvitationError; status: ErrorStatus }> {
   if (invitation.email.toLowerCase() !== user.email.toLowerCase()) {
     return { error: API_ERROR_CODES.FORBIDDEN, status: 403 };
   }
@@ -310,7 +313,7 @@ export async function cancelInvitation(
   db: Database,
   groupId: string,
   invitationId: string,
-): Promise<{ success: true } | { error: InvitationError; status: number }> {
+): Promise<{ success: true } | { error: InvitationError; status: ErrorStatus }> {
   if (!isValidUUID(invitationId)) {
     return { error: API_ERROR_CODES.INVITATION_NOT_FOUND, status: 404 };
   }
@@ -329,28 +332,11 @@ export async function cancelInvitation(
     return { error: API_ERROR_CODES.INVITATION_NOT_FOUND, status: 404 };
   }
 
-  // Delete invitation and associated pending member
-  await db.batch([
-    db
-      .delete(schema.groupInvitations)
-      .where(
-        and(
-          eq(schema.groupInvitations.id, invitationId),
-          eq(schema.groupInvitations.groupId, groupId),
-        ),
-      ),
-    db
-      .delete(schema.groupMembers)
-      .where(
-        and(
-          eq(schema.groupMembers.groupId, groupId),
-          eq(schema.groupMembers.email, invitation.email),
-          isNull(schema.groupMembers.userId),
-        ),
-      ),
-  ]);
-
-  await recalculateCoefficients(db, groupId);
+  await removePendingMember(
+    db,
+    { id: invitationId, groupId, email: invitation.email },
+    { markDeclined: false },
+  );
 
   return { success: true };
 }
@@ -359,11 +345,19 @@ export async function cancelInvitation(
  * Resend an invitation: generate a new token and update expiry.
  * Returns the new token and invitation email for the caller to send the email.
  */
+/**
+ * Prepare a token refresh for resending an invitation.
+ * Validates the invitation and generates a new token WITHOUT persisting it.
+ * Call `commitTokenRefresh` after the email is sent successfully.
+ */
 export async function refreshInvitationToken(
   db: Database,
   groupId: string,
   invitationId: string,
-): Promise<{ token: string; email: string } | { error: InvitationError; status: number }> {
+): Promise<
+  | { token: string; email: string; expiresAt: Date }
+  | { error: InvitationError; status: ErrorStatus }
+> {
   if (!isValidUUID(invitationId)) {
     return { error: API_ERROR_CODES.INVITATION_NOT_FOUND, status: 404 };
   }
@@ -382,15 +376,26 @@ export async function refreshInvitationToken(
     return { error: API_ERROR_CODES.INVITATION_NOT_FOUND, status: 404 };
   }
 
-  const newToken = crypto.randomUUID();
-  const newExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  const token = crypto.randomUUID();
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
+  return { token, email: invitation.email, expiresAt };
+}
+
+/**
+ * Persist a new token and expiry for a resent invitation.
+ * Should only be called after the email was sent successfully.
+ */
+export async function commitTokenRefresh(
+  db: Database,
+  invitationId: string,
+  token: string,
+  expiresAt: Date,
+): Promise<void> {
   await db
     .update(schema.groupInvitations)
-    .set({ token: newToken, expiresAt: newExpiresAt })
+    .set({ token, expiresAt })
     .where(eq(schema.groupInvitations.id, invitationId));
-
-  return { token: newToken, email: invitation.email };
 }
 
 // ── Internal helpers ───────────────────────────────────────────────

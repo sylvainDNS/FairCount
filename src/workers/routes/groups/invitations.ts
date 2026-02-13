@@ -117,7 +117,7 @@ invitationsRoutes.delete('/:invitationId', async (c) => {
   const result = await invitationService.cancelInvitation(db, groupId, invitationId);
 
   if ('error' in result) {
-    return c.json({ error: result.error }, result.status as 404);
+    return c.json({ error: result.error }, result.status);
   }
 
   return c.json({ success: true });
@@ -138,7 +138,7 @@ invitationsRoutes.post('/:invitationId/resend', async (c) => {
   const refreshResult = await invitationService.refreshInvitationToken(db, groupId, invitationId);
 
   if ('error' in refreshResult) {
-    return c.json({ error: refreshResult.error }, refreshResult.status as 404);
+    return c.json({ error: refreshResult.error }, refreshResult.status);
   }
 
   // Get group name for email
@@ -162,6 +162,14 @@ invitationsRoutes.post('/:invitationId/resend', async (c) => {
     console.error('Failed to resend invitation email:', error);
     return c.json({ error: API_ERROR_CODES.EMAIL_SEND_FAILED }, 500);
   }
+
+  // Only persist the new token after email was sent successfully
+  await invitationService.commitTokenRefresh(
+    db,
+    invitationId,
+    refreshResult.token,
+    refreshResult.expiresAt,
+  );
 
   return c.json({ success: true });
 });
