@@ -2,8 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { type LoginFormValues, loginSchema } from '@/lib/schemas/auth.schema';
-import { Button } from '@/shared/components/Button';
-import { FormField } from '@/shared/components/FormField';
+import { Button, FormField } from '@/shared/components';
 import { useAuth } from '../hooks/useAuth';
 import { AUTH_ERROR_MESSAGES, type AuthError } from '../types';
 

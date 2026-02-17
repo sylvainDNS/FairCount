@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { Button } from '@/shared/components/Button';
+import { Button } from '@/shared/components';
 import { useInvitations } from '../hooks/useInvitations';
 import type { InvitationInfo } from '../types';
 

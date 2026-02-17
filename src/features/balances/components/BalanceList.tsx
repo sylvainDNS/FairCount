@@ -1,5 +1,5 @@
 import { Tooltip } from '@ark-ui/react/tooltip';
-import { Badge } from '@/shared/components/Badge';
+import { Badge } from '@/shared/components';
 import { formatCurrency } from '@/shared/utils/format';
 import type { Balance } from '../types';
 import { BalanceCard } from './BalanceCard';

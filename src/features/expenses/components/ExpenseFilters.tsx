@@ -1,9 +1,7 @@
 import { Collapsible } from '@ark-ui/react/collapsible';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useMembers } from '@/features/members/hooks/useMembers';
-import { SegmentedControl } from '@/shared/components/SegmentedControl';
-import { Select } from '@/shared/components/Select';
-import { TextInput } from '@/shared/components/TextInput';
+import { SegmentedControl, Select, TextInput } from '@/shared/components';
 import { formatMemberName } from '../hooks/useExpenseForm';
 import type { ExpenseFilters as FilterType } from '../types';
 

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { AppVersion } from '@/shared/components/AppVersion';
+import { AppVersion } from '@/shared/components';
 
 interface AuthLayoutProps {
   readonly children: ReactNode;

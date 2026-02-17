@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Button } from '@/shared/components/Button';
+import { Button } from '@/shared/components';
 import { formatCurrency } from '@/shared/utils/format';
 import { useSettlement } from '../hooks/useSettlement';
 import type { SettlementSuggestion } from '../types';

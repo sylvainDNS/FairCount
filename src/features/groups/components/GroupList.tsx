@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom';
-import { EmptyState, EmptyStateIcons } from '@/shared/components/EmptyState';
-import { Skeleton } from '@/shared/components/Loading';
+import { EmptyState, EmptyStateIcons, Skeleton } from '@/shared/components';
 import { useGroups } from '../hooks/useGroups';
 import { GroupCard } from './GroupCard';
 

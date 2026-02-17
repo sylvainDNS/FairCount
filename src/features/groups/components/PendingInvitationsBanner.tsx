@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { Button } from '@/shared/components/Button';
+import { Button } from '@/shared/components';
 import { usePendingInvitations } from '../hooks/usePendingInvitations';
 import { GROUP_ERROR_MESSAGES, type GroupResult, type PendingInvitation } from '../types';
 

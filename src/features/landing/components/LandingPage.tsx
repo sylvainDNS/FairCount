@@ -1,4 +1,4 @@
-import { AppVersion } from '@/shared/components/AppVersion';
+import { AppVersion } from '@/shared/components';
 import { ConceptSection } from './ConceptSection';
 import { FeaturesSection } from './FeaturesSection';
 import { HeroSection } from './HeroSection';

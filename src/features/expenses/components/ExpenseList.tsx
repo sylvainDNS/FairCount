@@ -1,8 +1,5 @@
 import { useCallback, useState } from 'react';
-import { Button } from '@/shared/components/Button';
-import { ConfirmDialog } from '@/shared/components/ConfirmDialog';
-import { EmptyState, EmptyStateIcons } from '@/shared/components/EmptyState';
-import { Skeleton } from '@/shared/components/Loading';
+import { Button, ConfirmDialog, EmptyState, EmptyStateIcons, Skeleton } from '@/shared/components';
 import { useInfiniteLoad } from '@/shared/hooks/useInfiniteLoad';
 import { expensesApi } from '../api';
 import { useExpenses } from '../hooks/useExpenses';

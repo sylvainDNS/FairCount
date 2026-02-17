@@ -2,9 +2,7 @@ import { lazy, Suspense } from 'react';
 import type { RouteObject } from 'react-router-dom';
 // Landing page - eagerly loaded (static, no auth dependency)
 import { LandingPage } from '@/features/landing';
-import { Layout } from '@/shared/components/Layout';
-import { Loading } from '@/shared/components/Loading';
-import { ProtectedRoute } from '@/shared/components/ProtectedRoute';
+import { Layout, Loading, ProtectedRoute } from '@/shared/components';
 
 // Auth pages chunk
 const LoginPage = lazy(() => import('@/features/auth').then((m) => ({ default: m.LoginPage })));

@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { INCOME_FREQUENCY_LABELS, type IncomeFrequency } from '@/features/groups';
-import { ConfirmDialog } from '@/shared/components/ConfirmDialog';
+import { ConfirmDialog } from '@/shared/components';
 import { formatCurrency } from '@/shared/utils/format';
 import { useMembers } from '../hooks/useMembers';
 import type { MemberWithCoefficient } from '../types';

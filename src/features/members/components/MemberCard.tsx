@@ -1,7 +1,6 @@
 import { Collapsible } from '@ark-ui/react/collapsible';
 import { INCOME_FREQUENCY_LABELS, type IncomeFrequency } from '@/features/groups';
-import { Badge } from '@/shared/components/Badge';
-import { Button } from '@/shared/components/Button';
+import { Badge, Button } from '@/shared/components';
 import { formatCurrency } from '@/shared/utils/format';
 import type { MemberWithCoefficient } from '../types';
 

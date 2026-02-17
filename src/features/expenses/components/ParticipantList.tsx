@@ -1,7 +1,6 @@
 import type { FieldArrayWithId, UseFormRegister } from 'react-hook-form';
 import type { ExpenseFormValues } from '@/lib/schemas/expense.schema';
-import { Checkbox } from '@/shared/components/Checkbox';
-import { TextInput } from '@/shared/components/TextInput';
+import { Checkbox, TextInput } from '@/shared/components';
 
 interface ParticipantListProps {
   readonly fields: FieldArrayWithId<ExpenseFormValues, 'participants', 'id'>[];
