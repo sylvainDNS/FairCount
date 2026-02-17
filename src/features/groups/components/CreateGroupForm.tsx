@@ -4,15 +4,16 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { type CreateGroupFormValues, createGroupSchema } from '@/lib/schemas/group.schema';
-import { Button } from '@/shared/components/Button';
 import {
+  Button,
   FormField,
   fieldErrorClasses,
   fieldLabelClasses,
   requiredIndicatorClasses,
-} from '@/shared/components/FormField';
-import { SegmentedControl } from '@/shared/components/SegmentedControl';
-import { Select } from '@/shared/components/Select';
+  SegmentedControl,
+  Select,
+  toaster,
+} from '@/shared/components';
 import { useGroups } from '../hooks/useGroups';
 import {
   CURRENCIES,
@@ -31,7 +32,6 @@ export const CreateGroupForm = () => {
     handleSubmit,
     control,
     watch,
-    setError,
     formState: { errors, isSubmitting },
   } = useForm<CreateGroupFormValues>({
     resolver: zodResolver(createGroupSchema),
@@ -54,12 +54,13 @@ export const CreateGroupForm = () => {
     });
 
     if (!result.success) {
-      setError('root', {
-        message: GROUP_ERROR_MESSAGES[result.error] || GROUP_ERROR_MESSAGES.UNKNOWN_ERROR,
+      toaster.error({
+        title: GROUP_ERROR_MESSAGES[result.error] || GROUP_ERROR_MESSAGES.UNKNOWN_ERROR,
       });
       return;
     }
 
+    toaster.success({ title: 'Groupe créé' });
     navigate(`/groups/${result.data.id}`);
   };
 
@@ -136,12 +137,6 @@ export const CreateGroupForm = () => {
           {INCOME_FREQUENCY_LABELS[incomeFrequency].description}
         </Fieldset.HelperText>
       </Fieldset.Root>
-
-      {errors.root && (
-        <div id="form-error" role="alert" className="text-red-600 dark:text-red-400 text-sm">
-          {errors.root.message}
-        </div>
-      )}
 
       <Button type="submit" fullWidth loading={isSubmitting} loadingText="Création en cours...">
         Créer le groupe

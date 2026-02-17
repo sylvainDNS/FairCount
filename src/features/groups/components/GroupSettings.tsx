@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/shared/components/Button';
-import { SegmentedControl } from '@/shared/components/SegmentedControl';
-import { TextInput } from '@/shared/components/TextInput';
+import { Button, SegmentedControl, TextInput, toaster } from '@/shared/components';
 import { useGroup } from '../hooks/useGroup';
 import {
   GROUP_ERROR_MESSAGES,
@@ -26,7 +24,6 @@ export const GroupSettings = ({ groupId }: GroupSettingsProps) => {
   const [incomeFrequency, setIncomeFrequency] = useState<IncomeFrequency>('annual');
   const [saving, setSaving] = useState(false);
   const [leaving, setLeaving] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
 
   useEffect(() => {
@@ -39,12 +36,11 @@ export const GroupSettings = ({ groupId }: GroupSettingsProps) => {
 
   const handleSave = useCallback(async () => {
     if (!name.trim()) {
-      setErrorMessage(GROUP_ERROR_MESSAGES.INVALID_NAME);
+      toaster.error({ title: GROUP_ERROR_MESSAGES.INVALID_NAME });
       return;
     }
 
     setSaving(true);
-    setErrorMessage('');
 
     const result = await updateGroup({
       name: name.trim(),
@@ -54,19 +50,25 @@ export const GroupSettings = ({ groupId }: GroupSettingsProps) => {
 
     setSaving(false);
 
-    if (!result.success) {
-      setErrorMessage(
-        GROUP_ERROR_MESSAGES[result.error as GroupError] || GROUP_ERROR_MESSAGES.UNKNOWN_ERROR,
-      );
+    if (result.success) {
+      toaster.success({ title: 'Groupe mis à jour' });
+    } else {
+      toaster.error({
+        title:
+          GROUP_ERROR_MESSAGES[result.error as GroupError] || GROUP_ERROR_MESSAGES.UNKNOWN_ERROR,
+      });
     }
   }, [name, description, incomeFrequency, updateGroup]);
 
   const handleArchive = useCallback(async () => {
     const result = await archiveGroup();
-    if (!result.success) {
-      setErrorMessage(
-        GROUP_ERROR_MESSAGES[result.error as GroupError] || GROUP_ERROR_MESSAGES.UNKNOWN_ERROR,
-      );
+    if (result.success) {
+      toaster.success({ title: 'Groupe archivé' });
+    } else {
+      toaster.error({
+        title:
+          GROUP_ERROR_MESSAGES[result.error as GroupError] || GROUP_ERROR_MESSAGES.UNKNOWN_ERROR,
+      });
     }
   }, [archiveGroup]);
 
@@ -74,11 +76,13 @@ export const GroupSettings = ({ groupId }: GroupSettingsProps) => {
     setLeaving(true);
     const result = await leaveGroup();
     if (result.success) {
+      toaster.success({ title: 'Vous avez quitté le groupe' });
       navigate('/groups');
     } else {
-      setErrorMessage(
-        GROUP_ERROR_MESSAGES[result.error as GroupError] || GROUP_ERROR_MESSAGES.UNKNOWN_ERROR,
-      );
+      toaster.error({
+        title:
+          GROUP_ERROR_MESSAGES[result.error as GroupError] || GROUP_ERROR_MESSAGES.UNKNOWN_ERROR,
+      });
       setLeaving(false);
     }
     setShowLeaveConfirm(false);
@@ -159,8 +163,6 @@ export const GroupSettings = ({ groupId }: GroupSettingsProps) => {
             </p>
           )}
         </fieldset>
-
-        {errorMessage && <p className="text-red-600 dark:text-red-400 text-sm">{errorMessage}</p>}
 
         <Button
           type="button"

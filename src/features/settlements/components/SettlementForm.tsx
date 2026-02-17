@@ -5,14 +5,15 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Controller, useForm } from 'react-hook-form';
 import { useMembers } from '@/features/members/hooks/useMembers';
 import { type SettlementFormValues, settlementSchema } from '@/lib/schemas/settlement.schema';
-import { Button } from '@/shared/components/Button';
 import {
+  Button,
   FormField,
   fieldErrorClasses,
   fieldLabelClasses,
   requiredIndicatorClasses,
-} from '@/shared/components/FormField';
-import { Select } from '@/shared/components/Select';
+  Select,
+  toaster,
+} from '@/shared/components';
 import { getLocalDateString } from '@/shared/utils/date';
 import { useSettlement } from '../hooks/useSettlement';
 import type { SettlementSuggestion } from '../types';
@@ -69,6 +70,7 @@ export const SettlementForm = ({
         return;
       }
 
+      toaster.success({ title: 'Remboursement enregistré' });
       onSuccess();
     } catch {
       setError('root', { message: 'Une erreur est survenue' });

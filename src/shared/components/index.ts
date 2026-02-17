@@ -22,3 +22,4 @@ export { Select } from './Select';
 export { Spinner } from './Spinner';
 export { TabsContent, TabsList, TabsRoot, TabsTrigger } from './Tabs';
 export { TextInput } from './TextInput';
+export { ToastOutlet, toaster } from './Toast';

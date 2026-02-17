@@ -1,5 +1,7 @@
 # Système de Toast/Notification
 
+> **Statut : Implémenté** — Singleton `createToaster()` dans `src/shared/components/Toast/toaster.ts`, sans Context/Provider. Usage : `toaster.success({ title: '...' })`.
+
 ## Contexte
 
 ### État actuel du codebase

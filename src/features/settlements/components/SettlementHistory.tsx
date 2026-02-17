@@ -1,8 +1,7 @@
 import { Dialog } from '@ark-ui/react/dialog';
 import { Portal } from '@ark-ui/react/portal';
 import { useCallback, useState } from 'react';
-import { Button } from '@/shared/components/Button';
-import { SegmentedControl } from '@/shared/components/SegmentedControl';
+import { Button, SegmentedControl, toaster } from '@/shared/components';
 import { useInfiniteLoad } from '@/shared/hooks/useInfiniteLoad';
 import { useSettlement } from '../hooks/useSettlement';
 import { useSettlements } from '../hooks/useSettlements';
@@ -30,7 +29,6 @@ export const SettlementHistory = ({ groupId, currency }: SettlementHistoryProps)
 
   const [settlementToDelete, setSettlementToDelete] = useState<SettlementListItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   // Infinite scroll
   const sentinelRef = useInfiniteLoad<HTMLLIElement>({
@@ -43,18 +41,18 @@ export const SettlementHistory = ({ groupId, currency }: SettlementHistoryProps)
     if (!settlementToDelete) return;
 
     setIsDeleting(true);
-    setDeleteError(null);
 
     const result = await remove(settlementToDelete.id);
 
     if (!result.success) {
-      setDeleteError(SETTLEMENT_ERROR_MESSAGES[result.error]);
+      toaster.error({ title: SETTLEMENT_ERROR_MESSAGES[result.error] });
       setIsDeleting(false);
       return;
     }
 
     setSettlementToDelete(null);
     setIsDeleting(false);
+    toaster.success({ title: 'Remboursement supprimé' });
     refresh();
   }, [settlementToDelete, remove, refresh]);
 
@@ -164,12 +162,6 @@ export const SettlementHistory = ({ groupId, currency }: SettlementHistoryProps)
               <Dialog.Description className="text-slate-500 dark:text-slate-400 mb-4">
                 Cette action est irréversible. Le remboursement sera définitivement supprimé.
               </Dialog.Description>
-
-              {deleteError && (
-                <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg mb-4">
-                  {deleteError}
-                </p>
-              )}
 
               <div className="flex gap-3">
                 <Button

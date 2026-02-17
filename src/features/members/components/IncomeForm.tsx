@@ -4,8 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { INCOME_FREQUENCY_LABELS, type IncomeFrequency } from '@/features/groups';
 import { type IncomeFormValues, incomeSchema } from '@/lib/schemas/income.schema';
-import { Button } from '@/shared/components/Button';
-import { FormField } from '@/shared/components/FormField';
+import { Button, FormField, toaster } from '@/shared/components';
 
 interface IncomeFormProps {
   readonly memberName: string;
@@ -27,7 +26,6 @@ export const IncomeForm = ({
   const {
     register,
     handleSubmit,
-    setError,
     formState: { errors, isSubmitting },
   } = useForm<IncomeFormValues>({
     resolver: zodResolver(incomeSchema),
@@ -39,8 +37,9 @@ export const IncomeForm = ({
 
     try {
       await onSubmit(incomeInCents);
+      toaster.success({ title: 'Revenu mis à jour' });
     } catch {
-      setError('root', { message: 'Une erreur est survenue' });
+      toaster.error({ title: 'Une erreur est survenue' });
     }
   };
 
@@ -80,16 +79,6 @@ export const IncomeForm = ({
                   {...register('income')}
                 />
               </div>
-
-              {errors.root && (
-                <p
-                  id="income-root-error"
-                  className="text-sm text-red-600 dark:text-red-400 mb-4"
-                  role="alert"
-                >
-                  {errors.root.message}
-                </p>
-              )}
 
               <div className="flex gap-3">
                 <Dialog.CloseTrigger asChild>

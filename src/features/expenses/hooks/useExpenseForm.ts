@@ -3,6 +3,7 @@ import { useCallback, useEffect } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import type { MemberWithCoefficient } from '@/features/members/types';
 import { type ExpenseFormValues, expenseSchema } from '@/lib/schemas/expense.schema';
+import { toaster } from '@/shared/components';
 import { getLocalDateString } from '@/shared/utils/date';
 import type {
   CreateExpenseFormData,
@@ -165,6 +166,8 @@ export const useExpenseForm = ({
           setError('root', { message: EXPENSE_ERROR_MESSAGES[result.error] });
           return;
         }
+
+        toaster.success({ title: 'Dépense modifiée' });
       } else {
         const createData: CreateExpenseFormData = {
           amount: amountInCents,
@@ -180,6 +183,8 @@ export const useExpenseForm = ({
           setError('root', { message: EXPENSE_ERROR_MESSAGES[result.error] });
           return;
         }
+
+        toaster.success({ title: 'Dépense enregistrée' });
       }
 
       onSuccess();

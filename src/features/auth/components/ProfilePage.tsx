@@ -1,18 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Spinner, TextInput } from '@/shared/components';
-import { AppVersion } from '@/shared/components/AppVersion';
+import { AppVersion, Button, Spinner, TextInput, toaster } from '@/shared/components';
 import { useAuth } from '../hooks/useAuth';
 import { AUTH_ERROR_MESSAGES, type AuthError } from '../types';
-
-type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
 export const ProfilePage = () => {
   const navigate = useNavigate();
   const { user, isLoading, isAuthenticated, logout, updateProfile } = useAuth();
   const [name, setName] = useState('');
-  const [saveState, setSaveState] = useState<SaveState>('idle');
-  const [errorMessage, setErrorMessage] = useState('');
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -29,19 +25,18 @@ export const ProfilePage = () => {
   const handleSave = useCallback(async () => {
     if (!name.trim()) return;
 
-    setSaveState('saving');
-    setErrorMessage('');
+    setSaving(true);
 
     const result = await updateProfile({ name: name.trim() });
 
+    setSaving(false);
+
     if (result.success) {
-      setSaveState('saved');
-      setTimeout(() => setSaveState('idle'), 2000);
+      toaster.success({ title: 'Profil mis à jour' });
     } else {
-      setSaveState('error');
-      setErrorMessage(
-        AUTH_ERROR_MESSAGES[result.error as AuthError] || AUTH_ERROR_MESSAGES.UNKNOWN_ERROR,
-      );
+      toaster.error({
+        title: AUTH_ERROR_MESSAGES[result.error as AuthError] || AUTH_ERROR_MESSAGES.UNKNOWN_ERROR,
+      });
     }
   }, [name, updateProfile]);
 
@@ -84,15 +79,9 @@ export const ProfilePage = () => {
               id="name"
               type="text"
               value={name}
-              onChange={(e) => {
-                setName(e.target.value);
-                if (saveState !== 'idle') {
-                  setSaveState('idle');
-                  setErrorMessage('');
-                }
-              }}
+              onChange={(e) => setName(e.target.value)}
               placeholder="Votre nom"
-              disabled={saveState === 'saving'}
+              disabled={saving}
               fullWidth={false}
               className="flex-1"
             />
@@ -100,15 +89,12 @@ export const ProfilePage = () => {
               type="button"
               onClick={handleSave}
               disabled={!name.trim() || name === user.name}
-              loading={saveState === 'saving'}
+              loading={saving}
               loadingText="Enregistrement..."
             >
-              {saveState === 'saved' ? 'Enregistré' : 'Enregistrer'}
+              Enregistrer
             </Button>
           </div>
-          {saveState === 'error' && errorMessage && (
-            <p className="text-red-600 dark:text-red-400 text-sm mt-2">{errorMessage}</p>
-          )}
         </div>
 
         <div className="p-4">
