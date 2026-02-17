@@ -60,6 +60,7 @@
     "vite": "^6.3.5",
     "vite-plugin-pwa": "^1.2.0",
     "vitest": "^4.0.18",
+    "workbox-window": "^7.4.0",
     "wrangler": "^4.61.0"
   }
 }

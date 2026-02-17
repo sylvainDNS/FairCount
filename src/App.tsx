@@ -3,7 +3,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { queryClient } from '@/lib/query-client';
 import { routes } from '@/routes';
-import { ErrorBoundary, ToastOutlet } from '@/shared/components';
+import { ErrorBoundary, ToastOutlet, UpdatePrompt } from '@/shared/components';
 
 const router = createBrowserRouter([...routes]);
 
@@ -14,6 +14,7 @@ export const App = () => {
         <RouterProvider router={router} />
         {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
         <ToastOutlet />
+        <UpdatePrompt />
       </QueryClientProvider>
     </ErrorBoundary>
   );
