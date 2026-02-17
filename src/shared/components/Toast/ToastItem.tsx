@@ -64,10 +64,10 @@ const toastContainerVariants = cva(
   {
     variants: {
       type: {
-        success: 'bg-green-50 dark:bg-green-950/40 border-green-200 dark:border-green-800',
-        error: 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800',
-        warning: 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800',
-        info: 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700',
+        success: 'bg-green-50 dark:bg-green-950/90 border-green-200 dark:border-green-800',
+        error: 'bg-red-50 dark:bg-red-950/90 border-red-200 dark:border-red-800',
+        warning: 'bg-amber-50 dark:bg-amber-950/90 border-amber-200 dark:border-amber-800',
+        info: 'bg-white dark:bg-slate-800/90 border-slate-200 dark:border-slate-700',
       },
     },
     defaultVariants: { type: 'info' },
