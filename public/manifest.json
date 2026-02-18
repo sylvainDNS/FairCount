@@ -3,7 +3,7 @@
   "name": "FairCount",
   "short_name": "FairCount",
   "description": "Partage de frais équitable selon les revenus",
-  "start_url": "/",
+  "start_url": "/groups",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#2563eb",
