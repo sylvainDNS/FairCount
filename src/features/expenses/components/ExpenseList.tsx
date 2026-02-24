@@ -90,7 +90,7 @@ export const ExpenseList = ({ groupId, currency }: ExpenseListProps) => {
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Dépenses</h2>
         {!isLoading && (
-          <Button type="button" size="sm" onClick={() => setShowCreateForm(true)}>
+          <Button type="button" onClick={() => setShowCreateForm(true)}>
             + Ajouter
           </Button>
         )}
