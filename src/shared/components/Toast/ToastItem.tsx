@@ -95,20 +95,17 @@ interface ToastItemProps {
   readonly toast: ToastOptions;
 }
 
-const actionVariants = cva(
-  'text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors mt-2',
-  {
-    variants: {
-      type: {
-        success: 'bg-green-600 text-white hover:bg-green-700',
-        error: 'bg-red-600 text-white hover:bg-red-700',
-        warning: 'bg-amber-600 text-white hover:bg-amber-700',
-        info: 'bg-blue-600 text-white hover:bg-blue-700',
-      },
+const actionVariants = cva('text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors mt-2', {
+  variants: {
+    type: {
+      success: 'bg-green-600 text-white hover:bg-green-700',
+      error: 'bg-red-600 text-white hover:bg-red-700',
+      warning: 'bg-amber-600 text-white hover:bg-amber-700',
+      info: 'bg-blue-600 text-white hover:bg-blue-700',
     },
-    defaultVariants: { type: 'info' },
   },
-);
+  defaultVariants: { type: 'info' },
+});
 
 export const ToastItem = ({ toast }: ToastItemProps) => {
   const type = resolveType(toast.type);
