@@ -10,9 +10,12 @@ interface LoginFormProps {
   readonly callbackURL?: string | undefined;
 }
 
+type AuthAction = 'login' | 'signup';
+
 export const LoginForm = ({ callbackURL }: LoginFormProps) => {
   const { login } = useAuth();
   const [showSuccess, setShowSuccess] = useState(false);
+  const [action, setAction] = useState<AuthAction | null>(null);
 
   const {
     register,
@@ -24,6 +27,13 @@ export const LoginForm = ({ callbackURL }: LoginFormProps) => {
     defaultValues: { email: '' },
   });
 
+  const handleBackToForm = () => {
+    setShowSuccess(false);
+    setAction(null);
+  };
+
+  // Both buttons trigger the same magic link flow: better-auth automatically
+  // creates an account on first use, so login and signup are identical actions.
   const onSubmit = async (data: LoginFormValues) => {
     const result = await login(data.email, callbackURL);
 
@@ -59,6 +69,9 @@ export const LoginForm = ({ callbackURL }: LoginFormProps) => {
         <p className="text-slate-500 dark:text-slate-400 text-sm">
           Consultez votre boîte de réception et cliquez sur le lien pour vous connecter.
         </p>
+        <Button type="button" variant="ghost" size="sm" onClick={handleBackToForm} className="mt-4">
+          Modifier l'adresse email
+        </Button>
       </div>
     );
   }
@@ -81,12 +94,32 @@ export const LoginForm = ({ callbackURL }: LoginFormProps) => {
         </div>
       )}
 
-      <Button type="submit" fullWidth loading={isSubmitting} loadingText="Envoi en cours...">
-        Recevoir le lien de connexion
-      </Button>
+      <div className="flex flex-col gap-2">
+        <Button
+          type="submit"
+          fullWidth
+          loading={isSubmitting && action === 'login'}
+          loadingText="Envoi en cours..."
+          disabled={isSubmitting}
+          onClick={() => setAction('login')}
+        >
+          Se connecter
+        </Button>
+        <Button
+          type="submit"
+          variant="outline"
+          fullWidth
+          loading={isSubmitting && action === 'signup'}
+          loadingText="Création en cours..."
+          disabled={isSubmitting}
+          onClick={() => setAction('signup')}
+        >
+          Créer un compte
+        </Button>
+      </div>
 
       <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
-        Un lien de connexion vous sera envoyé par email. Aucun mot de passe requis.
+        Un lien magique vous sera envoyé par email. Aucun mot de passe requis.
       </p>
     </form>
   );
