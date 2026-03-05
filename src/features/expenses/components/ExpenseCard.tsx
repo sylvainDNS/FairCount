@@ -34,7 +34,7 @@ export const ExpenseCard = ({ expense, currency, onClick }: ExpenseCardProps) =>
           <p
             className={`text-sm ${
               expense.myShare > 0
-                ? 'text-red-600 dark:text-red-400'
+                ? 'text-blue-600 dark:text-blue-400'
                 : 'text-slate-500 dark:text-slate-400'
             }`}
           >
