@@ -60,7 +60,7 @@ export const BalanceDetail = ({
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-slate-600 dark:text-slate-400">Total dû</span>
+            <span className="text-slate-600 dark:text-slate-400">Part totale</span>
             <span className="font-medium text-red-600 dark:text-red-400">
               -{formatCurrency(balance.totalOwed, currency)}
             </span>

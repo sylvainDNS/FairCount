@@ -74,7 +74,7 @@ export const BalanceCard = ({ balance, currency }: BalanceCardProps) => {
           {formatCurrency(balance.netBalance, currency)}
         </p>
         <p className="text-xs text-slate-500 dark:text-slate-400">
-          Doit : {formatCurrency(balance.totalOwed, currency)}
+          Part : {formatCurrency(balance.totalOwed, currency)}
         </p>
       </div>
     </li>
