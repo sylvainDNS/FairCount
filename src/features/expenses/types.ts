@@ -82,8 +82,6 @@ export interface ExpenseDetail {
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly participants: ReadonlyArray<ParticipantDetail>;
-  readonly canEdit: boolean;
-  readonly canDelete: boolean;
 }
 
 // Filter types
@@ -106,7 +104,6 @@ export interface ExpensesPage {
 export type ExpenseError =
   | CommonError
   | 'EXPENSE_NOT_FOUND'
-  | 'NOT_CREATOR'
   | 'INVALID_AMOUNT'
   | 'INVALID_DESCRIPTION'
   | 'INVALID_DATE'
@@ -118,7 +115,6 @@ export type ExpenseError =
 export const EXPENSE_ERROR_MESSAGES = {
   ...COMMON_ERROR_MESSAGES,
   EXPENSE_NOT_FOUND: 'Dépense introuvable',
-  NOT_CREATOR: 'Seul le créateur peut modifier cette dépense',
   INVALID_AMOUNT: 'Le montant doit être positif',
   INVALID_DESCRIPTION: 'La description est requise',
   INVALID_DATE: 'La date est invalide',
@@ -133,7 +129,6 @@ export const VALID_EXPENSE_ERRORS: readonly ExpenseError[] = [
   'UNKNOWN_ERROR',
   'NOT_A_MEMBER',
   'EXPENSE_NOT_FOUND',
-  'NOT_CREATOR',
   'INVALID_AMOUNT',
   'INVALID_DESCRIPTION',
   'INVALID_DATE',

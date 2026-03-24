@@ -1,6 +1,7 @@
 import { Dialog } from '@ark-ui/react/dialog';
 import { Portal } from '@ark-ui/react/portal';
 import { useState } from 'react';
+import { Button } from '@/shared/components';
 import { formatCurrency } from '@/shared/utils/format';
 import { useExpense } from '../hooks/useExpense';
 import { EXPENSE_ERROR_MESSAGES } from '../types';
@@ -162,29 +163,23 @@ export const ExpenseDetail = ({
 
                 {/* Actions */}
                 <div className="p-6 flex gap-3">
-                  <Dialog.CloseTrigger className="flex-1 px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-                    Fermer
+                  <Dialog.CloseTrigger asChild>
+                    <Button variant="outline" className="flex-1">
+                      Fermer
+                    </Button>
                   </Dialog.CloseTrigger>
 
-                  {expense.canEdit && (
-                    <button
-                      type="button"
-                      onClick={() => setShowEditForm(true)}
-                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                      Modifier
-                    </button>
-                  )}
+                  <Button
+                    variant="primary"
+                    className="flex-1"
+                    onClick={() => setShowEditForm(true)}
+                  >
+                    Modifier
+                  </Button>
 
-                  {expense.canDelete && (
-                    <button
-                      type="button"
-                      onClick={() => onDeleteRequest(expense.id)}
-                      className="px-4 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                    >
-                      Supprimer
-                    </button>
-                  )}
+                  <Button variant="ghost-danger" onClick={() => onDeleteRequest(expense.id)}>
+                    Supprimer
+                  </Button>
                 </div>
               </>
             ) : null}

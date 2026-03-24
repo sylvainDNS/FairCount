@@ -317,8 +317,6 @@ export async function getExpense(ctx: ExpenseContext, expenseId: string): Promis
     .leftJoin(schema.users, eq(schema.groupMembers.userId, schema.users.id))
     .where(eq(schema.groupMembers.id, result.expense.createdBy));
 
-  const isCreator = result.expense.createdBy === ctx.currentMemberId;
-
   return Response.json({
     id: result.expense.id,
     groupId: result.expense.groupId,
@@ -333,7 +331,7 @@ export async function getExpense(ctx: ExpenseContext, expenseId: string): Promis
     createdBy: {
       id: result.expense.createdBy,
       name: creator?.name ?? 'Inconnu',
-      isCurrentUser: isCreator,
+      isCurrentUser: result.expense.createdBy === ctx.currentMemberId,
     },
     createdAt: result.expense.createdAt.toISOString(),
     updatedAt: result.expense.updatedAt.toISOString(),
@@ -345,8 +343,6 @@ export async function getExpense(ctx: ExpenseContext, expenseId: string): Promis
       calculatedShare: shares.get(p.participant.memberId) ?? 0,
       isCurrentUser: p.memberUserId === ctx.userId,
     })),
-    canEdit: isCreator,
-    canDelete: isCreator,
   });
 }
 
@@ -454,11 +450,6 @@ export async function updateExpense(
     return Response.json({ error: 'EXPENSE_NOT_FOUND' }, { status: 404 });
   }
 
-  // Check if user is creator
-  if (expense.createdBy !== ctx.currentMemberId) {
-    return Response.json({ error: 'NOT_CREATOR' }, { status: 403 });
-  }
-
   const updates: Partial<{
     amount: number;
     description: string;
@@ -562,11 +553,6 @@ export async function deleteExpense(ctx: ExpenseContext, expenseId: string): Pro
 
   if (!expense) {
     return Response.json({ error: 'EXPENSE_NOT_FOUND' }, { status: 404 });
-  }
-
-  // Check if user is creator
-  if (expense.createdBy !== ctx.currentMemberId) {
-    return Response.json({ error: 'NOT_CREATOR' }, { status: 403 });
   }
 
   // Soft delete
