@@ -64,31 +64,42 @@ async function listGroups(db: Database, userId: string) {
   const groupIds = userGroups.map((g) => g.id);
   const memberIdByGroup = new Map(userGroups.map((g) => [g.id, g.memberId]));
 
-  // Get member counts for all groups in a single query
-  const memberCounts = await selectByIdsChunked(groupIds, (chunk) =>
-    db
-      .select({
-        groupId: schema.groupMembers.groupId,
-        count: count(),
-      })
-      .from(schema.groupMembers)
-      .where(and(inArray(schema.groupMembers.groupId, chunk), isNull(schema.groupMembers.leftAt)))
-      .groupBy(schema.groupMembers.groupId),
-  );
+  // Fetch the four group-scoped datasets in parallel; they don't depend on each other.
+  const [memberCounts, allMembers, allExpenses, allSettlements] = await Promise.all([
+    selectByIdsChunked(groupIds, (chunk) =>
+      db
+        .select({
+          groupId: schema.groupMembers.groupId,
+          count: count(),
+        })
+        .from(schema.groupMembers)
+        .where(and(inArray(schema.groupMembers.groupId, chunk), isNull(schema.groupMembers.leftAt)))
+        .groupBy(schema.groupMembers.groupId),
+    ),
+    selectByIdsChunked(groupIds, (chunk) =>
+      db
+        .select({
+          id: schema.groupMembers.id,
+          groupId: schema.groupMembers.groupId,
+          coefficient: schema.groupMembers.coefficient,
+        })
+        .from(schema.groupMembers)
+        .where(
+          and(inArray(schema.groupMembers.groupId, chunk), isNull(schema.groupMembers.leftAt)),
+        ),
+    ),
+    selectByIdsChunked(groupIds, (chunk) =>
+      db
+        .select()
+        .from(schema.expenses)
+        .where(and(inArray(schema.expenses.groupId, chunk), isNull(schema.expenses.deletedAt))),
+    ),
+    selectByIdsChunked(groupIds, (chunk) =>
+      db.select().from(schema.settlements).where(inArray(schema.settlements.groupId, chunk)),
+    ),
+  ]);
 
   const countMap = new Map(memberCounts.map((mc) => [mc.groupId, mc.count]));
-
-  // Get all members for coefficient calculation
-  const allMembers = await selectByIdsChunked(groupIds, (chunk) =>
-    db
-      .select({
-        id: schema.groupMembers.id,
-        groupId: schema.groupMembers.groupId,
-        coefficient: schema.groupMembers.coefficient,
-      })
-      .from(schema.groupMembers)
-      .where(and(inArray(schema.groupMembers.groupId, chunk), isNull(schema.groupMembers.leftAt))),
-  );
 
   const membersByGroup = new Map<string, Map<string, number>>();
   for (const m of allMembers) {
@@ -97,15 +108,7 @@ async function listGroups(db: Database, userId: string) {
     membersByGroup.set(m.groupId, groupMap);
   }
 
-  // Get all expenses for these groups
-  const allExpenses = await selectByIdsChunked(groupIds, (chunk) =>
-    db
-      .select()
-      .from(schema.expenses)
-      .where(and(inArray(schema.expenses.groupId, chunk), isNull(schema.expenses.deletedAt))),
-  );
-
-  // Get all participants
+  // Participants depend on the expense ids — fetch after allExpenses resolved.
   const expenseIds = allExpenses.map((e) => e.id);
   const allParticipants = await selectByIdsChunked(expenseIds, (chunk) =>
     db
@@ -123,11 +126,6 @@ async function listGroups(db: Database, userId: string) {
     list.push({ memberId: p.memberId, customAmount: p.customAmount });
     participantsByExpense.set(p.expenseId, list);
   }
-
-  // Get all settlements
-  const allSettlements = await selectByIdsChunked(groupIds, (chunk) =>
-    db.select().from(schema.settlements).where(inArray(schema.settlements.groupId, chunk)),
-  );
 
   // Calculate balance for each group
   const balanceByGroup = new Map<string, number>();
