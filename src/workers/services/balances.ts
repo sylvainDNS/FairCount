@@ -1,4 +1,4 @@
-import { and, eq, gte, isNull, sql } from 'drizzle-orm';
+import { and, eq, gte, inArray, isNull, sql } from 'drizzle-orm';
 import * as schema from '@/db/schema';
 import {
   type BalanceContext as BaseBalanceContext,
@@ -6,7 +6,11 @@ import {
   verifyBalancesIntegrity,
 } from './shared/balance-calculation';
 import { calculateShares } from './shared/share-calculation';
-import { activeGroupMembersCondition, memberDisplayName, sqlInClause } from './shared/sql-helpers';
+import {
+  activeGroupMembersCondition,
+  memberDisplayName,
+  selectByIdsChunked,
+} from './shared/sql-helpers';
 
 interface BalanceContext extends BaseBalanceContext {
   readonly userId: string;
@@ -64,23 +68,21 @@ export async function getMyBalance(ctx: BalanceContext): Promise<Response> {
 
   // Get participants for my expenses
   const expenseIds = myExpenses.map((e) => e.expense.id);
+  const participants = await selectByIdsChunked(expenseIds, (chunk) =>
+    ctx.db
+      .select()
+      .from(schema.expenseParticipants)
+      .where(inArray(schema.expenseParticipants.expenseId, chunk)),
+  );
+
   const participantsByExpense = new Map<
     string,
     Array<{ memberId: string; customAmount: number | null }>
   >();
-
-  const expenseIdsInClause = sqlInClause(schema.expenseParticipants.expenseId, expenseIds);
-  if (expenseIdsInClause) {
-    const participants = await ctx.db
-      .select()
-      .from(schema.expenseParticipants)
-      .where(expenseIdsInClause);
-
-    for (const p of participants) {
-      const list = participantsByExpense.get(p.expenseId) ?? [];
-      list.push({ memberId: p.memberId, customAmount: p.customAmount });
-      participantsByExpense.set(p.expenseId, list);
-    }
+  for (const p of participants) {
+    const list = participantsByExpense.get(p.expenseId) ?? [];
+    list.push({ memberId: p.memberId, customAmount: p.customAmount });
+    participantsByExpense.set(p.expenseId, list);
   }
 
   // Build expense list with my share
