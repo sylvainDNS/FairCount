@@ -42,7 +42,6 @@ export function sqlInClause(column: SQLiteColumn, ids: readonly string[]): SQL |
 }
 
 // Cloudflare D1 prepared statements support up to 100 bound parameters.
-// If a query has additional binds besides the IN clause, callers must account for it.
 const D1_MAX_BOUND_PARAMS = 100;
 
 /**
@@ -50,21 +49,43 @@ const D1_MAX_BOUND_PARAMS = 100;
  * fit under D1's 100-bound-parameter limit. Returns the concatenation of
  * each chunk's results.
  *
+ * Default chunkSize is 100 (D1's hard limit). If the query has additional
+ * binds besides the single IN clause (e.g. a value-comparison `eq(col, x)`),
+ * pass a smaller `chunkSize` to leave room for them.
+ *
+ * Note on GROUP BY: chunked results are concatenated naively. If your query
+ * uses GROUP BY, this is only correct when the grouping key is the IN-clause
+ * column itself (or otherwise cannot span chunks). Otherwise the caller must
+ * re-aggregate across chunks.
+ *
  * @example
  * const participants = await selectByIdsChunked(expenseIds, (chunk) =>
  *   db.select().from(schema.expenseParticipants)
  *     .where(inArray(schema.expenseParticipants.expenseId, chunk)),
  * );
+ *
+ * @example
+ * // Query with an extra bind: shrink chunkSize so total stays ≤100.
+ * await selectByIdsChunked(ids, (chunk) =>
+ *   db.select().from(t).where(and(inArray(t.id, chunk), eq(t.status, 'active'))),
+ *   { chunkSize: 99 },
+ * );
  */
 export async function selectByIdsChunked<T>(
   ids: readonly string[],
   fetchChunk: (chunk: readonly string[]) => Promise<readonly T[]>,
+  options?: { chunkSize?: number },
 ): Promise<T[]> {
+  const chunkSize = options?.chunkSize ?? D1_MAX_BOUND_PARAMS;
+  if (chunkSize < 1) {
+    throw new Error(`selectByIdsChunked: chunkSize must be >= 1, got ${chunkSize}`);
+  }
+
   if (ids.length === 0) return [];
 
   const results: T[] = [];
-  for (let i = 0; i < ids.length; i += D1_MAX_BOUND_PARAMS) {
-    const chunk = ids.slice(i, i + D1_MAX_BOUND_PARAMS);
+  for (let i = 0; i < ids.length; i += chunkSize) {
+    const chunk = ids.slice(i, i + chunkSize);
     const part = await fetchChunk(chunk);
     results.push(...part);
   }
