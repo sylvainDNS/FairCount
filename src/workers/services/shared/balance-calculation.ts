@@ -1,8 +1,8 @@
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq, inArray, isNull } from 'drizzle-orm';
 import type { Database } from '@/db';
 import * as schema from '@/db/schema';
 import { calculateShares } from './share-calculation';
-import { activeGroupMembersCondition, memberDisplayName, sqlInClause } from './sql-helpers';
+import { activeGroupMembersCondition, memberDisplayName, selectByIdsChunked } from './sql-helpers';
 
 export interface BalanceContext {
   readonly db: Database;
@@ -70,10 +70,12 @@ export async function calculateGroupBalances(ctx: BalanceContext): Promise<Membe
   if (expenses.length > 0) {
     // Récupérer les participants pour ces dépenses
     const expenseIds = expenses.map((e) => e.id);
-    const expenseIdsInClause = sqlInClause(schema.expenseParticipants.expenseId, expenseIds);
-    const participants = expenseIdsInClause
-      ? await ctx.db.select().from(schema.expenseParticipants).where(expenseIdsInClause)
-      : [];
+    const participants = await selectByIdsChunked(expenseIds, (chunk) =>
+      ctx.db
+        .select()
+        .from(schema.expenseParticipants)
+        .where(inArray(schema.expenseParticipants.expenseId, chunk)),
+    );
 
     // Grouper les participants par dépense
     const participantsByExpense = new Map<

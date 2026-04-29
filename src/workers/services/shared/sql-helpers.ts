@@ -41,6 +41,36 @@ export function sqlInClause(column: SQLiteColumn, ids: readonly string[]): SQL |
   )})`;
 }
 
+// Cloudflare D1 prepared statements support up to 100 bound parameters.
+// If a query has additional binds besides the IN clause, callers must account for it.
+const D1_MAX_BOUND_PARAMS = 100;
+
+/**
+ * Run a SELECT keyed on a list of IDs, splitting the list into chunks that
+ * fit under D1's 100-bound-parameter limit. Returns the concatenation of
+ * each chunk's results.
+ *
+ * @example
+ * const participants = await selectByIdsChunked(expenseIds, (chunk) =>
+ *   db.select().from(schema.expenseParticipants)
+ *     .where(inArray(schema.expenseParticipants.expenseId, chunk)),
+ * );
+ */
+export async function selectByIdsChunked<T>(
+  ids: readonly string[],
+  fetchChunk: (chunk: readonly string[]) => Promise<readonly T[]>,
+): Promise<T[]> {
+  if (ids.length === 0) return [];
+
+  const results: T[] = [];
+  for (let i = 0; i < ids.length; i += D1_MAX_BOUND_PARAMS) {
+    const chunk = ids.slice(i, i + D1_MAX_BOUND_PARAMS);
+    const part = await fetchChunk(chunk);
+    results.push(...part);
+  }
+  return results;
+}
+
 /**
  * Build cursor-based pagination condition.
  * Returns undefined if cursor is invalid or not provided.
