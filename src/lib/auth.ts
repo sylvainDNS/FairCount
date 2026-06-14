@@ -38,7 +38,7 @@ export const createAuth = ({ db, env }: CreateAuthOptions) => {
       enabled: false,
     },
     session: {
-      expiresIn: 60 * 60 * 24 * 7, // 7 days
+      expiresIn: 60 * 60 * 24 * 90, // 90 days
     },
     plugins: [
       magicLink({
