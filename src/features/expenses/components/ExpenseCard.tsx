@@ -23,6 +23,11 @@ export const ExpenseCard = ({ expense, currency, onClick }: ExpenseCardProps) =>
         <p className="font-medium text-slate-900 dark:text-white truncate">{expense.description}</p>
         <p className="text-sm text-slate-500 dark:text-slate-400">
           {formattedDate} · Payé par {expense.paidBy.name}
+          {expense.paidBy.isJointAccount && (
+            <span className="ml-1.5 inline-flex items-center rounded-full bg-emerald-100 dark:bg-emerald-900/40 px-1.5 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+              Compte commun
+            </span>
+          )}
         </p>
       </div>
 

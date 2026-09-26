@@ -4,6 +4,7 @@ import { Fieldset } from '@ark-ui/react/fieldset';
 import { Portal } from '@ark-ui/react/portal';
 import { Controller } from 'react-hook-form';
 import { twMerge } from 'tailwind-merge';
+import { useGroup } from '@/features/groups/hooks/useGroup';
 import { useMembers } from '@/features/members/hooks/useMembers';
 import {
   Button,
@@ -34,7 +35,20 @@ export const ExpenseForm = ({
   onCancel,
 }: ExpenseFormProps) => {
   const { members } = useMembers(groupId);
+  const { group } = useGroup(groupId);
   const { create, update } = useExpense(groupId, expense?.id);
+
+  // Build the payer options: real members, plus the joint account when it is
+  // active — or when editing an expense already paid by it (even if since
+  // disabled), so that expense stays editable.
+  const jointAccount = group?.jointAccount ?? null;
+  const editingJointExpense = expense?.paidBy.isJointAccount ?? false;
+  const payerItems = [
+    ...members.map((m) => ({ value: m.id, label: formatMemberName(m) })),
+    ...(jointAccount && (jointAccount.active || editingJointExpense)
+      ? [{ value: jointAccount.memberId, label: jointAccount.name }]
+      : []),
+  ];
 
   const {
     register,
@@ -120,10 +134,7 @@ export const ExpenseForm = ({
                   control={control}
                   render={({ field }) => (
                     <Select
-                      items={members.map((m) => ({
-                        value: m.id,
-                        label: formatMemberName(m),
-                      }))}
+                      items={payerItems}
                       value={field.value}
                       onValueChange={field.onChange}
                       placeholder="Sélectionner..."

@@ -39,6 +39,12 @@ export const invalidations = {
     queryClient.invalidateQueries({ queryKey: queryKeys.groups.all });
   },
 
+  // Enabling/disabling the joint account only changes group configuration,
+  // not existing expenses or balances.
+  afterJointAccountChange: (queryClient: QueryClient, groupId: string) => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.groups.detail(groupId) });
+  },
+
   // Invitations
   afterInvitationSend: (queryClient: QueryClient, groupId: string) => {
     queryClient.invalidateQueries({ queryKey: queryKeys.invitations.list(groupId) });

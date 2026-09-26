@@ -93,6 +93,13 @@ export interface GroupWithMembers {
   readonly members: GroupMemberInfo[];
   readonly memberCount: number;
   readonly myMemberId: string;
+  readonly jointAccount: JointAccountInfo | null;
+}
+
+export interface JointAccountInfo {
+  readonly memberId: string;
+  readonly name: string;
+  readonly active: boolean;
 }
 
 export interface GroupMemberInfo {

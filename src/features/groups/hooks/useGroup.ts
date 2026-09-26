@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { throwIfError, toTypedError } from '@/lib/api-error';
 import { invalidations } from '@/lib/query-invalidations';
 import { queryKeys } from '@/lib/query-keys';
-import { groupsApi } from '../api';
+import { groupsApi, jointAccountApi } from '../api';
 import type { GroupError, GroupResult, GroupWithMembers, UpdateGroupFormData } from '../types';
 
 interface UseGroupResult {
@@ -13,6 +13,8 @@ interface UseGroupResult {
   readonly archiveGroup: () => Promise<GroupResult>;
   readonly leaveGroup: () => Promise<GroupResult>;
   readonly deleteGroup: () => Promise<GroupResult>;
+  readonly setJointAccount: (name?: string) => Promise<GroupResult>;
+  readonly disableJointAccount: () => Promise<GroupResult>;
   readonly refresh: () => Promise<void>;
 }
 
@@ -78,6 +80,22 @@ export const useGroup = (groupId: string): UseGroupResult => {
     onSuccess: () => invalidations.afterGroupDelete(queryClient),
   });
 
+  const setJointAccountMutation = useMutation<unknown, Error, string | undefined>({
+    mutationFn: async (name) => {
+      const result = await jointAccountApi.set(groupId, name !== undefined ? { name } : {});
+      return throwIfError(result);
+    },
+    onSuccess: () => invalidations.afterJointAccountChange(queryClient, groupId),
+  });
+
+  const disableJointAccountMutation = useMutation<{ success: boolean }, Error>({
+    mutationFn: async () => {
+      const result = await jointAccountApi.disable(groupId);
+      return throwIfError(result);
+    },
+    onSuccess: () => invalidations.afterJointAccountChange(queryClient, groupId),
+  });
+
   const updateGroup = async (formData: UpdateGroupFormData): Promise<GroupResult> => {
     try {
       await updateMutation.mutateAsync(formData);
@@ -114,6 +132,24 @@ export const useGroup = (groupId: string): UseGroupResult => {
     }
   };
 
+  const setJointAccount = async (name?: string): Promise<GroupResult> => {
+    try {
+      await setJointAccountMutation.mutateAsync(name);
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: toTypedError(err, VALID_ERRORS) as GroupError };
+    }
+  };
+
+  const disableJointAccount = async (): Promise<GroupResult> => {
+    try {
+      await disableJointAccountMutation.mutateAsync();
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: toTypedError(err, VALID_ERRORS) as GroupError };
+    }
+  };
+
   return {
     group: data ?? null,
     isLoading,
@@ -122,6 +158,8 @@ export const useGroup = (groupId: string): UseGroupResult => {
     archiveGroup,
     leaveGroup,
     deleteGroup,
+    setJointAccount,
+    disableJointAccount,
     refresh: async () => {
       await refetch();
     },

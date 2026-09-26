@@ -3,6 +3,7 @@ import type {
   CreateGroupFormData,
   GroupListItem,
   GroupWithMembers,
+  JointAccountInfo,
   UpdateGroupFormData,
 } from '../types';
 
@@ -55,6 +56,28 @@ export const groupsApi = {
   leave: async (id: string): Promise<{ success: boolean } | { error: string }> => {
     const res = await fetchWithAuth(`/groups/${id}/leave`, {
       method: 'POST',
+    });
+    return res.json();
+  },
+};
+
+export const jointAccountApi = {
+  // Create, rename or reactivate the group's joint account
+  set: async (
+    groupId: string,
+    data: { name?: string },
+  ): Promise<{ jointAccount: JointAccountInfo } | { error: string }> => {
+    const res = await fetchWithAuth(`/groups/${groupId}/joint-account`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
+
+  // Disable the group's joint account
+  disable: async (groupId: string): Promise<{ success: boolean } | { error: string }> => {
+    const res = await fetchWithAuth(`/groups/${groupId}/joint-account`, {
+      method: 'DELETE',
     });
     return res.json();
   },
