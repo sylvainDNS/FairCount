@@ -27,7 +27,8 @@ Crée, renomme ou réactive le compte commun du groupe (upsert idempotent).
 { "jointAccount": { "memberId": "uuid", "name": "Compte joint", "active": true } }
 ```
 
-**Erreurs** : `400 VALIDATION_ERROR` (Zod), `404 GROUP_NOT_FOUND`.
+**Erreurs** : `400` réponse par défaut de `zValidator` (`{ "success": false, "error": ZodError }`,
+comme les autres routes validées — pas de code `{ "error": "CODE" }`), `404 GROUP_NOT_FOUND`.
 
 ### DELETE /api/groups/:id/joint-account
 
