@@ -143,6 +143,11 @@ export const BalanceDetail = ({
                   <p className="text-sm text-slate-500 dark:text-slate-400">
                     {formatDate(expense.date)} ·{' '}
                     {expense.isPayer ? 'Payé par vous' : `Payé par ${expense.paidBy.name}`}
+                    {expense.paidBy.isJointAccount && (
+                      <span className="ml-1.5 inline-flex items-center rounded-full bg-emerald-100 dark:bg-emerald-900/40 px-1.5 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                        Compte commun
+                      </span>
+                    )}
                   </p>
                 </div>
                 <div className="text-right shrink-0 ml-4">

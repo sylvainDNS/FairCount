@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { jointAccountSchema } from '@/lib/schemas/group.schema';
 import { Button, SegmentedControl, TextInput, toaster } from '@/shared/components';
 import { useGroup } from '../hooks/useGroup';
 import {
@@ -17,7 +18,15 @@ interface GroupSettingsProps {
 
 export const GroupSettings = ({ groupId }: GroupSettingsProps) => {
   const navigate = useNavigate();
-  const { group, isLoading, updateGroup, archiveGroup, leaveGroup } = useGroup(groupId);
+  const {
+    group,
+    isLoading,
+    updateGroup,
+    archiveGroup,
+    leaveGroup,
+    setJointAccount,
+    disableJointAccount,
+  } = useGroup(groupId);
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -25,14 +34,67 @@ export const GroupSettings = ({ groupId }: GroupSettingsProps) => {
   const [saving, setSaving] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [jointName, setJointName] = useState('');
+  const [jointSaving, setJointSaving] = useState(false);
+
+  const jointAccount = group?.jointAccount ?? null;
+  const jointActive = jointAccount?.active ?? false;
 
   useEffect(() => {
     if (group) {
       setName(group.name);
       setDescription(group.description || '');
       setIncomeFrequency(group.incomeFrequency);
+      setJointName(group.jointAccount?.name ?? 'Compte commun');
     }
   }, [group]);
+
+  const handleEnableJoint = useCallback(async () => {
+    setJointSaving(true);
+    const result = await setJointAccount(jointName.trim() || undefined);
+    setJointSaving(false);
+    if (result.success) {
+      toaster.success({ title: 'Compte commun activé' });
+    } else {
+      toaster.error({
+        title:
+          GROUP_ERROR_MESSAGES[result.error as GroupError] || GROUP_ERROR_MESSAGES.UNKNOWN_ERROR,
+      });
+    }
+  }, [jointName, setJointAccount]);
+
+  const handleSaveJointName = useCallback(async () => {
+    const parsed = jointAccountSchema.safeParse({ name: jointName });
+    if (!parsed.success) {
+      toaster.error({ title: parsed.error.issues[0]?.message ?? 'Nom du compte commun invalide' });
+      return;
+    }
+    setJointSaving(true);
+    const result = await setJointAccount(parsed.data.name);
+    setJointSaving(false);
+    if (result.success) {
+      toaster.success({ title: 'Compte commun mis à jour' });
+    } else {
+      toaster.error({
+        title:
+          GROUP_ERROR_MESSAGES[result.error as GroupError] || GROUP_ERROR_MESSAGES.UNKNOWN_ERROR,
+      });
+    }
+  }, [jointName, setJointAccount]);
+
+  const handleDisableJoint = useCallback(async () => {
+    setJointSaving(true);
+    const result = await disableJointAccount();
+    setJointSaving(false);
+    if (result.success) {
+      toaster.success({ title: 'Compte commun désactivé' });
+    } else {
+      toaster.error({
+        title:
+          GROUP_ERROR_MESSAGES[result.error as GroupError] || GROUP_ERROR_MESSAGES.UNKNOWN_ERROR,
+      });
+    }
+  }, [disableJointAccount]);
 
   const handleSave = useCallback(async () => {
     if (!name.trim()) {
@@ -173,6 +235,69 @@ export const GroupSettings = ({ groupId }: GroupSettingsProps) => {
         >
           Enregistrer
         </Button>
+      </div>
+
+      {/* Joint account section */}
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 space-y-3">
+        <h2 className="font-semibold text-slate-900 dark:text-white">Compte commun</h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Activez un compte commun pour pouvoir l'utiliser comme payeur d'une dépense (par exemple
+          un achat personnel réglé avec la carte du foyer). Son coût est alors réparti entre les
+          membres selon leurs coefficients de revenus.
+        </p>
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          Pour que les calculs soient exacts, saisissez les versements vers le compte commun comme
+          des dépenses en répartition équitable (sans montant personnalisé).
+        </p>
+
+        {jointActive ? (
+          <>
+            <div>
+              <label
+                htmlFor="joint-account-name"
+                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+              >
+                Nom du compte commun
+              </label>
+              <TextInput
+                id="joint-account-name"
+                type="text"
+                value={jointName}
+                onChange={(e) => setJointName(e.target.value)}
+                disabled={jointSaving}
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                onClick={handleSaveJointName}
+                disabled={jointName.trim() === (jointAccount?.name ?? '') || !jointName.trim()}
+                loading={jointSaving}
+                loadingText="..."
+              >
+                Enregistrer le nom
+              </Button>
+              <Button
+                type="button"
+                variant="ghost-danger"
+                onClick={handleDisableJoint}
+                disabled={jointSaving}
+              >
+                Désactiver
+              </Button>
+            </div>
+          </>
+        ) : (
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={handleEnableJoint}
+            loading={jointSaving}
+            loadingText="Activation..."
+          >
+            {jointAccount ? 'Réactiver le compte commun' : 'Activer le compte commun'}
+          </Button>
+        )}
       </div>
 
       {/* Archive section */}

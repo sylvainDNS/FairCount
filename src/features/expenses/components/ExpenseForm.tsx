@@ -2,8 +2,10 @@ import { Dialog } from '@ark-ui/react/dialog';
 import { Field } from '@ark-ui/react/field';
 import { Fieldset } from '@ark-ui/react/fieldset';
 import { Portal } from '@ark-ui/react/portal';
+import { useMemo } from 'react';
 import { Controller } from 'react-hook-form';
 import { twMerge } from 'tailwind-merge';
+import { useGroup } from '@/features/groups/hooks/useGroup';
 import { useMembers } from '@/features/members/hooks/useMembers';
 import {
   Button,
@@ -17,6 +19,27 @@ import { useExpense } from '../hooks/useExpense';
 import { formatMemberName, useExpenseForm } from '../hooks/useExpenseForm';
 import type { ExpenseDetail } from '../types';
 import { ParticipantList } from './ParticipantList';
+
+// Credit card icon distinguishing the joint account from real members in the payer list
+const jointAccountIcon = (
+  <>
+    <svg
+      className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z"
+      />
+    </svg>
+    <span className="sr-only">Compte commun :</span>
+  </>
+);
 
 interface ExpenseFormProps {
   readonly groupId: string;
@@ -34,7 +57,24 @@ export const ExpenseForm = ({
   onCancel,
 }: ExpenseFormProps) => {
   const { members } = useMembers(groupId);
+  const { group } = useGroup(groupId);
   const { create, update } = useExpense(groupId, expense?.id);
+
+  // Build the payer options: real members, plus the joint account when it is
+  // active — or when editing an expense already paid by it (even if since
+  // disabled), so that expense stays editable.
+  // Memoized so the Select's list collection is not rebuilt on every render.
+  const jointAccount = group?.jointAccount ?? null;
+  const editingJointExpense = expense?.paidBy.isJointAccount ?? false;
+  const payerItems = useMemo(
+    () => [
+      ...members.map((m) => ({ value: m.id, label: formatMemberName(m) })),
+      ...(jointAccount && (jointAccount.active || editingJointExpense)
+        ? [{ value: jointAccount.memberId, label: jointAccount.name, icon: jointAccountIcon }]
+        : []),
+    ],
+    [members, jointAccount, editingJointExpense],
+  );
 
   const {
     register,
@@ -120,10 +160,7 @@ export const ExpenseForm = ({
                   control={control}
                   render={({ field }) => (
                     <Select
-                      items={members.map((m) => ({
-                        value: m.id,
-                        label: formatMemberName(m),
-                      }))}
+                      items={payerItems}
                       value={field.value}
                       onValueChange={field.onChange}
                       placeholder="Sélectionner..."

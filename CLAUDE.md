@@ -87,7 +87,12 @@ Uses better-auth with magic link (email-only, no passwords):
 Located in `src/db/schema/`:
 - `users.ts` - Users, sessions, accounts, verifications (better-auth tables)
 - `groups.ts` - Groups and invitations
-- `members.ts` - Group memberships with income coefficients
+- `members.ts` - Group memberships with income coefficients. The `kind` column
+  (`'person' | 'joint_account'`) distinguishes real members from the optional virtual
+  "joint account" payer: at most one per group (unique partial index), no user/income/
+  coefficient, never a beneficiary, settlement party, or balance line. It can only pay
+  expenses; its cost is redistributed across active persons by coefficient. Queries that
+  must exclude it use `activePersonMembersCondition`; activation/deactivation reuses `leftAt`.
 - `expenses.ts` - Expenses and participant shares
 - `settlements.ts` - Reimbursement records
 

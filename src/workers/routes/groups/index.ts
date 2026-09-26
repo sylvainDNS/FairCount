@@ -1,13 +1,21 @@
 import { zValidator } from '@hono/zod-validator';
-import { and, count, eq, inArray, isNull } from 'drizzle-orm';
+import { and, count, eq, inArray, isNull, or } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { z } from 'zod';
+import { jointAccountSchema } from '@/lib/schemas/group.schema';
 import { API_ERROR_CODES } from '@/shared/constants/errors';
 import type { Database } from '../../../db';
 import * as schema from '../../../db/schema';
 import { authMiddleware, membershipMiddleware } from '../../middleware';
+import {
+  disableJointAccount,
+  getJointAccount,
+  upsertJointAccount,
+} from '../../services/joint-account';
+import { calculatePaidShares } from '../../services/shared/balance-calculation';
 import { calculateShares } from '../../services/shared/share-calculation';
 import {
+  activePersonMembersCondition,
   memberDisplayName,
   resolveInitialMemberName,
   selectByIdsChunked,
@@ -73,7 +81,13 @@ async function listGroups(db: Database, userId: string) {
           count: count(),
         })
         .from(schema.groupMembers)
-        .where(and(inArray(schema.groupMembers.groupId, chunk), isNull(schema.groupMembers.leftAt)))
+        .where(
+          and(
+            inArray(schema.groupMembers.groupId, chunk),
+            isNull(schema.groupMembers.leftAt),
+            eq(schema.groupMembers.kind, 'person'),
+          ),
+        )
         .groupBy(schema.groupMembers.groupId),
     ),
     selectByIdsChunked(groupIds, (chunk) =>
@@ -82,10 +96,16 @@ async function listGroups(db: Database, userId: string) {
           id: schema.groupMembers.id,
           groupId: schema.groupMembers.groupId,
           coefficient: schema.groupMembers.coefficient,
+          kind: schema.groupMembers.kind,
         })
         .from(schema.groupMembers)
+        // Active persons + the joint account regardless of its active state, so a
+        // disabled joint account is still detected as the payer of past expenses.
         .where(
-          and(inArray(schema.groupMembers.groupId, chunk), isNull(schema.groupMembers.leftAt)),
+          and(
+            inArray(schema.groupMembers.groupId, chunk),
+            or(isNull(schema.groupMembers.leftAt), eq(schema.groupMembers.kind, 'joint_account')),
+          ),
         ),
     ),
     selectByIdsChunked(groupIds, (chunk) =>
@@ -101,8 +121,17 @@ async function listGroups(db: Database, userId: string) {
 
   const countMap = new Map(memberCounts.map((mc) => [mc.groupId, mc.count]));
 
+  // Coefficients cover real persons only; joint account ids are tracked apart so
+  // their expenses can be redistributed on the payer side.
   const membersByGroup = new Map<string, Map<string, number>>();
+  const jointIdsByGroup = new Map<string, Set<string>>();
   for (const m of allMembers) {
+    if (m.kind === 'joint_account') {
+      const set = jointIdsByGroup.get(m.groupId) ?? new Set<string>();
+      set.add(m.id);
+      jointIdsByGroup.set(m.groupId, set);
+      continue;
+    }
     const groupMap = membersByGroup.get(m.groupId) ?? new Map();
     groupMap.set(m.id, m.coefficient);
     membersByGroup.set(m.groupId, groupMap);
@@ -134,6 +163,8 @@ async function listGroups(db: Database, userId: string) {
     if (!myMemberId) continue;
 
     const memberCoeffs = membersByGroup.get(groupId) ?? new Map();
+    const activePersonIds = [...memberCoeffs.keys()];
+    const jointIds = jointIdsByGroup.get(groupId) ?? new Set<string>();
     const groupExpenses = allExpenses.filter((e) => e.groupId === groupId);
     const groupSettlements = allSettlements.filter((s) => s.groupId === groupId);
 
@@ -142,8 +173,14 @@ async function listGroups(db: Database, userId: string) {
       (acc, expense) => {
         const participants = participantsByExpense.get(expense.id) ?? [];
         const shares = calculateShares(expense.amount, participants, memberCoeffs);
+        const paidShares = calculatePaidShares(
+          expense,
+          jointIds.has(expense.paidBy),
+          activePersonIds,
+          memberCoeffs,
+        );
         return {
-          totalPaid: acc.totalPaid + (expense.paidBy === myMemberId ? expense.amount : 0),
+          totalPaid: acc.totalPaid + (paidShares.get(myMemberId) ?? 0),
           totalOwed: acc.totalOwed + (shares.get(myMemberId) ?? 0),
         };
       },
@@ -252,9 +289,10 @@ groupRouter.get('/', async (c) => {
     })
     .from(schema.groupMembers)
     .leftJoin(schema.users, eq(schema.groupMembers.userId, schema.users.id))
-    .where(and(eq(schema.groupMembers.groupId, groupId), isNull(schema.groupMembers.leftAt)));
+    .where(activePersonMembersCondition(groupId));
 
   const myMember = members.find((m) => m.userId === user.id);
+  const jointAccount = await getJointAccount(db, groupId);
 
   return c.json({
     id: group.id,
@@ -276,6 +314,7 @@ groupRouter.get('/', async (c) => {
     })),
     memberCount: members.length,
     myMemberId: myMember?.id,
+    jointAccount,
   });
 });
 
@@ -349,11 +388,12 @@ groupRouter.post('/leave', async (c) => {
   const user = c.get('user');
   const groupId = c.req.param('id')!;
 
-  // Check if user is the only member
+  // Check if user is the only person (the joint account must not keep an
+  // otherwise-empty group alive)
   const [memberCount] = await db
     .select({ count: count() })
     .from(schema.groupMembers)
-    .where(and(eq(schema.groupMembers.groupId, groupId), isNull(schema.groupMembers.leftAt)));
+    .where(activePersonMembersCondition(groupId));
 
   if ((memberCount?.count ?? 0) <= 1) {
     // Last member leaving: delete the group (cascades to all related data)
@@ -371,6 +411,34 @@ groupRouter.post('/leave', async (c) => {
         isNull(schema.groupMembers.leftAt),
       ),
     );
+
+  return c.json({ success: true });
+});
+
+// PUT /api/groups/:id/joint-account - Create, rename or reactivate the joint account
+groupRouter.put('/joint-account', zValidator('json', jointAccountSchema), async (c) => {
+  const db = c.get('db');
+  const groupId = c.req.param('id')!;
+  const data = c.req.valid('json');
+
+  const [group] = await db.select().from(schema.groups).where(eq(schema.groups.id, groupId));
+  if (!group) {
+    return c.json({ error: API_ERROR_CODES.GROUP_NOT_FOUND }, 404);
+  }
+
+  const jointAccount = await upsertJointAccount(db, groupId, data.name);
+  return c.json({ jointAccount });
+});
+
+// DELETE /api/groups/:id/joint-account - Disable the joint account
+groupRouter.delete('/joint-account', async (c) => {
+  const db = c.get('db');
+  const groupId = c.req.param('id')!;
+
+  const existed = await disableJointAccount(db, groupId);
+  if (!existed) {
+    return c.json({ error: API_ERROR_CODES.JOINT_ACCOUNT_NOT_FOUND }, 404);
+  }
 
   return c.json({ success: true });
 });

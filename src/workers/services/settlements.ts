@@ -129,7 +129,8 @@ export async function createSettlement(
     return Response.json({ error: 'INVALID_DATE' }, { status: 400 });
   }
 
-  // Check recipient exists and is active
+  // Check recipient exists, is active, and is a real person (never the joint
+  // account — INV-5)
   const [toMember] = await ctx.db
     .select()
     .from(schema.groupMembers)
@@ -138,6 +139,7 @@ export async function createSettlement(
         eq(schema.groupMembers.id, data.toMember),
         eq(schema.groupMembers.groupId, ctx.groupId),
         isNull(schema.groupMembers.leftAt),
+        eq(schema.groupMembers.kind, 'person'),
       ),
     );
 

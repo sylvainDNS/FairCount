@@ -39,6 +39,14 @@ export const invalidations = {
     queryClient.invalidateQueries({ queryKey: queryKeys.groups.all });
   },
 
+  // Enabling/disabling the joint account does not change amounts, but a rename
+  // changes the payer name shown in expense lists/details and balance details.
+  afterJointAccountChange: (queryClient: QueryClient, groupId: string) => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.groups.detail(groupId) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.expenses.byGroup(groupId) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.balances.byGroup(groupId) });
+  },
+
   // Invitations
   afterInvitationSend: (queryClient: QueryClient, groupId: string) => {
     queryClient.invalidateQueries({ queryKey: queryKeys.invitations.list(groupId) });

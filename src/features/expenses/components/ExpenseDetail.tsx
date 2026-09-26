@@ -102,6 +102,11 @@ export const ExpenseDetail = ({
                     <span className="text-slate-600 dark:text-slate-400">Payé par</span>
                     <span className="text-slate-900 dark:text-white font-medium">
                       {expense.paidBy.name}
+                      {expense.paidBy.isJointAccount && (
+                        <span className="text-emerald-600 dark:text-emerald-400 ml-1">
+                          (compte commun)
+                        </span>
+                      )}
                       {expense.paidBy.isCurrentUser && (
                         <span className="text-blue-600 dark:text-blue-400 ml-1">(vous)</span>
                       )}

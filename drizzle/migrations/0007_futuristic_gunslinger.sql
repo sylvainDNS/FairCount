@@ -1,0 +1,2 @@
+ALTER TABLE `group_members` ADD `kind` text DEFAULT 'person' NOT NULL;--> statement-breakpoint
+CREATE UNIQUE INDEX `uq_group_members_joint_account` ON `group_members` (`group_id`) WHERE "group_members"."kind" = 'joint_account';

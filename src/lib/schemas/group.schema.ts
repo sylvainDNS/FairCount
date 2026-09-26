@@ -9,6 +9,17 @@ export const createGroupSchema = z.object({
 
 export type CreateGroupFormValues = z.infer<typeof createGroupSchema>;
 
+export const jointAccountSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, 'Nom du compte commun requis')
+    .max(100, 'Nom trop long (100 caractères max)')
+    .optional(),
+});
+
+export type JointAccountFormValues = z.infer<typeof jointAccountSchema>;
+
 export const inviteSchema = z.object({
   email: z.string().min(1, 'Adresse email requise').email('Adresse email invalide'),
 });

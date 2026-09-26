@@ -23,6 +23,7 @@ export interface ExpenseWithShare {
   readonly paidBy: {
     readonly id: string;
     readonly name: string;
+    readonly isJointAccount: boolean;
   };
   readonly myShare: number; // ma part
   readonly isPayer: boolean; // est-ce que c'est moi qui ai payé

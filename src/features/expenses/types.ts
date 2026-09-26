@@ -41,6 +41,7 @@ export interface ExpenseSummary {
   readonly paidBy: {
     readonly id: string;
     readonly name: string;
+    readonly isJointAccount: boolean;
   };
   readonly amount: number; // cents
   readonly description: string;
@@ -70,6 +71,7 @@ export interface ExpenseDetail {
     readonly id: string;
     readonly name: string;
     readonly isCurrentUser: boolean;
+    readonly isJointAccount: boolean;
   };
   readonly amount: number;
   readonly description: string;

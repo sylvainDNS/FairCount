@@ -3,11 +3,13 @@ import * as schema from '@/db/schema';
 import {
   type BalanceContext as BaseBalanceContext,
   calculateGroupBalances,
+  calculatePaidShares,
   verifyBalancesIntegrity,
 } from './shared/balance-calculation';
 import { calculateShares } from './shared/share-calculation';
 import {
   activeGroupMembersCondition,
+  activePersonMembersCondition,
   memberDisplayName,
   selectByIdsChunked,
 } from './shared/sql-helpers';
@@ -43,6 +45,7 @@ export async function getMyBalance(ctx: BalanceContext): Promise<Response> {
     .select({
       expense: schema.expenses,
       payerName: memberDisplayName,
+      payerKind: schema.groupMembers.kind,
     })
     .from(schema.expenses)
     .innerJoin(schema.groupMembers, eq(schema.expenses.paidBy, schema.groupMembers.id))
@@ -99,6 +102,7 @@ export async function getMyBalance(ctx: BalanceContext): Promise<Response> {
       paidBy: {
         id: e.expense.paidBy,
         name: e.payerName,
+        isJointAccount: e.payerKind === 'joint_account',
       },
       myShare,
       isPayer: e.expense.paidBy === ctx.currentMemberId,
@@ -195,24 +199,56 @@ export async function getGroupStats(ctx: BalanceContext, period?: string): Promi
     conditions.push(gte(schema.expenses.date, dateStr as string));
   }
 
-  // Get expenses
-  const expenses = await ctx.db
-    .select({
-      expense: schema.expenses,
-      payerName: memberDisplayName,
-    })
-    .from(schema.expenses)
-    .innerJoin(schema.groupMembers, eq(schema.expenses.paidBy, schema.groupMembers.id))
-    .leftJoin(schema.users, eq(schema.groupMembers.userId, schema.users.id))
-    .where(and(...conditions));
+  // Expenses and active persons are independent queries — fetch them in parallel.
+  // Active persons carry coefficients used to redistribute joint-account
+  // expenses; the joint account itself is never a stats line (FR-012, INV-6).
+  const [expenses, activePersons] = await Promise.all([
+    ctx.db
+      .select({
+        expense: schema.expenses,
+        payerName: memberDisplayName,
+        payerKind: schema.groupMembers.kind,
+      })
+      .from(schema.expenses)
+      .innerJoin(schema.groupMembers, eq(schema.expenses.paidBy, schema.groupMembers.id))
+      .leftJoin(schema.users, eq(schema.groupMembers.userId, schema.users.id))
+      .where(and(...conditions)),
+    ctx.db
+      .select({
+        id: schema.groupMembers.id,
+        name: memberDisplayName,
+        coefficient: schema.groupMembers.coefficient,
+      })
+      .from(schema.groupMembers)
+      .leftJoin(schema.users, eq(schema.groupMembers.userId, schema.users.id))
+      .where(activePersonMembersCondition(ctx.groupId)),
+  ]);
 
-  // Calculate stats by member
+  const coefficients = new Map(activePersons.map((p) => [p.id, p.coefficient]));
+  const activePersonIds = activePersons.map((p) => p.id);
+  const memberNames = new Map(activePersons.map((p) => [p.id, p.name]));
+  // Preserve names of person payers who may have since left the group.
+  for (const e of expenses) {
+    if (e.payerKind === 'person') memberNames.set(e.expense.paidBy, e.payerName);
+  }
+
+  // Calculate stats by member: a joint-account expense is spread across active
+  // persons by coefficient (same shares as balances); a person-paid expense is
+  // attributed in full to that person.
   const memberStats = expenses.reduce((acc, e) => {
-    const current = acc.get(e.expense.paidBy) ?? { name: e.payerName, totalPaid: 0 };
-    acc.set(e.expense.paidBy, {
-      name: current.name,
-      totalPaid: current.totalPaid + e.expense.amount,
-    });
+    const paidShares = calculatePaidShares(
+      e.expense,
+      e.payerKind === 'joint_account',
+      activePersonIds,
+      coefficients,
+    );
+    for (const [memberId, share] of paidShares) {
+      const current = acc.get(memberId) ?? {
+        name: memberNames.get(memberId) ?? '?',
+        totalPaid: 0,
+      };
+      acc.set(memberId, { name: current.name, totalPaid: current.totalPaid + share });
+    }
     return acc;
   }, new Map<string, { name: string; totalPaid: number }>());
 
