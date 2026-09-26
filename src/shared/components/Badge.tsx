@@ -5,7 +5,6 @@ const badgeVariants = cva('inline-flex items-center font-medium', {
   variants: {
     variant: {
       default: '',
-      primary: '',
       success: '',
       warning: '',
       danger: '',
@@ -38,18 +37,6 @@ const badgeVariants = cva('inline-flex items-center font-medium', {
       variant: 'default',
       appearance: 'soft',
       className: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
-    },
-    // Primary
-    { variant: 'primary', appearance: 'solid', className: 'bg-primary-600 text-white' },
-    {
-      variant: 'primary',
-      appearance: 'outline',
-      className: 'border-primary-500 text-primary-700 dark:text-primary-400',
-    },
-    {
-      variant: 'primary',
-      appearance: 'soft',
-      className: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400',
     },
     // Success
     { variant: 'success', appearance: 'solid', className: 'bg-positive-600 text-white' },
