@@ -2,18 +2,6 @@
 
 /* Custom theme configuration for Tailwind v4 */
 @theme {
-  /* Couleur primaire (teal) */
-  --color-primary-50: #f0fdfa;
-  --color-primary-100: #ccfbf1;
-  --color-primary-200: #99f6e4;
-  --color-primary-300: #5eead4;
-  --color-primary-400: #2dd4bf;
-  --color-primary-500: #14b8a6;
-  --color-primary-600: #0d9488;
-  --color-primary-700: #0f766e;
-  --color-primary-800: #115e59;
-  --color-primary-900: #134e4a;
-
   /* Couleurs sémantiques */
   --color-positive-50: #f0fdf4;
   --color-positive-100: #dcfce7;

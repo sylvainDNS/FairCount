@@ -56,9 +56,9 @@ export const BottomNav = () => {
             key={item.path}
             to={item.path}
             className={({ isActive }) =>
-              `flex flex-col items-center justify-center gap-1 px-4 py-2 text-sm transition-colors ${
+              `flex flex-col items-center justify-center gap-1 px-4 py-2 text-sm rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 ${
                 isActive
-                  ? 'text-primary-600 dark:text-primary-400'
+                  ? 'text-blue-600 dark:text-blue-400'
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
               }`
             }
