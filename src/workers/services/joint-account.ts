@@ -47,24 +47,35 @@ export async function upsertJointAccount(
   groupId: string,
   name?: string,
 ): Promise<JointAccountView> {
-  const existing = await getJointAccount(db, groupId);
-  const now = new Date();
+  let existing = await getJointAccount(db, groupId);
 
   if (!existing) {
     const memberId = crypto.randomUUID();
     const resolvedName = name?.trim() || DEFAULT_JOINT_ACCOUNT_NAME;
-    await db.insert(schema.groupMembers).values({
-      id: memberId,
-      groupId,
-      userId: null,
-      kind: 'joint_account',
-      name: resolvedName,
-      email: null,
-      income: 0,
-      coefficient: 0,
-      joinedAt: now,
-    });
-    return { memberId, name: resolvedName, active: true };
+    // A concurrent PUT may insert first: the unique partial index then rejects
+    // this row, and we fall through to the update path on the winner's row.
+    const inserted = await db
+      .insert(schema.groupMembers)
+      .values({
+        id: memberId,
+        groupId,
+        userId: null,
+        kind: 'joint_account',
+        name: resolvedName,
+        email: null,
+        income: 0,
+        coefficient: 0,
+        joinedAt: new Date(),
+      })
+      .onConflictDoNothing()
+      .returning({ id: schema.groupMembers.id });
+    if (inserted.length > 0) {
+      return { memberId, name: resolvedName, active: true };
+    }
+    existing = await getJointAccount(db, groupId);
+    if (!existing) {
+      throw new Error(`Joint account insert conflicted but no row found for group ${groupId}`);
+    }
   }
 
   const updates: { leftAt: null; name?: string } = { leftAt: null };

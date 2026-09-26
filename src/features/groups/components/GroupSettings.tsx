@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { jointAccountSchema } from '@/lib/schemas/group.schema';
 import { Button, SegmentedControl, TextInput, toaster } from '@/shared/components';
 import { useGroup } from '../hooks/useGroup';
 import {
@@ -63,12 +64,13 @@ export const GroupSettings = ({ groupId }: GroupSettingsProps) => {
   }, [jointName, setJointAccount]);
 
   const handleSaveJointName = useCallback(async () => {
-    if (!jointName.trim()) {
-      toaster.error({ title: 'Nom du compte commun requis' });
+    const parsed = jointAccountSchema.safeParse({ name: jointName });
+    if (!parsed.success) {
+      toaster.error({ title: parsed.error.issues[0]?.message ?? 'Nom du compte commun invalide' });
       return;
     }
     setJointSaving(true);
-    const result = await setJointAccount(jointName.trim());
+    const result = await setJointAccount(parsed.data.name);
     setJointSaving(false);
     if (result.success) {
       toaster.success({ title: 'Compte commun mis à jour' });

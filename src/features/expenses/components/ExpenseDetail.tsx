@@ -107,7 +107,7 @@ export const ExpenseDetail = ({
                           (compte commun)
                         </span>
                       )}
-                      {expense.paidBy.isCurrentUser && !expense.paidBy.isJointAccount && (
+                      {expense.paidBy.isCurrentUser && (
                         <span className="text-blue-600 dark:text-blue-400 ml-1">(vous)</span>
                       )}
                     </span>

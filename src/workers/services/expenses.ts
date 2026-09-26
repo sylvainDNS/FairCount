@@ -513,10 +513,8 @@ export async function updateExpense(
     updates.paidBy = data.paidBy;
   }
 
-  // Update expense
-  await ctx.db.update(schema.expenses).set(updates).where(eq(schema.expenses.id, expenseId));
-
-  // Update participants if provided
+  // Validate participants before writing anything, so a rejected request
+  // never leaves the expense half-updated.
   if (data.participants !== undefined) {
     const activeMembers = await ctx.db
       .select({ id: schema.groupMembers.id })
@@ -526,12 +524,17 @@ export async function updateExpense(
     const activeMemberIds = new Set(activeMembers.map((m) => m.id));
     const expenseAmount = updates.amount ?? expense.amount;
 
-    // Validate participants
     const validation = validateParticipants(data.participants, activeMemberIds, expenseAmount);
     if (!validation.valid) {
       return Response.json({ error: validation.error }, { status: 400 });
     }
+  }
 
+  // Update expense
+  await ctx.db.update(schema.expenses).set(updates).where(eq(schema.expenses.id, expenseId));
+
+  // Update participants if provided
+  if (data.participants !== undefined) {
     // Delete existing participants and recreate
     await ctx.db
       .delete(schema.expenseParticipants)

@@ -2,6 +2,7 @@ import { zValidator } from '@hono/zod-validator';
 import { and, count, eq, inArray, isNull, or } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { z } from 'zod';
+import { jointAccountSchema } from '@/lib/schemas/group.schema';
 import { API_ERROR_CODES } from '@/shared/constants/errors';
 import type { Database } from '../../../db';
 import * as schema from '../../../db/schema';
@@ -44,10 +45,6 @@ const updateGroupSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   description: z.string().max(500).optional(),
   incomeFrequency: z.enum(['annual', 'monthly']).optional(),
-});
-
-const jointAccountSchema = z.object({
-  name: z.string().trim().min(1).max(100).optional(),
 });
 
 // List user's groups

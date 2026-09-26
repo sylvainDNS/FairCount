@@ -71,7 +71,13 @@ export const jointAccountApi = {
       method: 'PUT',
       body: JSON.stringify(data),
     });
-    return res.json();
+    const body = await res.json();
+    // zValidator rejects with { success: false, error: ZodError } (non-string error),
+    // which throwIfError would otherwise treat as a success.
+    if (!res.ok && typeof body?.error !== 'string') {
+      return { error: 'UNKNOWN_ERROR' };
+    }
+    return body;
   },
 
   // Disable the group's joint account
