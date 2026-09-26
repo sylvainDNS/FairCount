@@ -126,3 +126,22 @@ export function buildCursorCondition(
 export function activeGroupMembersCondition(groupId: string): SQL {
   return and(eq(schema.groupMembers.groupId, groupId), isNull(schema.groupMembers.leftAt)) as SQL;
 }
+
+/**
+ * Build condition for active real members (persons) of a group, excluding the
+ * virtual joint account. Use wherever the joint account must never appear:
+ * member lists, member counts, balances, settlement parties, stats by member.
+ *
+ * @example
+ * const members = await db
+ *   .select()
+ *   .from(schema.groupMembers)
+ *   .where(activePersonMembersCondition(groupId));
+ */
+export function activePersonMembersCondition(groupId: string): SQL {
+  return and(
+    eq(schema.groupMembers.groupId, groupId),
+    isNull(schema.groupMembers.leftAt),
+    eq(schema.groupMembers.kind, 'person'),
+  ) as SQL;
+}
