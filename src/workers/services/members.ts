@@ -79,7 +79,9 @@ export async function listMembers(ctx: MemberContext): Promise<Response> {
   );
 }
 
-// Get member details
+// Get member details. Member routes only address persons: the joint account is
+// managed through /joint-account and must never get an income, a name change or
+// a removal here.
 export async function getMember(ctx: MemberContext, memberId: string): Promise<Response> {
   const [member] = await ctx.db
     .select({
@@ -93,13 +95,7 @@ export async function getMember(ctx: MemberContext, memberId: string): Promise<R
     })
     .from(schema.groupMembers)
     .leftJoin(schema.users, eq(schema.groupMembers.userId, schema.users.id))
-    .where(
-      and(
-        eq(schema.groupMembers.id, memberId),
-        eq(schema.groupMembers.groupId, ctx.groupId),
-        isNull(schema.groupMembers.leftAt),
-      ),
-    );
+    .where(and(eq(schema.groupMembers.id, memberId), activePersonMembersCondition(ctx.groupId)));
 
   if (!member) {
     return Response.json({ error: 'MEMBER_NOT_FOUND' }, { status: 404 });
@@ -127,13 +123,7 @@ export async function updateMember(
   const [member] = await ctx.db
     .select()
     .from(schema.groupMembers)
-    .where(
-      and(
-        eq(schema.groupMembers.id, memberId),
-        eq(schema.groupMembers.groupId, ctx.groupId),
-        isNull(schema.groupMembers.leftAt),
-      ),
-    );
+    .where(and(eq(schema.groupMembers.id, memberId), activePersonMembersCondition(ctx.groupId)));
 
   if (!member) {
     return Response.json({ error: 'MEMBER_NOT_FOUND' }, { status: 404 });
@@ -176,13 +166,7 @@ export async function removeMember(ctx: MemberContext, memberId: string): Promis
   const [member] = await ctx.db
     .select()
     .from(schema.groupMembers)
-    .where(
-      and(
-        eq(schema.groupMembers.id, memberId),
-        eq(schema.groupMembers.groupId, ctx.groupId),
-        isNull(schema.groupMembers.leftAt),
-      ),
-    );
+    .where(and(eq(schema.groupMembers.id, memberId), activePersonMembersCondition(ctx.groupId)));
 
   if (!member) {
     return Response.json({ error: 'MEMBER_NOT_FOUND' }, { status: 404 });
