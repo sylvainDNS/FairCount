@@ -4,6 +4,7 @@ import * as schema from '@/db/schema';
 import { calculateShares } from './shared/share-calculation';
 import {
   activeGroupMembersCondition,
+  activePersonMembersCondition,
   buildCursorCondition,
   memberDisplayName,
   sqlInClause,
@@ -125,6 +126,7 @@ export async function listExpenses(
     .select({
       expense: schema.expenses,
       payerName: memberDisplayName,
+      payerKind: schema.groupMembers.kind,
     })
     .from(schema.expenses)
     .innerJoin(schema.groupMembers, eq(schema.expenses.paidBy, schema.groupMembers.id))
@@ -139,6 +141,7 @@ export async function listExpenses(
       .select({
         expense: schema.expenses,
         payerName: memberDisplayName,
+        payerKind: schema.groupMembers.kind,
       })
       .from(schema.expenses)
       .innerJoin(schema.groupMembers, eq(schema.expenses.paidBy, schema.groupMembers.id))
@@ -237,6 +240,7 @@ export async function listExpenses(
       paidBy: {
         id: r.expense.paidBy,
         name: r.payerName,
+        isJointAccount: r.payerKind === 'joint_account',
       },
       amount: r.expense.amount,
       description: r.expense.description,
@@ -267,6 +271,7 @@ export async function getExpense(ctx: ExpenseContext, expenseId: string): Promis
     .select({
       expense: schema.expenses,
       payerName: memberDisplayName,
+      payerKind: schema.groupMembers.kind,
     })
     .from(schema.expenses)
     .innerJoin(schema.groupMembers, eq(schema.expenses.paidBy, schema.groupMembers.id))
@@ -324,6 +329,7 @@ export async function getExpense(ctx: ExpenseContext, expenseId: string): Promis
       id: result.expense.paidBy,
       name: result.payerName,
       isCurrentUser: result.expense.paidBy === ctx.currentMemberId,
+      isJointAccount: result.payerKind === 'joint_account',
     },
     amount: result.expense.amount,
     description: result.expense.description,
@@ -383,11 +389,12 @@ export async function createExpense(
     return Response.json({ error: 'INVALID_PAYER' }, { status: 400 });
   }
 
-  // Get all active members to validate participants
+  // Get active persons to validate participants (the joint account can never
+  // be a beneficiary — INV-4).
   const activeMembers = await ctx.db
     .select({ id: schema.groupMembers.id })
     .from(schema.groupMembers)
-    .where(activeGroupMembersCondition(ctx.groupId));
+    .where(activePersonMembersCondition(ctx.groupId));
 
   const activeMemberIds = new Set(activeMembers.map((m) => m.id));
 
@@ -484,19 +491,24 @@ export async function updateExpense(
   }
 
   if (data.paidBy !== undefined) {
-    const [payer] = await ctx.db
-      .select()
-      .from(schema.groupMembers)
-      .where(
-        and(
-          eq(schema.groupMembers.id, data.paidBy),
-          eq(schema.groupMembers.groupId, ctx.groupId),
-          isNull(schema.groupMembers.leftAt),
-        ),
-      );
+    // A payer identical to the one already stored is always accepted, even if
+    // it is a now-disabled joint account (INV-3). Only a *changed* payer must
+    // be an active member of the group.
+    if (data.paidBy !== expense.paidBy) {
+      const [payer] = await ctx.db
+        .select()
+        .from(schema.groupMembers)
+        .where(
+          and(
+            eq(schema.groupMembers.id, data.paidBy),
+            eq(schema.groupMembers.groupId, ctx.groupId),
+            isNull(schema.groupMembers.leftAt),
+          ),
+        );
 
-    if (!payer) {
-      return Response.json({ error: 'INVALID_PAYER' }, { status: 400 });
+      if (!payer) {
+        return Response.json({ error: 'INVALID_PAYER' }, { status: 400 });
+      }
     }
     updates.paidBy = data.paidBy;
   }
@@ -509,7 +521,7 @@ export async function updateExpense(
     const activeMembers = await ctx.db
       .select({ id: schema.groupMembers.id })
       .from(schema.groupMembers)
-      .where(activeGroupMembersCondition(ctx.groupId));
+      .where(activePersonMembersCondition(ctx.groupId));
 
     const activeMemberIds = new Set(activeMembers.map((m) => m.id));
     const expenseAmount = updates.amount ?? expense.amount;

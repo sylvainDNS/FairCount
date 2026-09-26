@@ -1,7 +1,7 @@
 import { and, count, eq, isNull } from 'drizzle-orm';
 import type { Database } from '@/db';
 import * as schema from '@/db/schema';
-import { memberDisplayName } from './shared/sql-helpers';
+import { activePersonMembersCondition, memberDisplayName } from './shared/sql-helpers';
 
 interface MemberContext {
   readonly db: Database;
@@ -11,11 +11,12 @@ interface MemberContext {
 
 // Recalculate all coefficients for a group
 export async function recalculateCoefficients(db: Database, groupId: string): Promise<void> {
-  // Get all active members with their incomes
+  // Get all active persons with their incomes (the joint account never carries
+  // income or a coefficient).
   const members = await db
     .select({ id: schema.groupMembers.id, income: schema.groupMembers.income })
     .from(schema.groupMembers)
-    .where(and(eq(schema.groupMembers.groupId, groupId), isNull(schema.groupMembers.leftAt)));
+    .where(activePersonMembersCondition(groupId));
 
   if (members.length === 0) return;
 
@@ -55,7 +56,7 @@ export async function listMembers(ctx: MemberContext): Promise<Response> {
     })
     .from(schema.groupMembers)
     .leftJoin(schema.users, eq(schema.groupMembers.userId, schema.users.id))
-    .where(and(eq(schema.groupMembers.groupId, ctx.groupId), isNull(schema.groupMembers.leftAt)))
+    .where(activePersonMembersCondition(ctx.groupId))
     .orderBy(schema.groupMembers.joinedAt);
 
   const totalCoefficient = members.reduce((sum, m) => sum + m.coefficient, 0);
@@ -192,11 +193,12 @@ export async function removeMember(ctx: MemberContext, memberId: string): Promis
     return Response.json({ error: 'CANNOT_REMOVE_SELF' }, { status: 400 });
   }
 
-  // Check if this would leave the group empty
+  // Check if this would leave the group empty (persons only; the joint account
+  // must not mask the "last member" guard).
   const [memberCount] = await ctx.db
     .select({ count: count() })
     .from(schema.groupMembers)
-    .where(and(eq(schema.groupMembers.groupId, ctx.groupId), isNull(schema.groupMembers.leftAt)));
+    .where(activePersonMembersCondition(ctx.groupId));
 
   if ((memberCount?.count ?? 0) <= 1) {
     return Response.json({ error: 'CANNOT_REMOVE_LAST_MEMBER' }, { status: 400 });

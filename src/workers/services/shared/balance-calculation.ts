@@ -1,8 +1,36 @@
-import { and, eq, inArray, isNull } from 'drizzle-orm';
+import { and, eq, inArray, isNull, or } from 'drizzle-orm';
 import type { Database } from '@/db';
 import * as schema from '@/db/schema';
 import { calculateShares } from './share-calculation';
-import { activeGroupMembersCondition, memberDisplayName, selectByIdsChunked } from './sql-helpers';
+import { memberDisplayName, selectByIdsChunked } from './sql-helpers';
+
+/**
+ * Compute how a single expense's amount is borne on the payer side.
+ * - Real member payer: the whole amount is attributed to that member.
+ * - Joint-account payer: the amount is spread across the active real members
+ *   proportionally to their income coefficients, reusing the same fair-share
+ *   engine (and thus the same deterministic rounding) as the owed side. This
+ *   keeps the group balances summing to exactly zero.
+ *
+ * Pure function — no DB access — so the monetary invariants are unit-testable
+ * without a D1 harness.
+ */
+export function calculatePaidShares(
+  expense: { paidBy: string; amount: number },
+  isJointPayer: boolean,
+  activePersonIds: readonly string[],
+  coefficients: Map<string, number>,
+): Map<string, number> {
+  if (!isJointPayer) {
+    return new Map([[expense.paidBy, expense.amount]]);
+  }
+
+  const participants = activePersonIds.map((memberId) => ({
+    memberId,
+    customAmount: null,
+  }));
+  return calculateShares(expense.amount, participants, coefficients);
+}
 
 export interface BalanceContext {
   readonly db: Database;
@@ -28,23 +56,37 @@ export interface MemberBalance {
  * Prend en compte les dépenses, les parts et les règlements.
  */
 export async function calculateGroupBalances(ctx: BalanceContext): Promise<MemberBalance[]> {
-  // Récupérer les membres actifs
+  // Active persons, plus the joint account regardless of its active state: a
+  // disabled joint account must still be recognised as the payer of past
+  // expenses, otherwise their amount is dropped and balances stop summing to 0.
   const members = await ctx.db
     .select({
       id: schema.groupMembers.id,
       name: memberDisplayName,
       userId: schema.groupMembers.userId,
       coefficient: schema.groupMembers.coefficient,
+      kind: schema.groupMembers.kind,
     })
     .from(schema.groupMembers)
     .leftJoin(schema.users, eq(schema.groupMembers.userId, schema.users.id))
-    .where(activeGroupMembersCondition(ctx.groupId));
+    .where(
+      and(
+        eq(schema.groupMembers.groupId, ctx.groupId),
+        or(isNull(schema.groupMembers.leftAt), eq(schema.groupMembers.kind, 'joint_account')),
+      ),
+    );
 
-  const memberCoefficients = new Map(members.map((m) => [m.id, m.coefficient]));
+  // The joint account never has a balance of its own; only real persons do.
+  const persons = members.filter((m) => m.kind === 'person');
+  const jointMemberIds = new Set(
+    members.filter((m) => m.kind === 'joint_account').map((m) => m.id),
+  );
+  const activePersonIds = persons.map((m) => m.id);
+  const memberCoefficients = new Map(persons.map((m) => [m.id, m.coefficient]));
 
-  // Initialiser les balances
+  // Initialiser les balances (personnes uniquement)
   const balances = new Map<string, MemberBalance>(
-    members.map((m) => [
+    persons.map((m) => [
       m.id,
       {
         memberId: m.id,
@@ -90,13 +132,21 @@ export async function calculateGroupBalances(ctx: BalanceContext): Promise<Membe
 
     // Traiter chaque dépense
     for (const expense of expenses) {
-      // Ajouter ce que le payeur a payé
-      const payer = balances.get(expense.paidBy);
-      if (payer) {
-        balances.set(expense.paidBy, {
-          ...payer,
-          totalPaid: payer.totalPaid + expense.amount,
-        });
+      // Répartir ce qui a été payé (payeur réel ou compte commun au prorata)
+      const paidShares = calculatePaidShares(
+        expense,
+        jointMemberIds.has(expense.paidBy),
+        activePersonIds,
+        memberCoefficients,
+      );
+      for (const [memberId, share] of paidShares) {
+        const member = balances.get(memberId);
+        if (member) {
+          balances.set(memberId, {
+            ...member,
+            totalPaid: member.totalPaid + share,
+          });
+        }
       }
 
       // Calculer les parts et ajouter à totalOwed
