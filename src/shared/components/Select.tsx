@@ -1,6 +1,6 @@
 import { Portal } from '@ark-ui/react/portal';
 import { Select as ArkSelect, createListCollection } from '@ark-ui/react/select';
-import { useMemo } from 'react';
+import { type ReactNode, useMemo } from 'react';
 import { type ClassNameValue, twMerge } from 'tailwind-merge';
 
 const selectTriggerStyles = (
@@ -19,6 +19,8 @@ const selectTriggerStyles = (
 export interface SelectItem {
   readonly value: string;
   readonly label: string;
+  // Optional leading icon, shown in the option and in the trigger when selected
+  readonly icon?: ReactNode | undefined;
 }
 
 interface SelectProps {
@@ -45,6 +47,7 @@ export const Select = ({
   'aria-describedby': ariaDescribedby,
 }: SelectProps) => {
   const collection = useMemo(() => createListCollection({ items: items as SelectItem[] }), [items]);
+  const selectedIcon = items.find((item) => item.value === value)?.icon;
 
   return (
     <ArkSelect.Root
@@ -60,7 +63,10 @@ export const Select = ({
           aria-label={ariaLabel}
           aria-describedby={ariaDescribedby}
         >
-          <ArkSelect.ValueText placeholder={placeholder} />
+          <span className="flex items-center gap-2 min-w-0">
+            {selectedIcon}
+            <ArkSelect.ValueText placeholder={placeholder} className="truncate" />
+          </span>
           <ArkSelect.Indicator>
             <svg
               className="w-4 h-4 text-slate-400"
@@ -89,7 +95,10 @@ export const Select = ({
                 item={item}
                 className="flex items-center justify-between px-3 py-2 cursor-pointer text-sm text-slate-900 dark:text-white data-highlighted:bg-slate-100 dark:data-highlighted:bg-slate-700"
               >
-                <ArkSelect.ItemText>{item.label}</ArkSelect.ItemText>
+                <span className="flex items-center gap-2 min-w-0">
+                  {item.icon}
+                  <ArkSelect.ItemText>{item.label}</ArkSelect.ItemText>
+                </span>
                 <ArkSelect.ItemIndicator>
                   <svg
                     className="w-4 h-4 text-blue-500"
