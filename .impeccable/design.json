@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-26T00:00:00Z",
+  "generatedAt": "2026-09-27T16:18:18Z",
   "title": "Design System: FairCount",
   "extensions": {
     "colorMeta": {
@@ -47,7 +47,9 @@
       { "name": "color-transition", "value": "color, background-color, border-color 150ms cubic-bezier(0.4, 0, 0.2, 1)", "purpose": "Hover and active state changes on buttons, links and nav items." },
       { "name": "fade-in", "value": "fade-in 0.2s ease-out", "purpose": "Entrances of overlays and transient content." },
       { "name": "slide-up", "value": "slide-up 0.3s ease-out (10px rise + fade)", "purpose": "Entrances of stacked content." },
-      { "name": "pulse", "value": "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite", "purpose": "Skeleton loading placeholders." }
+      { "name": "pulse", "value": "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite", "purpose": "Skeleton loading placeholders." },
+      { "name": "collapse-open", "value": "collapse-open 180ms cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Unfolds an Ark UI Collapsible (height from --height + fade): the « Récurrences » card and the form's « Répétition » block. Disabled under prefers-reduced-motion." },
+      { "name": "collapse-close", "value": "collapse-close 150ms ease-in", "purpose": "Folds the same Collapsible back. Disabled under prefers-reduced-motion." }
     ],
     "breakpoints": [
       { "name": "sm", "value": "640px" },
@@ -127,6 +129,14 @@
       "description": "Signature card: personal balance, wash and amount color follow the sign; plain-language sentence below.",
       "html": "<div class=\"ds-bal ds-bal--owed\"><div class=\"ds-bal-head\"><span class=\"ds-bal-label\">Mon solde</span><svg class=\"ds-bal-icon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 10l7-7m0 0l7 7m-7-7v18\"/></svg></div><p class=\"ds-bal-amt\">+42,50 €</p><p class=\"ds-bal-msg\">On vous doit 42,50 €</p><a class=\"ds-bal-link\" href=\"#\">Voir le détail →</a></div>",
       "css": ".ds-bal { font-family: Inter, system-ui, sans-serif; padding: 24px; border-radius: 12px; border: 1px solid; } .ds-bal--owed { background: var(--color-emerald-50, #ecfdf5); border-color: var(--color-emerald-200, #a7f3d0); color: var(--color-emerald-600, #059669); } .ds-bal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; } .ds-bal-label { font-size: 14px; font-weight: 500; color: var(--color-slate-600, #475569); } .ds-bal-icon { width: 24px; height: 24px; } .ds-bal-amt { margin: 0 0 4px; font-size: 30px; line-height: 1.2; font-weight: 700; } .ds-bal-msg { margin: 0 0 16px; font-size: 14px; color: var(--color-slate-600, #475569); } .ds-bal-link { font-size: 14px; font-weight: 500; color: var(--color-blue-600, #2563eb); text-decoration: none; transition: color 150ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-bal-link:hover { color: var(--color-blue-700, #1d4ed8); } .ds-bal-link:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--color-blue-500, #3b82f6); border-radius: 4px; }"
+    },
+    {
+      "name": "Toast",
+      "kind": "custom",
+      "refersTo": "toast",
+      "description": "Confirmation or notice floating above the tab bar. One neutral surface for every type; only the icon takes a hue (Quiet Toast Rule); actions are always Steady Blue.",
+      "html": "<div class=\"ds-toast\" role=\"status\"><svg class=\"ds-toast-icon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 13l4 4L19 7\"/></svg><div class=\"ds-toast-body\"><p class=\"ds-toast-title\">Récurrence enregistrée</p><p class=\"ds-toast-desc\">Prochaine échéance le 13 oct.</p></div><button class=\"ds-toast-close\" aria-label=\"Fermer\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" aria-hidden=\"true\"><path d=\"M6 18L18 6M6 6l12 12\"/></svg></button></div>",
+      "css": ".ds-toast { display: flex; align-items: flex-start; gap: 12px; max-width: 384px; padding: 16px; background: var(--color-white); border: 1px solid var(--color-slate-200); border-radius: 12px; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); font-family: Inter, system-ui, sans-serif; } .ds-toast-icon { width: 20px; height: 20px; flex-shrink: 0; color: var(--color-blue-600); } .ds-toast-body { flex: 1; min-width: 0; } .ds-toast-title { margin: 0; font-size: 14px; font-weight: 500; line-height: 1.43; color: var(--color-slate-900); } .ds-toast-desc { margin: 2px 0 0; font-size: 14px; line-height: 1.43; color: var(--color-slate-500); } .ds-toast-close { flex-shrink: 0; padding: 4px; border: none; background: transparent; border-radius: 8px; color: var(--color-slate-400); cursor: pointer; transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-toast-close svg { width: 16px; height: 16px; display: block; } .ds-toast-close:hover { background: rgb(0 0 0 / 0.05); } .ds-toast-close:focus-visible { outline: 2px solid var(--color-blue-600); outline-offset: 2px; }"
     }
   ],
   "narrative": {
@@ -141,7 +151,8 @@
     ],
     "rules": [
       { "name": "The One Voice Rule", "body": "Steady Blue is the only accent that means \"act here\". Do not introduce a second interactive hue. Steady Blue is used directly as Tailwind's `blue-*` scale (600 fill, 700 deep, 400 on dark, 50 wash); there is no separate `primary-*` token scale, and the former teal one has been removed.", "section": "colors" },
-      { "name": "The Money Speaks in Two Colors Rule", "body": "Green and red appear only where a balance or a destructive consequence is shown. Never use them for decoration, category coding or success toasts that are not about money.", "section": "colors" },
+      { "name": "The Money Speaks in Two Colors Rule", "body": "Green and red appear only where a balance or a destructive consequence is shown. Never use them for decoration, category coding or confirmations. A toast never shows a balance, so no toast is ever green, not even one confirming an expense or a settlement; the balance screens carry that color.", "section": "colors" },
+      { "name": "The Quiet Toast Rule", "body": "Every toast sits on the same neutral surface; only its icon takes a hue, and the words carry the meaning. No tinted backgrounds, no colored borders, no colored titles:\n\n| Type | When | Icon (20px stroke) | Icon color |\n|------|------|--------------------|------------|\n| `success` | an action the person just took worked (« Dépense enregistrée », « Récurrence désactivée ») | check | Steady Blue |\n| `info` | the app has something to tell, unprompted (« Mise à jour disponible ») | circled i | Steady Blue |\n| `warning` | something will need attention but nothing failed | triangle | Caution Amber |\n| `error` | an action failed; the title names the problem, the description the recovery | circled ! | Owing Red |\n\nA toast action button is always the primary Steady Blue button, whatever the type: it is an action, and actions speak blue. Success and info share a hue on purpose: in this system blue is the app's own voice (actions, links, informational callouts), and the glyph is enough to tell them apart.", "section": "colors" },
       { "name": "The Informs-Not-Alarms Rule", "body": "Owing Red states a balance; it never comes with warning icons, shaking, bold alerts or guilt copy. A negative balance uses the same calm layout as a positive one.", "section": "colors" },
       { "name": "The Weight Before Size Rule", "body": "Reach for 500/600 before a bigger size. Amounts in lists are 600 at body size, not larger text.", "section": "typography" },
       { "name": "The Signed Amount Rule", "body": "Positive balances always carry an explicit `+`; negative ones keep the locale minus. Currency is always formatted with `fr-FR` conventions (narrow no-break space before €).", "section": "typography" },
@@ -158,6 +169,7 @@
     "donts": [
       "Don't introduce a second accent hue; the active nav item, filters and links all speak Steady Blue.",
       "Don't use green or red outside balances, errors and destructive actions.",
+      "Don't tint a toast's background or border by type; only the icon changes color (Quiet Toast Rule).",
       "Don't make a negative balance feel alarming: no warning triangles, bold alert banners or guilt copy.",
       "Don't add confetti, badges, streaks or saturated celebratory color.",
       "Don't drift toward a cold banking look: no dense dashboards, dark corporate chrome or financial jargon.",
