@@ -1,6 +1,7 @@
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { useEffect, useRef } from 'react';
 import { toaster } from './Toast/toaster';
+import { setUpdateAvailable } from './update-available';
 
 export const UpdatePrompt = () => {
   const {
@@ -8,6 +9,10 @@ export const UpdatePrompt = () => {
     updateServiceWorker,
   } = useRegisterSW();
   const prompted = useRef(false);
+
+  useEffect(() => {
+    setUpdateAvailable(needRefresh);
+  }, [needRefresh]);
 
   useEffect(() => {
     if (needRefresh && !prompted.current) {

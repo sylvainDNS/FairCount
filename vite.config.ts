@@ -1,4 +1,5 @@
 import { execSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
@@ -7,6 +8,9 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 const gitSha = process.env.VITE_GIT_SHA || execSync('git rev-parse HEAD').toString().trim();
 const buildDate = process.env.VITE_BUILD_DATE || new Date().toISOString();
+const appVersion: string = JSON.parse(
+  readFileSync(resolve(__dirname, 'package.json'), 'utf-8'),
+).version;
 
 export default defineConfig({
   plugins: [
@@ -58,6 +62,7 @@ export default defineConfig({
   define: {
     __GIT_SHA__: JSON.stringify(gitSha),
     __BUILD_DATE__: JSON.stringify(buildDate),
+    __APP_VERSION__: JSON.stringify(appVersion),
   },
   build: {
     outDir: 'dist',

@@ -113,6 +113,17 @@ export * from './components';
 export * from './hooks';
 ```
 
+### Releases et changelog
+Toute release visible par les utilisateur·rices bumpe `package.json#version` (semver) et ajoute,
+dans la même PR, son entrée en tête de `src/features/changelog/data/changelog.ts` :
+- catégories `feature` (Nouveauté), `improvement` (Amélioration), `fix` (Correction) ;
+- textes en français, non techniques, écriture inclusive ; jamais générés depuis les commits ;
+- une PR purement technique ne touche ni la version ni le changelog.
+
+Le test `changelog.test.ts` (lancé en CI et avant déploiement) échoue si la version et la tête
+du changelog divergent. L'app affiche un résumé « Quoi de neuf » après une mise à jour contenant
+une Nouveauté ou Amélioration, et l'historique sur `/profile/changelog`.
+
 ### Routes API (Hono)
 Routes use Hono framework with typed middleware context:
 ```typescript
