@@ -35,3 +35,6 @@ drizzle/meta/
 
 # Claude settings
 .claude/settings.local.json
+
+# Impeccable per-developer overrides
+.impeccable/config.local.json
