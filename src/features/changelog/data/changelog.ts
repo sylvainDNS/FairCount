@@ -6,7 +6,7 @@ import type { ChangelogRelease } from '../types';
 export const changelog = [
   {
     version: '0.3.0',
-    date: '2026-09-27',
+    date: '2026-09-30',
     changes: [
       {
         category: 'feature',
