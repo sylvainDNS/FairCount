@@ -5,6 +5,20 @@ import type { ChangelogRelease } from '../types';
 // Texts: French, plain language, inclusive writing.
 export const changelog = [
   {
+    version: '0.3.0',
+    date: '2026-09-27',
+    changes: [
+      {
+        category: 'feature',
+        text: "Programmez des dépenses récurrentes : elles s'ajoutent toutes seules au jour prévu",
+      },
+      {
+        category: 'improvement',
+        text: 'Des messages de confirmation plus sobres, qui ne se confondent plus avec vos soldes',
+      },
+    ],
+  },
+  {
     version: '0.2.0',
     date: '2026-09-27',
     changes: [
