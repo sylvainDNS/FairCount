@@ -25,6 +25,7 @@ import { balancesRoutes } from './balances';
 import { expensesRoutes } from './expenses';
 import { invitationsRoutes } from './invitations';
 import { membersRoutes } from './members';
+import { recurringExpensesRoutes } from './recurring-expenses';
 import { settlementsRoutes } from './settlements';
 import { statsRoutes } from './stats';
 
@@ -446,6 +447,7 @@ groupRouter.delete('/joint-account', async (c) => {
 // Mount sub-routers
 groupRouter.route('/members', membersRoutes);
 groupRouter.route('/expenses', expensesRoutes);
+groupRouter.route('/recurring-expenses', recurringExpensesRoutes);
 groupRouter.route('/balances', balancesRoutes);
 groupRouter.route('/settlements', settlementsRoutes);
 groupRouter.route('/invitations', invitationsRoutes);

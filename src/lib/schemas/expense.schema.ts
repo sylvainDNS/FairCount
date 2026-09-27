@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { RECURRENCE_TIME_ZONE, todayIn } from '@/lib/recurrence';
 
 const participantSchema = z.object({
   memberId: z.string(),
@@ -25,6 +26,11 @@ export const expenseSchema = z
     participants: z.array(participantSchema).refine((p) => p.some((x) => x.selected), {
       message: 'Veuillez sélectionner au moins un participant',
     }),
+    // Recurrence (create mode, or recurrence edit mode): only checked when `repeat`
+    repeat: z.boolean(),
+    frequency: z.enum(['daily', 'weekly', 'monthly', 'yearly']),
+    dayOfWeek: z.number(),
+    dayOfMonth: z.number(),
   })
   .refine(
     (data) => {
@@ -43,6 +49,29 @@ export const expenseSchema = z
       message: 'Les montants personnalisés dépassent le total de la dépense',
       path: ['participants'],
     },
-  );
+  )
+  .superRefine((data, ctx) => {
+    if (!data.repeat) return;
+    if (
+      data.frequency === 'weekly' &&
+      !(Number.isInteger(data.dayOfWeek) && data.dayOfWeek >= 1 && data.dayOfWeek <= 7)
+    ) {
+      ctx.addIssue({ code: 'custom', path: ['dayOfWeek'], message: 'Jour invalide' });
+    }
+    if (
+      data.frequency === 'monthly' &&
+      !(Number.isInteger(data.dayOfMonth) && data.dayOfMonth >= 1 && data.dayOfMonth <= 31)
+    ) {
+      ctx.addIssue({ code: 'custom', path: ['dayOfMonth'], message: 'Jour invalide' });
+    }
+    if (data.date < todayIn(RECURRENCE_TIME_ZONE, new Date())) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['date'],
+        message:
+          "La répétition commence au plus tôt aujourd'hui. Saisissez les dépenses passées une par une.",
+      });
+    }
+  });
 
 export type ExpenseFormValues = z.infer<typeof expenseSchema>;

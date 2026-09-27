@@ -67,9 +67,13 @@ import { LoginPage, useAuth } from '@/features/auth';
 - `@/db/*` → `./src/db/*`
 
 ### Backend Structure (Hono)
+- `src/workers/index.ts` - Worker entry: `fetch` (Hono app) + `scheduled` (Cron Triggers)
+- `src/workers/scheduled.ts` - Cron `5 23,5,11 * * *` (UTC, `wrangler.toml`): generates the
+  expenses of due recurrences (`services/recurring-expense-generation.ts`). Local test:
+  `wrangler dev --test-scheduled` then `curl "http://localhost:8787/cdn-cgi/handler/scheduled"`
 - `src/workers/app.ts` - Main Hono app, middleware globaux, montage des routes
 - `src/workers/routes/` - Route handlers Hono
-  - `groups/index.ts` - Routes groupes + sous-routeurs (members, expenses, balances, settlements, invitations, stats)
+  - `groups/index.ts` - Routes groupes + sous-routeurs (members, expenses, recurring-expenses, balances, settlements, invitations, stats)
   - `auth.ts`, `user.ts`, `health.ts`, `invitations.ts` - Routes top-level
 - `src/workers/middleware/` - Middleware Hono (auth, cors, db, error, membership)
 - `src/workers/services/` - Logique métier et helpers SQL
@@ -93,7 +97,13 @@ Located in `src/db/schema/`:
   coefficient, never a beneficiary, settlement party, or balance line. It can only pay
   expenses; its cost is redistributed across active persons by coefficient. Queries that
   must exclude it use `activePersonMembersCondition`; activation/deactivation reuses `leftAt`.
-- `expenses.ts` - Expenses and participant shares
+- `expenses.ts` - Expenses and participant shares. `recurring_expense_id` + `recurrence_due_date`
+  link an expense to the recurrence échéance that generated it (partial unique index
+  `uq_expenses_recurrence_due`: one expense per échéance, deleted or not)
+- `recurring-expenses.ts` - Recurrences ("récurrences"): expense template + unit frequency rule
+  (daily/weekly/monthly/yearly, ISO anchors). `disabled_at` = manual deactivation, `deleted_at` =
+  soft delete (generated expenses keep their link); "paused" is derived from `left_at`, never
+  stored. Calendar maths shared by worker and UI live in `src/lib/recurrence.ts` (Europe/Paris)
 - `settlements.ts` - Reimbursement records
 
 ## Key Patterns

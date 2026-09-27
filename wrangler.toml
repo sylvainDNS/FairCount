@@ -7,6 +7,13 @@ compatibility_flags = ["nodejs_compat"]
 [dev]
 port = 8787
 
+# Cron Triggers (UTC) - recurring expenses generation.
+# 23:05 UTC is always after midnight in Paris (00:05 CET / 01:05 CEST);
+# 05:05 and 11:05 are retries that normally find nothing due.
+# `triggers` is inheritable: [env.production] uses the same schedule.
+[triggers]
+crons = ["5 23,5,11 * * *"]
+
 # D1 Database
 [[d1_databases]]
 binding = "DB"

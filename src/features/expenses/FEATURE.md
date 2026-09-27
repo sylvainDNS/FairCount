@@ -74,6 +74,21 @@ Permet d'enregistrer et gérer les dépenses du groupe. Chaque dépense est rép
 - [ ] Validation que le total = montant de la dépense
 - [ ] Retour possible au mode équitable
 
+### US-EXP-07: Dépenses récurrentes
+**En tant que** membre d'un groupe
+**Je veux** qu'une dépense régulière (loyer, abonnement…) s'ajoute toute seule
+**Afin de** ne plus la ressaisir ni l'oublier
+
+Spec complète : `specs/003-recurring-expenses/`. Vocabulaire : **récurrence** (le modèle),
+**échéance** (une date), **dépense générée** (dépense ordinaire ajoutée à une échéance, appelée
+simplement « dépense » dans l'UI).
+
+#### Critères d'acceptation
+- [x] Case « Répéter cette dépense » dans le formulaire de création (Jour · Semaine · Mois · An)
+- [x] Ajout automatique à chaque échéance (Cron Trigger), rattrapage des pannes, jamais de doublon
+- [x] Icône ↻ sur les dépenses générées, filtre « Récurrentes », carte « Récurrences » repliable
+- [x] Modifier (prochaines échéances seulement), désactiver/réactiver, supprimer (soft delete)
+
 ---
 
 ## Spécifications Techniques
@@ -87,6 +102,15 @@ Permet d'enregistrer et gérer les dépenses du groupe. Chaque dépense est rép
 | GET | `/api/groups/:id/expenses/:expenseId` | Détail d'une dépense |
 | PATCH | `/api/groups/:id/expenses/:expenseId` | Modifier une dépense |
 | DELETE | `/api/groups/:id/expenses/:expenseId` | Supprimer une dépense |
+| GET | `/api/groups/:id/recurring-expenses` | Liste des récurrences (hors supprimées) |
+| POST | `/api/groups/:id/recurring-expenses` | Créer une récurrence (génère la dépense si l'échéance est aujourd'hui) |
+| GET | `/api/groups/:id/recurring-expenses/:recurringExpenseId` | Détail d'une récurrence |
+| PATCH | `/api/groups/:id/recurring-expenses/:recurringExpenseId` | Modifier (prochaines échéances) |
+| POST | `/api/groups/:id/recurring-expenses/:recurringExpenseId/deactivate` | Désactiver |
+| POST | `/api/groups/:id/recurring-expenses/:recurringExpenseId/reactivate` | Réactiver (sans rattrapage) |
+| DELETE | `/api/groups/:id/recurring-expenses/:recurringExpenseId` | Supprimer (soft delete) |
+
+Contrat détaillé : `specs/003-recurring-expenses/contracts/recurring-expenses-api.md`.
 
 ### Schéma de données
 
@@ -153,7 +177,14 @@ Pour éviter les erreurs de centimes dues aux arrondis, la différence entre le 
 ### `ExpenseFilters`
 - Filtre par période (semaine, mois, année, personnalisé)
 - Filtre par personne
+- Filtre par type (Toutes · Récurrentes)
 - Barre de recherche
+
+### Récurrences
+- `RecurrenceFields` : bloc « Répétition » du formulaire (fréquence, jour, résumé en direct)
+- `RecurrenceSection` : carte repliable « Récurrences » au-dessus des filtres (état mémorisé par appareil)
+- `RecurrenceDetail` : détail d'une récurrence et actions (Modifier, Désactiver/Réactiver, Supprimer)
+- `RepeatIcon` : icône ↻ partagée par la carte, le formulaire et les dépenses générées
 
 ---
 

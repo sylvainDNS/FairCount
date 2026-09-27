@@ -43,6 +43,17 @@ export const queryKeys = {
       [...queryKeys.expenses.byGroup(groupId), 'infinite', filters ?? {}] as const,
     detail: (groupId: string, expenseId: string) =>
       [...queryKeys.expenses.byGroup(groupId), 'detail', expenseId] as const,
+    recurring: {
+      list: (groupId: string) =>
+        [...queryKeys.expenses.byGroup(groupId), 'recurring', 'list'] as const,
+      detail: (groupId: string, recurringExpenseId: string) =>
+        [
+          ...queryKeys.expenses.byGroup(groupId),
+          'recurring',
+          'detail',
+          recurringExpenseId,
+        ] as const,
+    },
   },
 
   // Balances

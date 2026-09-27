@@ -55,6 +55,7 @@ expensesRoutes.get('/', async (c) => {
     paidBy: c.req.query('paidBy'),
     participantId: c.req.query('participantId'),
     search: c.req.query('search'),
+    recurring: c.req.query('recurring') === 'true',
   };
 
   return expenseHandlers.listExpenses(ctx, params);

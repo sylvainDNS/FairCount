@@ -57,6 +57,13 @@
       "when": 1784226366725,
       "tag": "0007_futuristic_gunslinger",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1790516483370,
+      "tag": "0008_recurring_expenses",
+      "breakpoints": true
     }
   ]
 }

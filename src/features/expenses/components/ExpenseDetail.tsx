@@ -5,6 +5,7 @@ import { Button } from '@/shared/components';
 import { formatCurrency } from '@/shared/utils/format';
 import { useExpense } from '../hooks/useExpense';
 import { EXPENSE_ERROR_MESSAGES } from '../types';
+import { formatRecurrenceRule } from '../utils/format-recurrence-rule';
 import { ExpenseForm } from './ExpenseForm';
 
 interface ExpenseDetailProps {
@@ -14,6 +15,8 @@ interface ExpenseDetailProps {
   readonly onClose: () => void;
   readonly onEditSuccess: () => void;
   readonly onDeleteRequest: (expenseId: string) => void;
+  /** Opens the recurrence that generated the expense */
+  readonly onOpenRecurrence?: ((recurringExpenseId: string) => void) | undefined;
 }
 
 export const ExpenseDetail = ({
@@ -23,6 +26,7 @@ export const ExpenseDetail = ({
   onClose,
   onEditSuccess,
   onDeleteRequest,
+  onOpenRecurrence,
 }: ExpenseDetailProps) => {
   const { expense, isLoading, error } = useExpense(groupId, expenseId);
   const [showEditForm, setShowEditForm] = useState(false);
@@ -121,6 +125,43 @@ export const ExpenseDetail = ({
                       )}
                     </span>
                   </div>
+                  {expense.recurrence && (
+                    <div className="flex justify-between gap-4 text-sm">
+                      <span className="text-slate-600 dark:text-slate-400">Récurrence</span>
+                      {expense.recurrence.isDeleted || !onOpenRecurrence ? (
+                        <span className="text-right">
+                          <span className="block font-medium text-slate-900 dark:text-white">
+                            {formatRecurrenceRule(expense.recurrence.rule)}
+                          </span>
+                          {expense.recurrence.isDeleted && (
+                            <span className="block text-xs text-slate-500 dark:text-slate-400">
+                              Récurrence supprimée
+                            </span>
+                          )}
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (expense.recurrence) onOpenRecurrence(expense.recurrence.id);
+                          }}
+                          className="inline-flex items-center gap-1 rounded font-medium text-blue-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:text-blue-400"
+                        >
+                          {formatRecurrenceRule(expense.recurrence.rule)}
+                          <svg
+                            className="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                            viewBox="0 0 24 24"
+                            aria-hidden="true"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Participants breakdown */}
