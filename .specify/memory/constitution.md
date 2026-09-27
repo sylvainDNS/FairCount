@@ -1,14 +1,3 @@
-<!--
-Sync Impact Report
-- Version change: template → 1.0.0
-- Modified principles: n/a (initial adoption)
-- Added sections: Core Principles (5), Contraintes additionnelles, Workflow de développement, Governance
-- Removed sections: none
-- Templates: ✅ .specify/templates/plan-template.md (Constitution Check générique, compatible)
-             ✅ spec-template.md / tasks-template.md / checklist-template.md (aucune référence à mettre à jour)
-- Deferred TODOs: none
--->
-
 # FairCount Constitution
 
 ## Core Principles
@@ -81,7 +70,29 @@ Le code doit respecter les contraintes de la plateforme cible :
 - Commits au format Conventional Commits.
 - Une PR/feature = spec → plan → tasks (workflow Spec Kit) pour tout travail non trivial.
 - Gates avant merge : tests Vitest verts, `pnpm check` vert, invariants du Principe I vérifiés
-  si la logique monétaire est touchée.
+  si la logique monétaire est touchée, cohérence entre la version de l'app et la dernière entrée
+  du changelog.
+
+### Releases et changelog
+
+Chaque merge sur `main` déploie ; seul un changement de version annonce une release aux
+utilisateur·rices.
+
+- Tout changement visible par les utilisateur·rices MUST incrémenter la version de l'app
+  (`package.json`, semver) et ajouter, dans la même PR, l'entrée correspondante au changelog
+  utilisateur.
+- Semver côté produit : MAJOR pour une rupture d'usage ou de données, MINOR si la release contient
+  au moins une Nouveauté, PATCH si elle ne contient que des Améliorations ou Corrections.
+- Chaque entrée est rédigée en français, en langage non technique et en écriture inclusive, et
+  classée en « Nouveauté », « Amélioration » ou « Correction ». Le changelog n'est jamais généré
+  depuis les messages de commit.
+- Une PR purement technique (refactor, CI, dépendances, tests) MUST NOT changer la version ni le
+  changelog.
+- La version de l'app et la version la plus récente du changelog MUST être identiques ; une
+  incohérence bloque le merge.
+
+Rationale : les utilisateur·rices ne voient que la version et ses nouveautés ; un numéro qui ne
+bouge jamais ou un changelog technique rendent les mises à jour invisibles.
 
 ## Governance
 
@@ -93,4 +104,4 @@ Le code doit respecter les contraintes de la plateforme cible :
   doit être justifiée dans la section « Complexity Tracking » du plan.
 - Guidance runtime : `CLAUDE.md` et `SPECS.md` complètent sans contredire.
 
-**Version**: 1.0.0 | **Ratified**: 2026-07-16 | **Last Amended**: 2026-07-16
+**Version**: 1.1.0 | **Ratified**: 2026-07-16 | **Last Amended**: 2026-09-26
