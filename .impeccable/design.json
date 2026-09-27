@@ -1,0 +1,168 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-26T00:00:00Z",
+  "title": "Design System: FairCount",
+  "extensions": {
+    "colorMeta": {
+      "steady-blue": { "role": "primary", "displayName": "Steady Blue", "canonical": "#2563eb", "tonalRamp": ["#1e3a8a", "#1e40af", "#1d4ed8", "#2563eb", "#3b82f6", "#60a5fa", "#93c5fd", "#dbeafe"] },
+      "steady-blue-deep": { "role": "primary", "displayName": "Steady Blue Deep", "canonical": "#1d4ed8", "tonalRamp": ["#1e3a8a", "#1e40af", "#1d4ed8", "#2563eb", "#3b82f6", "#60a5fa", "#93c5fd", "#dbeafe"] },
+      "steady-blue-light": { "role": "primary", "displayName": "Steady Blue Light", "canonical": "#60a5fa", "tonalRamp": ["#1e3a8a", "#1e40af", "#1d4ed8", "#2563eb", "#3b82f6", "#60a5fa", "#93c5fd", "#dbeafe"] },
+      "steady-blue-wash": { "role": "primary", "displayName": "Steady Blue Wash", "canonical": "#eff6ff", "tonalRamp": ["#1e3a8a", "#1e40af", "#1d4ed8", "#2563eb", "#3b82f6", "#60a5fa", "#bfdbfe", "#eff6ff"] },
+      "owed-green": { "role": "secondary", "displayName": "Owed Green", "canonical": "#059669", "tonalRamp": ["#064e3b", "#065f46", "#047857", "#059669", "#10b981", "#34d399", "#6ee7b7", "#d1fae5"] },
+      "owed-green-light": { "role": "secondary", "displayName": "Owed Green Light", "canonical": "#34d399", "tonalRamp": ["#064e3b", "#065f46", "#047857", "#059669", "#10b981", "#34d399", "#6ee7b7", "#d1fae5"] },
+      "owed-green-wash": { "role": "secondary", "displayName": "Owed Green Wash", "canonical": "#ecfdf5", "tonalRamp": ["#064e3b", "#065f46", "#047857", "#059669", "#10b981", "#34d399", "#a7f3d0", "#ecfdf5"] },
+      "owing-red": { "role": "secondary", "displayName": "Owing Red", "canonical": "#dc2626", "tonalRamp": ["#7f1d1d", "#991b1b", "#b91c1c", "#dc2626", "#ef4444", "#f87171", "#fca5a5", "#fee2e2"] },
+      "owing-red-light": { "role": "secondary", "displayName": "Owing Red Light", "canonical": "#f87171", "tonalRamp": ["#7f1d1d", "#991b1b", "#b91c1c", "#dc2626", "#ef4444", "#f87171", "#fca5a5", "#fee2e2"] },
+      "owing-red-wash": { "role": "secondary", "displayName": "Owing Red Wash", "canonical": "#fef2f2", "tonalRamp": ["#7f1d1d", "#991b1b", "#b91c1c", "#dc2626", "#ef4444", "#f87171", "#fecaca", "#fef2f2"] },
+      "caution-amber": { "role": "tertiary", "displayName": "Caution Amber", "canonical": "#f59e0b", "tonalRamp": ["#78350f", "#92400e", "#b45309", "#d97706", "#f59e0b", "#fbbf24", "#fcd34d", "#fef3c7"] },
+      "ink": { "role": "neutral", "displayName": "Ink", "canonical": "#0f172a", "tonalRamp": ["#020617", "#0f172a", "#1e293b", "#334155", "#475569", "#64748b", "#94a3b8", "#e2e8f0"] },
+      "ink-soft": { "role": "neutral", "displayName": "Ink Soft", "canonical": "#334155", "tonalRamp": ["#020617", "#0f172a", "#1e293b", "#334155", "#475569", "#64748b", "#94a3b8", "#e2e8f0"] },
+      "slate-muted": { "role": "neutral", "displayName": "Slate Muted", "canonical": "#64748b", "tonalRamp": ["#020617", "#0f172a", "#1e293b", "#334155", "#475569", "#64748b", "#94a3b8", "#e2e8f0"] },
+      "slate-placeholder": { "role": "neutral", "displayName": "Slate Placeholder", "canonical": "#94a3b8", "tonalRamp": ["#020617", "#0f172a", "#1e293b", "#334155", "#475569", "#64748b", "#94a3b8", "#e2e8f0"] },
+      "line": { "role": "neutral", "displayName": "Line", "canonical": "#e2e8f0", "tonalRamp": ["#1e293b", "#334155", "#475569", "#64748b", "#94a3b8", "#cbd5e1", "#e2e8f0", "#f8fafc"] },
+      "line-strong": { "role": "neutral", "displayName": "Line Strong", "canonical": "#cbd5e1", "tonalRamp": ["#1e293b", "#334155", "#475569", "#64748b", "#94a3b8", "#cbd5e1", "#e2e8f0", "#f8fafc"] },
+      "canvas": { "role": "neutral", "displayName": "Canvas", "canonical": "#f8fafc", "tonalRamp": ["#1e293b", "#334155", "#475569", "#64748b", "#94a3b8", "#cbd5e1", "#f1f5f9", "#f8fafc"] },
+      "surface": { "role": "neutral", "displayName": "Surface", "canonical": "#ffffff", "tonalRamp": ["#1e293b", "#334155", "#475569", "#64748b", "#94a3b8", "#cbd5e1", "#f1f5f9", "#ffffff"] },
+      "surface-sunken": { "role": "neutral", "displayName": "Surface Sunken", "canonical": "#f1f5f9", "tonalRamp": ["#1e293b", "#334155", "#475569", "#64748b", "#94a3b8", "#cbd5e1", "#e2e8f0", "#f1f5f9"] },
+      "night-canvas": { "role": "neutral", "displayName": "Night Canvas", "canonical": "#020617", "tonalRamp": ["#020617", "#0f172a", "#1e293b", "#334155", "#475569", "#64748b", "#94a3b8", "#cbd5e1"] },
+      "night-surface": { "role": "neutral", "displayName": "Night Surface", "canonical": "#0f172a", "tonalRamp": ["#020617", "#0f172a", "#1e293b", "#334155", "#475569", "#64748b", "#94a3b8", "#cbd5e1"] },
+      "night-raised": { "role": "neutral", "displayName": "Night Raised", "canonical": "#1e293b", "tonalRamp": ["#020617", "#0f172a", "#1e293b", "#334155", "#475569", "#64748b", "#94a3b8", "#cbd5e1"] },
+      "night-line": { "role": "neutral", "displayName": "Night Line", "canonical": "#1e293b", "tonalRamp": ["#020617", "#0f172a", "#1e293b", "#334155", "#475569", "#64748b", "#94a3b8", "#cbd5e1"] }
+    },
+    "typographyMeta": {
+      "headline": { "displayName": "Headline", "purpose": "Page and section titles." },
+      "balance": { "displayName": "Balance", "purpose": "The personal balance amount in the balance summary; colored by sign." },
+      "title": { "displayName": "Title", "purpose": "Card, dialog and list-section titles." },
+      "body": { "displayName": "Body", "purpose": "Default reading text; inputs are forced to 16px to prevent iOS zoom." },
+      "body-sm": { "displayName": "Body Small", "purpose": "Most list content, descriptions, toast bodies, sidebar links." },
+      "label": { "displayName": "Label", "purpose": "Form labels, button text, tabs, names in lists." },
+      "caption": { "displayName": "Caption", "purpose": "Secondary amounts, dates, bottom-nav labels, small badges." }
+    },
+    "shadows": [
+      { "name": "hairline-lift", "value": "0 1px 2px 0 rgb(0 0 0 / 0.05)", "purpose": "Some resting cards and the selected item in segmented controls and tabs." },
+      { "name": "popover", "value": "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)", "purpose": "Select dropdowns and tooltips." },
+      { "name": "dialog", "value": "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)", "purpose": "Centered dialogs from 640px, over a 50% black backdrop." }
+    ],
+    "motion": [
+      { "name": "color-transition", "value": "color, background-color, border-color 150ms cubic-bezier(0.4, 0, 0.2, 1)", "purpose": "Hover and active state changes on buttons, links and nav items." },
+      { "name": "fade-in", "value": "fade-in 0.2s ease-out", "purpose": "Entrances of overlays and transient content." },
+      { "name": "slide-up", "value": "slide-up 0.3s ease-out (10px rise + fade)", "purpose": "Entrances of stacked content." },
+      { "name": "pulse", "value": "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite", "purpose": "Skeleton loading placeholders." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The single call to action on a screen: save, add an expense, start.",
+      "html": "<button class=\"ds-btn-primary\">Ajouter une dépense</button>",
+      "css": ".ds-btn-primary { font-family: Inter, system-ui, sans-serif; font-size: 16px; font-weight: 500; background: var(--color-blue-600, #2563eb); color: #fff; padding: 8px 16px; border: none; border-radius: 8px; cursor: pointer; transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-btn-primary:hover { background: var(--color-blue-700, #1d4ed8); } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--color-blue-500, #3b82f6); } .ds-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Neutral alternative action next to a primary one.",
+      "html": "<button class=\"ds-btn-secondary\">Annuler</button>",
+      "css": ".ds-btn-secondary { font-family: Inter, system-ui, sans-serif; font-size: 16px; font-weight: 500; background: var(--color-slate-100, #f1f5f9); color: var(--color-slate-900, #0f172a); padding: 8px 16px; border: none; border-radius: 8px; cursor: pointer; transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-btn-secondary:hover { background: var(--color-slate-200, #e2e8f0); } .ds-btn-secondary:focus-visible { outline: none; box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--color-slate-500, #64748b); }"
+    },
+    {
+      "name": "Danger Ghost Button",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "Destructive action (delete, leave group) shown as a quiet red text button.",
+      "html": "<button class=\"ds-btn-ghost-danger\">Supprimer la dépense</button>",
+      "css": ".ds-btn-ghost-danger { font-family: Inter, system-ui, sans-serif; font-size: 16px; font-weight: 500; background: transparent; color: var(--color-red-600, #dc2626); padding: 8px 16px; border: none; border-radius: 8px; cursor: pointer; transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-btn-ghost-danger:hover { background: var(--color-red-50, #fef2f2); } .ds-btn-ghost-danger:focus-visible { outline: none; box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--color-red-500, #ef4444); }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Labelled form field with required marker; ring replaces border on focus.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">Montant<span class=\"ds-field-req\">*</span></span><input class=\"ds-input\" placeholder=\"0,00 €\" /></label>",
+      "css": ".ds-field { display: block; font-family: Inter, system-ui, sans-serif; } .ds-field-label { display: block; font-size: 14px; font-weight: 500; color: var(--color-slate-700, #334155); margin-bottom: 4px; } .ds-field-req { color: var(--color-slate-500, #64748b); margin-left: 2px; } .ds-input { width: 100%; font-family: inherit; font-size: 16px; color: var(--color-slate-900, #0f172a); background: #fff; padding: 8px 12px; border: 1px solid var(--color-slate-300, #cbd5e1); border-radius: 8px; } .ds-input::placeholder { color: var(--color-slate-400, #94a3b8); } .ds-input:focus { outline: none; border-color: transparent; box-shadow: 0 0 0 2px var(--color-blue-500, #3b82f6); }"
+    },
+    {
+      "name": "Segmented Control",
+      "kind": "nav",
+      "refersTo": "segmented-track",
+      "description": "Switches views inside a group (Dépenses / Soldes / Remboursements).",
+      "html": "<div class=\"ds-seg\" role=\"radiogroup\"><button class=\"ds-seg-item ds-seg-item--on\" role=\"radio\" aria-checked=\"true\">Dépenses</button><button class=\"ds-seg-item\" role=\"radio\" aria-checked=\"false\">Soldes</button><button class=\"ds-seg-item\" role=\"radio\" aria-checked=\"false\">Remboursements</button></div>",
+      "css": ".ds-seg { display: flex; gap: 4px; padding: 4px; background: var(--color-slate-100, #f1f5f9); border-radius: 8px; font-family: Inter, system-ui, sans-serif; } .ds-seg-item { flex: 1; font-family: inherit; font-size: 14px; font-weight: 500; color: var(--color-slate-600, #475569); background: transparent; border: none; border-radius: 6px; padding: 6px 12px; cursor: pointer; transition: color 150ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-seg-item:hover { color: var(--color-slate-900, #0f172a); } .ds-seg-item:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--color-blue-500, #3b82f6); } .ds-seg-item--on { background: #fff; color: var(--color-slate-900, #0f172a); box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); }"
+    },
+    {
+      "name": "Bottom Navigation",
+      "kind": "nav",
+      "refersTo": "bottom-nav",
+      "description": "Mobile tab bar: stroke icon over a 12px label; active item in Steady Blue.",
+      "html": "<nav class=\"ds-bnav\"><a class=\"ds-bnav-item ds-bnav-item--on\" href=\"#\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/><path d=\"M23 21v-2a4 4 0 0 0-3-3.87\"/><path d=\"M16 3.13a4 4 0 0 1 0 7.75\"/></svg><span>Groupes</span></a><a class=\"ds-bnav-item\" href=\"#\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2\"/><circle cx=\"12\" cy=\"7\" r=\"4\"/></svg><span>Profil</span></a></nav>",
+      "css": ".ds-bnav { display: flex; align-items: center; justify-content: space-around; height: 64px; background: #fff; border-top: 1px solid var(--color-slate-200, #e2e8f0); font-family: Inter, system-ui, sans-serif; } .ds-bnav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 16px; font-size: 12px; color: var(--color-slate-500, #64748b); text-decoration: none; transition: color 150ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-bnav-item svg { width: 24px; height: 24px; } .ds-bnav-item:hover { color: var(--color-slate-700, #334155); } .ds-bnav-item:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--color-blue-500, #3b82f6); border-radius: 8px; } .ds-bnav-item--on { color: var(--color-blue-600, #2563eb); }"
+    },
+    {
+      "name": "Soft Badge",
+      "kind": "chip",
+      "refersTo": "badge-soft",
+      "description": "Status label (Archivé, Invitation en attente); semantic variants swap wash + text.",
+      "html": "<span class=\"ds-badge\">Archivé</span> <span class=\"ds-badge ds-badge--warn\">En attente</span>",
+      "css": ".ds-badge { display: inline-flex; align-items: center; font-family: Inter, system-ui, sans-serif; font-size: 14px; font-weight: 500; padding: 2px 10px; border-radius: 6px; background: var(--color-slate-100, #f1f5f9); color: var(--color-slate-700, #334155); } .ds-badge--warn { background: var(--color-amber-100, #fef3c7); color: var(--color-amber-700, #b45309); }"
+    },
+    {
+      "name": "Member Row Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Bordered list card of member balances; current person tinted, amounts colored by sign.",
+      "html": "<ul class=\"ds-card\"><li class=\"ds-row ds-row--me\"><span class=\"ds-avatar\" style=\"background:#6366f1\">AL</span><span class=\"ds-row-main\"><span class=\"ds-row-name\">Alex <span class=\"ds-row-me\">(vous)</span></span><span class=\"ds-row-sub\">Payé : 180,00 €</span></span><span class=\"ds-row-amt\"><span class=\"ds-amt ds-amt--pos\">+60,00 €</span><span class=\"ds-row-cap\">Part : 120,00 €</span></span></li><li class=\"ds-row\"><span class=\"ds-avatar\" style=\"background:#14b8a6\">SA</span><span class=\"ds-row-main\"><span class=\"ds-row-name\">Sam</span><span class=\"ds-row-sub\">Payé : 20,00 €</span></span><span class=\"ds-row-amt\"><span class=\"ds-amt ds-amt--neg\">-60,00 €</span><span class=\"ds-row-cap\">Part : 80,00 €</span></span></li></ul>",
+      "css": ".ds-card { list-style: none; margin: 0; padding: 0; background: #fff; border: 1px solid var(--color-slate-200, #e2e8f0); border-radius: 12px; overflow: hidden; font-family: Inter, system-ui, sans-serif; } .ds-row { display: flex; align-items: center; gap: 12px; padding: 16px; } .ds-row + .ds-row { border-top: 1px solid var(--color-slate-200, #e2e8f0); } .ds-row--me { background: rgb(239 246 255 / 0.5); } .ds-avatar { width: 40px; height: 40px; border-radius: 9999px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 14px; font-weight: 500; flex-shrink: 0; } .ds-row-main { flex: 1; display: flex; flex-direction: column; } .ds-row-name { font-weight: 500; color: var(--color-slate-900, #0f172a); } .ds-row-me { font-size: 12px; font-weight: 400; color: var(--color-slate-500, #64748b); margin-left: 8px; } .ds-row-sub { font-size: 14px; color: var(--color-slate-500, #64748b); } .ds-row-amt { display: flex; flex-direction: column; align-items: flex-end; } .ds-amt { font-weight: 600; } .ds-amt--pos { color: var(--color-emerald-600, #059669); } .ds-amt--neg { color: var(--color-red-600, #dc2626); } .ds-row-cap { font-size: 12px; color: var(--color-slate-500, #64748b); }"
+    },
+    {
+      "name": "Balance Summary",
+      "kind": "custom",
+      "refersTo": "balance-summary-owed",
+      "description": "Signature card: personal balance, wash and amount color follow the sign; plain-language sentence below.",
+      "html": "<div class=\"ds-bal ds-bal--owed\"><div class=\"ds-bal-head\"><span class=\"ds-bal-label\">Mon solde</span><svg class=\"ds-bal-icon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 10l7-7m0 0l7 7m-7-7v18\"/></svg></div><p class=\"ds-bal-amt\">+42,50 €</p><p class=\"ds-bal-msg\">On vous doit 42,50 €</p><a class=\"ds-bal-link\" href=\"#\">Voir le détail →</a></div>",
+      "css": ".ds-bal { font-family: Inter, system-ui, sans-serif; padding: 24px; border-radius: 12px; border: 1px solid; } .ds-bal--owed { background: var(--color-emerald-50, #ecfdf5); border-color: var(--color-emerald-200, #a7f3d0); color: var(--color-emerald-600, #059669); } .ds-bal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; } .ds-bal-label { font-size: 14px; font-weight: 500; color: var(--color-slate-600, #475569); } .ds-bal-icon { width: 24px; height: 24px; } .ds-bal-amt { margin: 0 0 4px; font-size: 30px; line-height: 1.2; font-weight: 700; } .ds-bal-msg { margin: 0 0 16px; font-size: 14px; color: var(--color-slate-600, #475569); } .ds-bal-link { font-size: 14px; font-weight: 500; color: var(--color-blue-600, #2563eb); text-decoration: none; transition: color 150ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-bal-link:hover { color: var(--color-blue-700, #1d4ed8); } .ds-bal-link:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--color-blue-500, #3b82f6); border-radius: 4px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Calm Table",
+    "overview": "FairCount is the kitchen table where a household, a flatshare or a group of friends sits down to settle the accounts, without tension. The system is quiet on purpose: cool slate neutrals, white surfaces laid on a barely tinted canvas, thin borders instead of shadows, and a single steady blue that marks where to act. Nothing competes with the numbers. Color is reserved for meaning: blue for action, green for what the group owes you, red for what you owe, and even those appear only where a balance is actually shown.\n\nDensity is moderate and mobile-first: one readable column (max 672px) with 16px gutters, cards stacked with calm spacing, a bottom tab bar on phones and a fixed sidebar from 768px up. Dark mode is a first-class twin, not an afterthought: every surface, line and text color has a slate night counterpart.\n\nThe system rejects three things explicitly. It is not a cold banking app: no corporate fintech chrome, dense dashboards or jargon. It is not gamified: no confetti, badges or saturated color used to motivate. And red never shames: a debt is information about a balance, not a fault.",
+    "keyCharacteristics": [
+      "Flat, bordered surfaces on a cool slate canvas; shadows only for things that float.",
+      "One action color (Steady Blue); semantic green/red only for balances and destructive actions.",
+      "A single typeface (Inter) carrying the whole hierarchy through size and weight.",
+      "Gently rounded forms: 8px for controls, 12px for cards and dialogs, full circles for avatars.",
+      "Full light/dark parity on every token."
+    ],
+    "rules": [
+      { "name": "The One Voice Rule", "body": "Steady Blue is the only accent that means \"act here\". Do not introduce a second interactive hue. Steady Blue is used directly as Tailwind's `blue-*` scale (600 fill, 700 deep, 400 on dark, 50 wash); there is no separate `primary-*` token scale, and the former teal one has been removed.", "section": "colors" },
+      { "name": "The Money Speaks in Two Colors Rule", "body": "Green and red appear only where a balance or a destructive consequence is shown. Never use them for decoration, category coding or success toasts that are not about money.", "section": "colors" },
+      { "name": "The Informs-Not-Alarms Rule", "body": "Owing Red states a balance; it never comes with warning icons, shaking, bold alerts or guilt copy. A negative balance uses the same calm layout as a positive one.", "section": "colors" },
+      { "name": "The Weight Before Size Rule", "body": "Reach for 500/600 before a bigger size. Amounts in lists are 600 at body size, not larger text.", "section": "typography" },
+      { "name": "The Signed Amount Rule", "body": "Positive balances always carry an explicit `+`; negative ones keep the locale minus. Currency is always formatted with `fr-FR` conventions (narrow no-break space before €).", "section": "typography" },
+      { "name": "The Floats-Only Rule", "body": "Only popovers, tooltips, toasts and dialogs cast a real shadow. Anything that sits in the page flow is flat and bordered.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do use Steady Blue (#2563eb) for every primary action, link and focus ring, and nothing else.",
+      "Do build surfaces as white cards with a 1px Line border and 12px radius on the slate Canvas; keep them flat.",
+      "Do color amounts by sign (Owed Green / Owing Red / Slate Muted at zero) and prefix positive amounts with `+`.",
+      "Do pair every light value with its dark twin (`dark:` slate counterparts); dark mode must stay complete.",
+      "Do keep inputs at 16px text and controls at 8px radius; keep 2px focus rings with offset on every interactive element.",
+      "Do use inline stroke SVG icons (24px nav, 20–24px elsewhere) with `aria-hidden=\"true\"`."
+    ],
+    "donts": [
+      "Don't introduce a second accent hue; the active nav item, filters and links all speak Steady Blue.",
+      "Don't use green or red outside balances, errors and destructive actions.",
+      "Don't make a negative balance feel alarming: no warning triangles, bold alert banners or guilt copy.",
+      "Don't add confetti, badges, streaks or saturated celebratory color.",
+      "Don't drift toward a cold banking look: no dense dashboards, dark corporate chrome or financial jargon.",
+      "Don't put shadows on in-flow cards beyond the hairline lift; real shadows are for floating layers only.",
+      "Don't add a second typeface; the declared JetBrains Mono stack is unused and not loaded."
+    ]
+  }
+}

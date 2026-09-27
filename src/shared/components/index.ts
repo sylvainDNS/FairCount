@@ -24,3 +24,4 @@ export { TabsContent, TabsList, TabsRoot, TabsTrigger } from './Tabs';
 export { TextInput } from './TextInput';
 export { ToastOutlet, toaster } from './Toast';
 export { UpdatePrompt } from './UpdatePrompt';
+export { useUpdateAvailable } from './update-available';

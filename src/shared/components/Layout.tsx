@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/features/auth';
+import { ChangelogSummaryGate, UnreadDot, useChangelogUnread } from '@/features/changelog';
 import { AppVersion } from './AppVersion';
 import { BottomNav } from './BottomNav';
 
@@ -24,6 +25,8 @@ export const Layout = ({ children }: LayoutProps) => {
       <aside className="hidden md:block fixed left-0 top-0 bottom-0 w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800">
         <DesktopSidebar />
       </aside>
+
+      <ChangelogSummaryGate />
     </div>
   );
 };
@@ -31,6 +34,7 @@ export const Layout = ({ children }: LayoutProps) => {
 const DesktopSidebar = () => {
   const navigate = useNavigate();
   const { logout } = useAuth();
+  const changelogUnread = useChangelogUnread();
 
   const handleLogout = async () => {
     await logout();
@@ -47,7 +51,7 @@ const DesktopSidebar = () => {
       <nav className="flex-1 p-4">
         <ul className="space-y-2">
           <SidebarLink to="/groups" label="Groupes" />
-          <SidebarLink to="/profile" label="Profil" />
+          <SidebarLink to="/profile" label="Profil" unread={changelogUnread} />
         </ul>
       </nav>
 
@@ -68,15 +72,17 @@ const DesktopSidebar = () => {
 interface SidebarLinkProps {
   readonly to: string;
   readonly label: string;
+  readonly unread?: boolean | undefined;
 }
 
-const SidebarLink = ({ to, label }: SidebarLinkProps) => {
+const SidebarLink = ({ to, label, unread = false }: SidebarLinkProps) => {
   return (
     <li>
       <NavLink
         to={to}
+        aria-label={unread ? `${label}, nouveautés non lues` : label}
         className={({ isActive }) =>
-          `block px-4 py-2 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 ${
+          `flex items-center gap-2 px-4 py-2 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 ${
             isActive
               ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 font-medium'
               : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
@@ -84,6 +90,7 @@ const SidebarLink = ({ to, label }: SidebarLinkProps) => {
         }
       >
         {label}
+        {unread && <UnreadDot className="ring-0" />}
       </NavLink>
     </li>
   );

@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import type { RouteObject } from 'react-router-dom';
 // Landing page - eagerly loaded (static, no auth dependency)
+import { ChangelogPage } from '@/features/changelog';
 import { LandingPage } from '@/features/landing';
 import { Layout, Loading, ProtectedRoute } from '@/shared/components';
 
@@ -107,6 +108,14 @@ export const routes = [
             element: (
               <Suspense fallback={SuspenseFallback}>
                 <ProfilePage />
+              </Suspense>
+            ),
+          },
+          {
+            path: 'profile/changelog',
+            element: (
+              <Suspense fallback={SuspenseFallback}>
+                <ChangelogPage />
               </Suspense>
             ),
           },

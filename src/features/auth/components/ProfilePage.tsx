@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ChangelogEntryRow } from '@/features/changelog';
 import { AppVersion, Button, Spinner, TextInput, toaster } from '@/shared/components';
 import { useAuth } from '../hooks/useAuth';
 import { AUTH_ERROR_MESSAGES, type AuthError } from '../types';
@@ -107,6 +108,8 @@ export const ProfilePage = () => {
           </p>
         </div>
       </div>
+
+      <ChangelogEntryRow />
 
       <div className="md:hidden space-y-4">
         <button

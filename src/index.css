@@ -64,6 +64,31 @@
   }
 }
 
+/* Bottom sheet (Ark UI Drawer): `translate` composes with the inline drag transform */
+@keyframes sheet-slide-in {
+  from {
+    translate: 0 100%;
+  }
+}
+
+@keyframes sheet-slide-out {
+  to {
+    translate: 0 100%;
+  }
+}
+
+@keyframes sheet-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes sheet-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
 /* Base layer styles */
 @layer base {
   html {

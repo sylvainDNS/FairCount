@@ -23,6 +23,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Blocks deployment on a failing test, including the version ↔ changelog gate
+      - name: Test
+        run: pnpm test
+
       - name: Build
         run: pnpm build
         env:
