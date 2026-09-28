@@ -104,10 +104,11 @@ export const RecurrenceDetail = ({
     <Dialog.Root open onOpenChange={(details) => !details.open && onClose()}>
       <Portal>
         <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/50" />
-        <Dialog.Positioner className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4">
+        <Dialog.Positioner className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Height capped to the viewport: the header and actions stay put, the body scrolls */}
           <Dialog.Content
             aria-labelledby="recurrence-detail-dialog-title"
-            className="my-8 w-full max-w-lg rounded-xl bg-white shadow-xl dark:bg-slate-900"
+            className="flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col rounded-xl bg-white shadow-xl dark:bg-slate-900"
           >
             {isLoading ? (
               <div className="animate-pulse space-y-4 p-6">
@@ -152,87 +153,89 @@ export const RecurrenceDetail = ({
                   </div>
                 </div>
 
-                {/* Pause explanation: information, not an alarm */}
-                {recurrence.status === 'paused' && recurrence.pausedReason && (
-                  <div className="px-6 pt-6">
-                    <p className="rounded-lg bg-slate-100 p-3 text-sm text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                      {formatPausedReason(recurrence.pausedReason, recurrence.paidBy)}.{' '}
-                      {pauseFix(recurrence)}
-                    </p>
-                  </div>
-                )}
-
-                {/* Info */}
-                <div className="space-y-3 border-b border-slate-200 p-6 dark:border-slate-800">
-                  {recurrence.status === 'active' && recurrence.nextDueDate && (
-                    <InfoRow label="Prochaine échéance">
-                      {formatDueDate(recurrence.nextDueDate, today, { withYear: true })}
-                    </InfoRow>
+                <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+                  {/* Pause explanation: information, not an alarm */}
+                  {recurrence.status === 'paused' && recurrence.pausedReason && (
+                    <div className="px-6 pt-6">
+                      <p className="rounded-lg bg-slate-100 p-3 text-sm text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                        {formatPausedReason(recurrence.pausedReason, recurrence.paidBy)}.{' '}
+                        {pauseFix(recurrence)}
+                      </p>
+                    </div>
                   )}
-                  <InfoRow label="Payé par">
-                    {recurrence.paidBy.name}
-                    {recurrence.paidBy.isJointAccount && (
-                      <span className="ml-1 font-normal text-slate-500 dark:text-slate-400">
-                        (compte commun)
-                      </span>
-                    )}
-                  </InfoRow>
-                  <InfoRow label="Créée par">
-                    {recurrence.createdBy.name}
-                    {recurrence.createdBy.isCurrentUser && (
-                      <span className="ml-1 text-blue-600 dark:text-blue-400">(vous)</span>
-                    )}
-                  </InfoRow>
-                </div>
 
-                {/* Split */}
-                <div className="border-b border-slate-200 p-6 dark:border-slate-800">
-                  <h3 className="mb-3 text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Répartition ({recurrence.participants.length} participant
-                    {recurrence.participants.length > 1 ? 's' : ''})
-                  </h3>
-                  <ul className="space-y-2">
-                    {recurrence.participants.map((p) => (
-                      <li
-                        key={p.memberId}
-                        className={`flex items-center justify-between rounded-lg px-3 py-2 ${
-                          p.isCurrentUser
-                            ? 'bg-blue-50 dark:bg-blue-900/20'
-                            : 'bg-slate-50 dark:bg-slate-800/50'
-                        }`}
-                      >
-                        <span
-                          className={`text-sm ${
-                            p.isActive
-                              ? 'text-slate-900 dark:text-white'
-                              : 'text-slate-500 dark:text-slate-400'
+                  {/* Info */}
+                  <div className="space-y-3 border-b border-slate-200 p-6 dark:border-slate-800">
+                    {recurrence.status === 'active' && recurrence.nextDueDate && (
+                      <InfoRow label="Prochaine échéance">
+                        {formatDueDate(recurrence.nextDueDate, today, { withYear: true })}
+                      </InfoRow>
+                    )}
+                    <InfoRow label="Payé par">
+                      {recurrence.paidBy.name}
+                      {recurrence.paidBy.isJointAccount && (
+                        <span className="ml-1 font-normal text-slate-500 dark:text-slate-400">
+                          (compte commun)
+                        </span>
+                      )}
+                    </InfoRow>
+                    <InfoRow label="Créée par">
+                      {recurrence.createdBy.name}
+                      {recurrence.createdBy.isCurrentUser && (
+                        <span className="ml-1 text-blue-600 dark:text-blue-400">(vous)</span>
+                      )}
+                    </InfoRow>
+                  </div>
+
+                  {/* Split */}
+                  <div className="border-b border-slate-200 p-6 dark:border-slate-800">
+                    <h3 className="mb-3 text-sm font-medium text-slate-700 dark:text-slate-300">
+                      Répartition ({recurrence.participants.length} participant
+                      {recurrence.participants.length > 1 ? 's' : ''})
+                    </h3>
+                    <ul className="space-y-2">
+                      {recurrence.participants.map((p) => (
+                        <li
+                          key={p.memberId}
+                          className={`flex items-center justify-between rounded-lg px-3 py-2 ${
+                            p.isCurrentUser
+                              ? 'bg-blue-50 dark:bg-blue-900/20'
+                              : 'bg-slate-50 dark:bg-slate-800/50'
                           }`}
                         >
-                          {p.memberName}
-                          {p.isCurrentUser && (
-                            <span className="ml-1 text-blue-600 dark:text-blue-400">(vous)</span>
-                          )}
-                          {!p.isActive && <span className="ml-1">(a quitté le groupe)</span>}
-                        </span>
-                        <span className="text-right">
                           <span
-                            className={`text-sm font-medium ${
-                              p.isCurrentUser
-                                ? 'text-blue-600 dark:text-blue-400'
-                                : 'text-slate-900 dark:text-white'
+                            className={`text-sm ${
+                              p.isActive
+                                ? 'text-slate-900 dark:text-white'
+                                : 'text-slate-500 dark:text-slate-400'
                             }`}
                           >
-                            {formatCurrency(p.calculatedShare, currency)}
+                            {p.memberName}
+                            {p.isCurrentUser && (
+                              <span className="ml-1 text-blue-600 dark:text-blue-400">(vous)</span>
+                            )}
+                            {!p.isActive && <span className="ml-1">(a quitté le groupe)</span>}
                           </span>
-                          {p.customAmount !== null && (
-                            <span className="ml-1 text-xs text-slate-500 dark:text-slate-400">
-                              (fixe)
+                          <span className="text-right">
+                            <span
+                              className={`text-sm font-medium ${
+                                p.isCurrentUser
+                                  ? 'text-blue-600 dark:text-blue-400'
+                                  : 'text-slate-900 dark:text-white'
+                              }`}
+                            >
+                              {formatCurrency(p.calculatedShare, currency)}
                             </span>
-                          )}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
+                            {p.customAmount !== null && (
+                              <span className="ml-1 text-xs text-slate-500 dark:text-slate-400">
+                                (fixe)
+                              </span>
+                            )}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
 
                 {/* Actions: the destructive one sits apart from the primary action */}
