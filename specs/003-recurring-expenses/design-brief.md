@@ -44,11 +44,11 @@ Confirmed in the shape interview (2026-09-27):
   grouped « Répétition » block unfolds in place and the Date label becomes « À partir du ».
   No sub-screen, no second entry point, no end date.
 - **Frequency = segmented control + contextual day.** A 4-item segmented control
-  « Jour · Semaine · Mois · An », then a one-line contextual control that reads as a sentence:
+  « Jour · Semaine · Mois · Année », then a one-line contextual control that reads as a sentence:
   - *Jour*: nothing more.
   - *Semaine*: « Le [lun. mar. mer. jeu. ven. sam. dim.] » — single-select pill row.
   - *Mois*: « Le [ 13 ▾ ] de chaque mois » — select 1er…31.
-  - *An*: « Le 27 septembre de chaque année » — derived from « À partir du », no picker.
+  - *Année*: « Le 27 septembre de chaque année » — derived from « À partir du », no picker.
   The day defaults to the start date's day/weekday and follows it while the person has not
   touched the day control; once touched, it stays.
 - **Live rule summary is the focal moment of the form.** At the bottom of the block, a
@@ -100,8 +100,9 @@ Confirmed in the shape interview (2026-09-27):
 - **Rule sentences** (single source for form summary, rows and details):
   « Tous les jours » · « Toutes les semaines, le lundi » · « Tous les mois, le 13 » ·
   « Tous les mois, le 1er » · « Tous les ans, le 27 septembre ».
-  Day ≥ 29: caption « Les mois plus courts, le dernier jour du mois. »
-  29 février yearly: « Le 28 février les années non bissextiles. »
+  Day 31: caption « Les mois de 30 jours et en février, la dépense est ajoutée le dernier jour du mois. »
+  Day 30: « En février, la dépense est ajoutée le 28 (ou le 29). »
+  Day 29 monthly and 29 février yearly: « Les années non bissextiles, la dépense est ajoutée le 28 février. »
 - **First échéance today**: summary reads « Première échéance : aujourd'hui — la dépense sera
   ajoutée dès l'enregistrement. »
 - **Errors**: start date in the past → field error « La répétition commence au plus tôt

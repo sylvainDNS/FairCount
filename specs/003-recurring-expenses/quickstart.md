@@ -37,7 +37,7 @@ Attendu : tout vert, y compris `changelog.test.ts` (version 0.3.0 = tête du cha
 | 1 | Nouvelle dépense sans cocher « Répéter » | Formulaire identique à avant | US1-4, SC-006 |
 | 2 | Cocher « Répéter », Mois, jour 13, début aujourd'hui (≠ 13) | Résumé « Tous les mois, le 13 — Prochaine échéance : 13 <mois> » ; après « Ajouter », carte « 1 récurrence » ; aucune dépense ajoutée | US1-1, FR-007 |
 | 3 | Idem avec Jour, début aujourd'hui | Dépense datée d'aujourd'hui ajoutée tout de suite, avec icône ↻ ; carte : prochaine échéance demain | R1 |
-| 4 | Jour 31 | Mention « Les mois plus courts, le dernier jour du mois. » | US1-3 |
+| 4 | Jour 31 | Mention « Les mois de 30 jours et en février, la dépense est ajoutée le dernier jour du mois. » | US1-3 |
 | 5 | Date de début hier | Erreur de champ, enregistrement bloqué | US1-5, FR-008a |
 | 6 | Forcer une échéance passée : en local, `UPDATE recurring_expenses SET next_due_date = date('now','-2 day')` (via `wrangler d1 execute faircount-db --local --command …`), puis déclencher le cron | 3 dépenses générées (J-2, J-1, J), une seule fois ; relancer le cron → rien de plus | US2-2, FR-012 |
 | 7 | Supprimer une dépense générée puis relancer le cron | Pas régénérée | FR-023 |

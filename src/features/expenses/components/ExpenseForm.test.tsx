@@ -152,7 +152,7 @@ describe('ExpenseForm — repeat option', () => {
 
     await fillBasics(user);
     await user.click(screen.getByRole('checkbox', { name: 'Répéter cette dépense' }));
-    await user.click(screen.getByText('An'));
+    await user.click(screen.getByText('Année'));
     await user.click(screen.getByRole('button', { name: 'Ajouter' }));
 
     await waitFor(() => expect(mocks.recurringCreate).toHaveBeenCalledTimes(1));

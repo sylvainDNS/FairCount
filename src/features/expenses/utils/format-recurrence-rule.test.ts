@@ -21,18 +21,17 @@ describe('formatRecurrenceRule', () => {
 });
 
 describe('formatRecurrenceNote', () => {
-  it('explains month ends for monthly days ≥ 29', () => {
-    expect(formatRecurrenceNote({ frequency: 'monthly', dayOfMonth: 29 })).toBe(
-      'Les mois plus courts, le dernier jour du mois.',
-    );
-    expect(formatRecurrenceNote({ frequency: 'monthly', dayOfMonth: 31 })).toBe(
-      'Les mois plus courts, le dernier jour du mois.',
-    );
+  it.each([
+    [31, 'Les mois de 30 jours et en février, la dépense est ajoutée le dernier jour du mois.'],
+    [30, 'En février, la dépense est ajoutée le 28 (ou le 29).'],
+    [29, 'Les années non bissextiles, la dépense est ajoutée le 28 février.'],
+  ])('explains month ends for monthly day %i', (dayOfMonth, expected) => {
+    expect(formatRecurrenceNote({ frequency: 'monthly', dayOfMonth })).toBe(expected);
   });
 
   it('explains 29 February on non-leap years', () => {
     expect(formatRecurrenceNote({ frequency: 'yearly', month: 2, dayOfMonth: 29 })).toBe(
-      'Le 28 février les années non bissextiles.',
+      'Les années non bissextiles, la dépense est ajoutée le 28 février.',
     );
   });
 

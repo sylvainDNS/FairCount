@@ -18,7 +18,7 @@ const FREQUENCY_ITEMS: ReadonlyArray<{ readonly value: Frequency; readonly label
   { value: 'daily', label: 'Jour' },
   { value: 'weekly', label: 'Semaine' },
   { value: 'monthly', label: 'Mois' },
-  { value: 'yearly', label: 'An' },
+  { value: 'yearly', label: 'Année' },
 ];
 
 const WEEKDAY_ITEMS = [

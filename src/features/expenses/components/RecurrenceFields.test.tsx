@@ -43,7 +43,7 @@ describe('RecurrenceFields', () => {
     render(<Harness startDate={TODAY} />);
     const group = screen.getByRole('group', { name: 'Répétition' });
     const frequency = within(group).getByRole('radiogroup', { name: 'Fréquence' });
-    for (const name of ['Jour', 'Semaine', 'Mois', 'An']) {
+    for (const name of ['Jour', 'Semaine', 'Mois', 'Année']) {
       expect(within(frequency).getByRole('radio', { name })).toBeInTheDocument();
     }
     expect(within(frequency).getByRole('radio', { name: 'Mois' })).toBeChecked();
@@ -104,7 +104,7 @@ describe('RecurrenceFields', () => {
   it('explains month ends for day 31', () => {
     render(<Harness startDate="2026-10-31" />);
     expect(screen.getByRole('status')).toHaveTextContent(
-      'Les mois plus courts, le dernier jour du mois.',
+      'Les mois de 30 jours et en février, la dépense est ajoutée le dernier jour du mois.',
     );
   });
 });

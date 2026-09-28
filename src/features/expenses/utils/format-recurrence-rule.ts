@@ -52,11 +52,16 @@ export function formatRecurrenceRule(rule: RecurrenceRule): string {
 
 /** Extra explanation when the anchor day does not exist every month/year. */
 export function formatRecurrenceNote(rule: RecurrenceRule): string | null {
-  if (rule.frequency === 'monthly' && rule.dayOfMonth >= 29) {
-    return 'Les mois plus courts, le dernier jour du mois.';
+  const nonLeapNote = 'Les années non bissextiles, la dépense est ajoutée le 28 février.';
+  if (rule.frequency === 'monthly') {
+    if (rule.dayOfMonth === 31) {
+      return 'Les mois de 30 jours et en février, la dépense est ajoutée le dernier jour du mois.';
+    }
+    if (rule.dayOfMonth === 30) return 'En février, la dépense est ajoutée le 28 (ou le 29).';
+    if (rule.dayOfMonth === 29) return nonLeapNote;
   }
   if (rule.frequency === 'yearly' && rule.month === 2 && rule.dayOfMonth === 29) {
-    return 'Le 28 février les années non bissextiles.';
+    return nonLeapNote;
   }
   return null;
 }
