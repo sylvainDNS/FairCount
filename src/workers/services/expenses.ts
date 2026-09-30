@@ -1,6 +1,8 @@
-import { and, desc, eq, exists, gte, isNull, like, lte, sql } from 'drizzle-orm';
+import { and, desc, eq, exists, gte, isNotNull, isNull, like, lte, sql } from 'drizzle-orm';
 import type { Database } from '@/db';
 import * as schema from '@/db/schema';
+import { columnsToRule } from './recurring-expense-planning';
+import { validateParticipants } from './shared/participant-validation';
 import { calculateShares } from './shared/share-calculation';
 import {
   activeGroupMembersCondition,
@@ -25,6 +27,7 @@ interface ListExpensesParams {
   paidBy?: string | undefined;
   participantId?: string | undefined;
   search?: string | undefined;
+  recurring?: boolean | undefined;
 }
 
 interface CreateExpenseData {
@@ -41,51 +44,6 @@ interface UpdateExpenseData {
   date?: string | undefined;
   paidBy?: string | undefined;
   participants?: Array<{ memberId: string; customAmount?: number | null | undefined }> | undefined;
-}
-
-// Participant validation result
-type ParticipantValidationResult =
-  | { valid: true; customAmountsTotal: number }
-  | {
-      valid: false;
-      error: 'NO_PARTICIPANTS' | 'INVALID_PARTICIPANT' | 'CUSTOM_AMOUNTS_EXCEED_TOTAL';
-    };
-
-// Validate participants against active members and check custom amounts
-function validateParticipants(
-  participants: Array<{ memberId: string; customAmount?: number | null | undefined }>,
-  activeMemberIds: Set<string>,
-  totalAmount: number,
-): ParticipantValidationResult {
-  if (!participants || participants.length === 0) {
-    return { valid: false, error: 'NO_PARTICIPANTS' };
-  }
-
-  // Validate all participants are active members
-  const hasInvalidMember = participants.some((p) => !activeMemberIds.has(p.memberId));
-  if (hasInvalidMember) {
-    return { valid: false, error: 'INVALID_PARTICIPANT' };
-  }
-
-  // Validate custom amounts format
-  const hasInvalidCustomAmount = participants.some(
-    (p) =>
-      p.customAmount !== null &&
-      p.customAmount !== undefined &&
-      (typeof p.customAmount !== 'number' || p.customAmount < 0),
-  );
-  if (hasInvalidCustomAmount) {
-    return { valid: false, error: 'INVALID_PARTICIPANT' };
-  }
-
-  // Calculate total of custom amounts
-  const customAmountsTotal = participants.reduce((sum, p) => sum + (p.customAmount ?? 0), 0);
-
-  if (customAmountsTotal > totalAmount) {
-    return { valid: false, error: 'CUSTOM_AMOUNTS_EXCEED_TOTAL' };
-  }
-
-  return { valid: true, customAmountsTotal };
 }
 
 // List expenses with pagination and filters
@@ -113,6 +71,10 @@ export async function listExpenses(
 
   if (params.paidBy) {
     conditions.push(eq(schema.expenses.paidBy, params.paidBy));
+  }
+
+  if (params.recurring) {
+    conditions.push(isNotNull(schema.expenses.recurringExpenseId));
   }
 
   if (params.search) {
@@ -252,6 +214,7 @@ export async function listExpenses(
       createdAt: r.expense.createdAt.toISOString(),
       participantCount: expenseParticipants.length,
       myShare: shares.get(ctx.currentMemberId) ?? null,
+      recurringExpenseId: r.expense.recurringExpenseId,
     };
   });
 
@@ -315,6 +278,15 @@ export async function getExpense(ctx: ExpenseContext, expenseId: string): Promis
   }));
   const shares = calculateShares(result.expense.amount, participantData, memberCoefficients);
 
+  // Recurrence that generated it, even soft-deleted (the UI keeps showing its rule)
+  const recurringExpenseId = result.expense.recurringExpenseId;
+  const [recurrence] = recurringExpenseId
+    ? await ctx.db
+        .select()
+        .from(schema.recurringExpenses)
+        .where(eq(schema.recurringExpenses.id, recurringExpenseId))
+    : [];
+
   // Get creator name
   const [creator] = await ctx.db
     .select({ name: memberDisplayName, userId: schema.groupMembers.userId })
@@ -349,6 +321,13 @@ export async function getExpense(ctx: ExpenseContext, expenseId: string): Promis
       calculatedShare: shares.get(p.participant.memberId) ?? 0,
       isCurrentUser: p.memberUserId === ctx.userId,
     })),
+    recurrence: recurrence
+      ? {
+          id: recurrence.id,
+          rule: columnsToRule(recurrence),
+          isDeleted: recurrence.deletedAt !== null,
+        }
+      : null,
   });
 }
 

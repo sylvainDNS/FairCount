@@ -1,6 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { APP_VERSION } from '@/features/changelog/lib/app-version';
 import { resetForTests } from '@/features/changelog/store/changelog-storage';
 import { Layout } from './Layout';
 
@@ -25,7 +26,7 @@ const renderLayout = () =>
   );
 
 describe('Layout', () => {
-  beforeEach(() => seed('0.2.0', '0.2.0'));
+  beforeEach(() => seed(APP_VERSION, APP_VERSION));
 
   describe('changelog summary', () => {
     it('shows the summary after an update', async () => {
@@ -42,7 +43,7 @@ describe('Layout', () => {
 
   describe('sidebar unread dot', () => {
     it('flags unread changelog entries on the Profil link', () => {
-      seed('0.2.0', '0.1.0');
+      seed(APP_VERSION, '0.1.0');
       renderLayout();
       const sidebar = screen.getByRole('complementary');
       const link = within(sidebar).getByRole('link', { name: 'Profil, nouveautés non lues' });

@@ -3,12 +3,15 @@ import { Button, ConfirmDialog, EmptyState, EmptyStateIcons, Skeleton } from '@/
 import { useInfiniteLoad } from '@/shared/hooks/useInfiniteLoad';
 import { expensesApi } from '../api';
 import { useExpenses } from '../hooks/useExpenses';
+import { useRecurringExpenses } from '../hooks/useRecurringExpenses';
 import type { ExpenseError, ExpenseSummary } from '../types';
 import { EXPENSE_ERROR_MESSAGES } from '../types';
 import { ExpenseCard } from './ExpenseCard';
 import { ExpenseDetail } from './ExpenseDetail';
 import { ExpenseFilters } from './ExpenseFilters';
 import { ExpenseForm } from './ExpenseForm';
+import { RecurrenceDetail } from './RecurrenceDetail';
+import { RecurrenceSection } from './RecurrenceSection';
 
 interface ExpenseListProps {
   readonly groupId: string;
@@ -18,7 +21,7 @@ interface ExpenseListProps {
 export const ExpenseList = ({ groupId, currency }: ExpenseListProps) => {
   const {
     expenses,
-    isLoading,
+    isLoading: isLoadingExpenses,
     isFetching,
     isLoadingMore,
     hasMore,
@@ -27,10 +30,16 @@ export const ExpenseList = ({ groupId, currency }: ExpenseListProps) => {
     loadMore,
     refresh,
   } = useExpenses(groupId);
+  // Same query as RecurrenceSection (deduplicated): wait for both so the
+  // « Récurrences » card never pops in above an already rendered list
+  const { isLoading: isLoadingRecurrences } = useRecurringExpenses(groupId);
+  const isLoading = isLoadingExpenses || isLoadingRecurrences;
 
   const [selectedExpense, setSelectedExpense] = useState<ExpenseSummary | null>(null);
+  const [selectedRecurrenceId, setSelectedRecurrenceId] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [expenseToDelete, setExpenseToDelete] = useState<string | null>(null);
+  const [deletingGenerated, setDeletingGenerated] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
@@ -54,10 +63,20 @@ export const ExpenseList = ({ groupId, currency }: ExpenseListProps) => {
     refresh();
   }, [refresh]);
 
-  const handleDeleteRequest = useCallback((expenseId: string) => {
-    setExpenseToDelete(expenseId);
+  // From an expense detail: swap the dialog for the recurrence that generated it
+  const handleOpenRecurrence = useCallback((recurringExpenseId: string) => {
     setSelectedExpense(null);
+    setSelectedRecurrenceId(recurringExpenseId);
   }, []);
+
+  const handleDeleteRequest = useCallback(
+    (expenseId: string) => {
+      setDeletingGenerated(!!selectedExpense?.recurringExpenseId);
+      setExpenseToDelete(expenseId);
+      setSelectedExpense(null);
+    },
+    [selectedExpense],
+  );
 
   const handleDeleteConfirm = useCallback(async () => {
     if (!expenseToDelete) return;
@@ -96,6 +115,15 @@ export const ExpenseList = ({ groupId, currency }: ExpenseListProps) => {
         )}
       </div>
 
+      {/* Recurrences: templates, above the filters on purpose (never filtered) */}
+      {!isLoading && (
+        <RecurrenceSection
+          groupId={groupId}
+          currency={currency}
+          onSelect={setSelectedRecurrenceId}
+        />
+      )}
+
       {/* Filters */}
       {!isLoading && (
         <ExpenseFilters groupId={groupId} filters={filters} onFiltersChange={setFilters} />
@@ -126,7 +154,11 @@ export const ExpenseList = ({ groupId, currency }: ExpenseListProps) => {
         </div>
       ) : expenses.length === 0 ? (
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
-          {filters.startDate || filters.endDate || filters.paidBy || filters.search ? (
+          {filters.startDate ||
+          filters.endDate ||
+          filters.paidBy ||
+          filters.search ||
+          filters.recurring ? (
             <EmptyState
               icon={<EmptyStateIcons.Search />}
               title="Aucun résultat"
@@ -191,6 +223,17 @@ export const ExpenseList = ({ groupId, currency }: ExpenseListProps) => {
           onClose={() => setSelectedExpense(null)}
           onEditSuccess={handleEditSuccess}
           onDeleteRequest={handleDeleteRequest}
+          onOpenRecurrence={handleOpenRecurrence}
+        />
+      )}
+
+      {/* Recurrence detail */}
+      {selectedRecurrenceId && (
+        <RecurrenceDetail
+          groupId={groupId}
+          recurringExpenseId={selectedRecurrenceId}
+          currency={currency}
+          onClose={() => setSelectedRecurrenceId(null)}
         />
       )}
 
@@ -201,7 +244,9 @@ export const ExpenseList = ({ groupId, currency }: ExpenseListProps) => {
         description={
           deleteError
             ? deleteError
-            : 'Voulez-vous vraiment supprimer cette dépense ? Cette action est irréversible.'
+            : deletingGenerated
+              ? 'Voulez-vous vraiment supprimer cette dépense ? Cette action est irréversible. Seule cette dépense est supprimée ; la récurrence continue.'
+              : 'Voulez-vous vraiment supprimer cette dépense ? Cette action est irréversible.'
         }
         confirmLabel="Supprimer"
         loadingText="Suppression..."

@@ -136,6 +136,12 @@ components:
     textColor: "{colors.ink-soft}"
     rounded: "{rounded.md}"
     padding: "2px 10px"
+  toast:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.ink}"
+    typography: "{typography.label}"
+    rounded: "{rounded.xl}"
+    padding: "16px"
   bottom-nav:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.slate-muted}"
@@ -170,10 +176,10 @@ A cool, restrained slate palette with one steady blue accent and a meaning-bound
 
 ### Secondary
 - **Owed Green** (`owed-green`): a positive balance, "On vous doit …". Used as text color on amounts and, as **Owed Green Wash** with a green border, as the background of the personal balance summary when it is positive. **Owed Green Light** replaces it on dark surfaces.
-- **Owing Red** (`owing-red`): a negative balance, "Vous devez …", plus destructive actions (danger buttons, delete links) and field errors. **Owing Red Wash** backs the negative balance summary and danger hover states. **Owing Red Light** on dark surfaces.
+- **Owing Red** (`owing-red`): a negative balance, "Vous devez …", plus destructive actions (danger buttons, delete links), field errors and the icon of error toasts. **Owing Red Wash** backs the negative balance summary and danger hover states. **Owing Red Light** on dark surfaces.
 
 ### Tertiary
-- **Caution Amber** (`caution-amber`): warning badges only. Rare by design.
+- **Caution Amber** (`caution-amber`): warning badges and the icon of warning toasts only. Rare by design.
 
 ### Neutral
 - **Ink** (`ink`): primary text, headings, amounts at rest.
@@ -187,7 +193,18 @@ A cool, restrained slate palette with one steady blue accent and a meaning-bound
 ### Named Rules
 **The One Voice Rule.** Steady Blue is the only accent that means "act here". Do not introduce a second interactive hue. Steady Blue is used directly as Tailwind's `blue-*` scale (600 fill, 700 deep, 400 on dark, 50 wash); there is no separate `primary-*` token scale, and the former teal one has been removed.
 
-**The Money Speaks in Two Colors Rule.** Green and red appear only where a balance or a destructive consequence is shown. Never use them for decoration, category coding or success toasts that are not about money.
+**The Money Speaks in Two Colors Rule.** Green and red appear only where a balance or a destructive consequence is shown. Never use them for decoration, category coding or confirmations. A toast never shows a balance, so no toast is ever green, not even one confirming an expense or a settlement; the balance screens carry that color.
+
+**The Quiet Toast Rule.** Every toast sits on the same neutral surface; only its icon takes a hue, and the words carry the meaning. No tinted backgrounds, no colored borders, no colored titles:
+
+| Type | When | Icon (20px stroke) | Icon color |
+|------|------|--------------------|------------|
+| `success` | an action the person just took worked (« Dépense enregistrée », « Récurrence désactivée ») | check | Steady Blue |
+| `info` | the app has something to tell, unprompted (« Mise à jour disponible ») | circled i | Steady Blue |
+| `warning` | something will need attention but nothing failed | triangle | Caution Amber |
+| `error` | an action failed; the title names the problem, the description the recovery | circled ! | Owing Red |
+
+A toast action button is always the primary Steady Blue button, whatever the type: it is an action, and actions speak blue. Success and info share a hue on purpose: in this system blue is the app's own voice (actions, links, informational callouts), and the glyph is enough to tell them apart.
 
 **The Informs-Not-Alarms Rule.** Owing Red states a balance; it never comes with warning icons, shaking, bold alerts or guilt copy. A negative balance uses the same calm layout as a positive one.
 
@@ -282,7 +299,10 @@ List rows inside a bordered card: 40px circular avatar with white initials on a 
 Ark UI dialogs over a 50% black backdrop. Full-screen white sheets on phones; from 640px, centered 12px-rounded panels (max 448–512px) with the Dialog shadow and 24px padding.
 
 ### Toasts
-Ark UI toasts, full-width on phones (with gap insets). A type-colored icon, a 14px/500 title and a 14px muted description, with an 8px-rounded close button.
+Ark UI toasts, full-width on phones (with gap insets), max 384px elsewhere, stacked at the bottom above the tab bar.
+- **Surface:** Surface (Night Raised in dark), 1px Line border (Night Line / slate-700 in dark), 12px radius, 16px padding, Popover shadow: toasts float, so they are the one small element that casts a real shadow.
+- **Content:** a 20px type icon colored per the Quiet Toast Rule, a 14px/500 Ink title, an optional 14px Slate Muted description, an optional primary Steady Blue action button, and an 8px-rounded Slate Placeholder close button.
+- **Timing:** 5 s by default, 8 s for errors (they carry a recovery to read).
 
 ## Do's and Don'ts
 
@@ -297,6 +317,7 @@ Ark UI toasts, full-width on phones (with gap insets). A type-colored icon, a 14
 ### Don't:
 - **Don't** introduce a second accent hue; the active nav item, filters and links all speak Steady Blue.
 - **Don't** use green or red outside balances, errors and destructive actions.
+- **Don't** tint a toast's background or border by type; only the icon changes color (Quiet Toast Rule).
 - **Don't** make a negative balance feel alarming: no warning triangles, bold alert banners or guilt copy.
 - **Don't** add confetti, badges, streaks or saturated celebratory color.
 - **Don't** drift toward a cold banking look: no dense dashboards, dark corporate chrome or financial jargon.

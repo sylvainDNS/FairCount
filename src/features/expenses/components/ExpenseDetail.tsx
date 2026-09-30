@@ -5,6 +5,7 @@ import { Button } from '@/shared/components';
 import { formatCurrency } from '@/shared/utils/format';
 import { useExpense } from '../hooks/useExpense';
 import { EXPENSE_ERROR_MESSAGES } from '../types';
+import { formatRecurrenceRule } from '../utils/format-recurrence-rule';
 import { ExpenseForm } from './ExpenseForm';
 
 interface ExpenseDetailProps {
@@ -14,6 +15,8 @@ interface ExpenseDetailProps {
   readonly onClose: () => void;
   readonly onEditSuccess: () => void;
   readonly onDeleteRequest: (expenseId: string) => void;
+  /** Opens the recurrence that generated the expense */
+  readonly onOpenRecurrence?: ((recurringExpenseId: string) => void) | undefined;
 }
 
 export const ExpenseDetail = ({
@@ -23,6 +26,7 @@ export const ExpenseDetail = ({
   onClose,
   onEditSuccess,
   onDeleteRequest,
+  onOpenRecurrence,
 }: ExpenseDetailProps) => {
   const { expense, isLoading, error } = useExpense(groupId, expenseId);
   const [showEditForm, setShowEditForm] = useState(false);
@@ -48,10 +52,11 @@ export const ExpenseDetail = ({
     <Dialog.Root open onOpenChange={(details) => !details.open && onClose()}>
       <Portal>
         <Dialog.Backdrop className="fixed inset-0 bg-black/50 z-50" />
-        <Dialog.Positioner className="fixed inset-0 flex items-center justify-center p-4 z-50 overflow-y-auto">
+        <Dialog.Positioner className="fixed inset-0 flex items-center justify-center p-4 z-50">
+          {/* Height capped to the viewport: the header and actions stay put, the body scrolls */}
           <Dialog.Content
             aria-labelledby="expense-detail-dialog-title"
-            className="bg-white dark:bg-slate-900 rounded-xl w-full max-w-lg shadow-xl my-8"
+            className="flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col rounded-xl bg-white shadow-xl dark:bg-slate-900"
           >
             {isLoading ? (
               <div className="p-6">
@@ -96,78 +101,117 @@ export const ExpenseDetail = ({
                   </p>
                 </div>
 
-                {/* Info */}
-                <div className="p-6 border-b border-slate-200 dark:border-slate-800 space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-600 dark:text-slate-400">Payé par</span>
-                    <span className="text-slate-900 dark:text-white font-medium">
-                      {expense.paidBy.name}
-                      {expense.paidBy.isJointAccount && (
-                        <span className="text-emerald-600 dark:text-emerald-400 ml-1">
-                          (compte commun)
-                        </span>
-                      )}
-                      {expense.paidBy.isCurrentUser && (
-                        <span className="text-blue-600 dark:text-blue-400 ml-1">(vous)</span>
-                      )}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-600 dark:text-slate-400">Ajouté par</span>
-                    <span className="text-slate-900 dark:text-white font-medium">
-                      {expense.createdBy.name}
-                      {expense.createdBy.isCurrentUser && (
-                        <span className="text-blue-600 dark:text-blue-400 ml-1">(vous)</span>
-                      )}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Participants breakdown */}
-                <div className="p-6 border-b border-slate-200 dark:border-slate-800">
-                  <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
-                    Répartition ({expense.participants.length} participant
-                    {expense.participants.length > 1 ? 's' : ''})
-                  </h3>
-                  <div className="space-y-2">
-                    {expense.participants.map((p) => (
-                      <div
-                        key={p.id}
-                        className={`flex justify-between items-center py-2 px-3 rounded-lg ${
-                          p.isCurrentUser
-                            ? 'bg-blue-50 dark:bg-blue-900/20'
-                            : 'bg-slate-50 dark:bg-slate-800/50'
-                        }`}
-                      >
-                        <span className="text-sm text-slate-900 dark:text-white">
-                          {p.memberName}
-                          {p.isCurrentUser && (
-                            <span className="text-blue-600 dark:text-blue-400 ml-1">(vous)</span>
-                          )}
-                        </span>
-                        <div className="text-right">
-                          <span
-                            className={`text-sm font-medium ${
-                              p.isCurrentUser
-                                ? 'text-blue-600 dark:text-blue-400'
-                                : 'text-slate-900 dark:text-white'
-                            }`}
-                          >
-                            {formatCurrency(p.calculatedShare, currency)}
+                <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+                  {/* Info */}
+                  <div className="p-6 border-b border-slate-200 dark:border-slate-800 space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-600 dark:text-slate-400">Payé par</span>
+                      <span className="text-slate-900 dark:text-white font-medium">
+                        {expense.paidBy.name}
+                        {expense.paidBy.isJointAccount && (
+                          <span className="text-emerald-600 dark:text-emerald-400 ml-1">
+                            (compte commun)
                           </span>
-                          {p.customAmount !== null && (
-                            <span className="text-xs text-slate-500 dark:text-slate-400 ml-1">
-                              (fixe)
+                        )}
+                        {expense.paidBy.isCurrentUser && (
+                          <span className="text-blue-600 dark:text-blue-400 ml-1">(vous)</span>
+                        )}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-600 dark:text-slate-400">Ajouté par</span>
+                      <span className="text-slate-900 dark:text-white font-medium">
+                        {expense.createdBy.name}
+                        {expense.createdBy.isCurrentUser && (
+                          <span className="text-blue-600 dark:text-blue-400 ml-1">(vous)</span>
+                        )}
+                      </span>
+                    </div>
+                    {expense.recurrence && (
+                      <div className="flex justify-between gap-4 text-sm">
+                        <span className="text-slate-600 dark:text-slate-400">Récurrence</span>
+                        {expense.recurrence.isDeleted || !onOpenRecurrence ? (
+                          <span className="text-right">
+                            <span className="block font-medium text-slate-900 dark:text-white">
+                              {formatRecurrenceRule(expense.recurrence.rule)}
                             </span>
-                          )}
-                        </div>
+                            {expense.recurrence.isDeleted && (
+                              <span className="block text-xs text-slate-500 dark:text-slate-400">
+                                Récurrence supprimée
+                              </span>
+                            )}
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (expense.recurrence) onOpenRecurrence(expense.recurrence.id);
+                            }}
+                            className="inline-flex items-center gap-1 rounded font-medium text-blue-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:text-blue-400"
+                          >
+                            {formatRecurrenceRule(expense.recurrence.rule)}
+                            <svg
+                              className="h-4 w-4"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth={2}
+                              viewBox="0 0 24 24"
+                              aria-hidden="true"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                            </svg>
+                          </button>
+                        )}
                       </div>
-                    ))}
+                    )}
+                  </div>
+
+                  {/* Participants breakdown */}
+                  <div className="p-6 border-b border-slate-200 dark:border-slate-800">
+                    <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
+                      Répartition ({expense.participants.length} participant
+                      {expense.participants.length > 1 ? 's' : ''})
+                    </h3>
+                    <div className="space-y-2">
+                      {expense.participants.map((p) => (
+                        <div
+                          key={p.id}
+                          className={`flex justify-between items-center py-2 px-3 rounded-lg ${
+                            p.isCurrentUser
+                              ? 'bg-blue-50 dark:bg-blue-900/20'
+                              : 'bg-slate-50 dark:bg-slate-800/50'
+                          }`}
+                        >
+                          <span className="text-sm text-slate-900 dark:text-white">
+                            {p.memberName}
+                            {p.isCurrentUser && (
+                              <span className="text-blue-600 dark:text-blue-400 ml-1">(vous)</span>
+                            )}
+                          </span>
+                          <div className="text-right">
+                            <span
+                              className={`text-sm font-medium ${
+                                p.isCurrentUser
+                                  ? 'text-blue-600 dark:text-blue-400'
+                                  : 'text-slate-900 dark:text-white'
+                              }`}
+                            >
+                              {formatCurrency(p.calculatedShare, currency)}
+                            </span>
+                            {p.customAmount !== null && (
+                              <span className="text-xs text-slate-500 dark:text-slate-400 ml-1">
+                                (fixe)
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
                 {/* Actions */}
-                <div className="p-6 flex gap-3">
+                <div className="p-6 flex flex-wrap gap-3">
                   <Dialog.CloseTrigger asChild>
                     <Button variant="outline" className="flex-1">
                       Fermer

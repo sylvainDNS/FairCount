@@ -115,6 +115,15 @@ export const invalidations = {
     queryClient.invalidateQueries({ queryKey: queryKeys.groups.list() });
   },
 
+  // Recurring expenses: creation or reactivation may generate an expense
+  // right away, so amounts (balances, suggestions, group list) can change too.
+  afterRecurringExpenseChange: (queryClient: QueryClient, groupId: string) => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.expenses.byGroup(groupId) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.balances.byGroup(groupId) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.settlements.suggestions(groupId) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.groups.list() });
+  },
+
   // Settlements
   afterSettlementCreate: (queryClient: QueryClient, groupId: string) => {
     queryClient.invalidateQueries({ queryKey: queryKeys.settlements.byGroup(groupId) });

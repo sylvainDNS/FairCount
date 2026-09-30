@@ -9,6 +9,14 @@ export { groupInvitations, groups } from './groups';
 export type { GroupMember, NewGroupMember } from './members';
 // Members
 export { groupMembers } from './members';
+export type {
+  NewRecurringExpense,
+  NewRecurringExpenseParticipant,
+  RecurringExpense,
+  RecurringExpenseParticipant,
+} from './recurring-expenses';
+// Recurring expenses
+export { recurringExpenseParticipants, recurringExpenses } from './recurring-expenses';
 export type { NewSettlement, Settlement } from './settlements';
 // Settlements
 export { settlements } from './settlements';

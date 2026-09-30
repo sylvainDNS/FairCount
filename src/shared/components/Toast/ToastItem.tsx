@@ -1,7 +1,6 @@
 import { Toast, type ToastOptions } from '@ark-ui/react/toast';
 import { cva } from 'class-variance-authority';
 import type { ReactElement } from 'react';
-import { twMerge } from 'tailwind-merge';
 
 type ToastType = 'success' | 'error' | 'warning' | 'info';
 
@@ -59,25 +58,15 @@ const icons: Record<ToastType, ReactElement> = {
   ),
 };
 
-const toastContainerVariants = cva(
-  'flex items-start gap-3 p-4 rounded-xl border shadow-lg w-[calc(100vw-2rem)] max-w-sm mx-auto',
-  {
-    variants: {
-      type: {
-        success: 'bg-green-50 dark:bg-green-950/90 border-green-200 dark:border-green-800',
-        error: 'bg-red-50 dark:bg-red-950/90 border-red-200 dark:border-red-800',
-        warning: 'bg-amber-50 dark:bg-amber-950/90 border-amber-200 dark:border-amber-800',
-        info: 'bg-white dark:bg-slate-800/90 border-slate-200 dark:border-slate-700',
-      },
-    },
-    defaultVariants: { type: 'info' },
-  },
-);
+// DESIGN.md « Quiet Toast Rule »: every toast shares one neutral surface;
+// only the icon takes a hue, and the words carry the meaning.
+const toastSurfaceClasses =
+  'flex items-start gap-3 p-4 rounded-xl border shadow-lg w-[calc(100vw-2rem)] max-w-sm mx-auto bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700';
 
 const toastIconVariants = cva('shrink-0', {
   variants: {
     type: {
-      success: 'text-green-600 dark:text-green-400',
+      success: 'text-blue-600 dark:text-blue-400',
       error: 'text-red-600 dark:text-red-400',
       warning: 'text-amber-600 dark:text-amber-400',
       info: 'text-blue-600 dark:text-blue-400',
@@ -95,39 +84,30 @@ interface ToastItemProps {
   readonly toast: ToastOptions;
 }
 
-const actionVariants = cva('text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors mt-2', {
-  variants: {
-    type: {
-      success: 'bg-green-600 text-white hover:bg-green-700',
-      error: 'bg-red-600 text-white hover:bg-red-700',
-      warning: 'bg-amber-600 text-white hover:bg-amber-700',
-      info: 'bg-blue-600 text-white hover:bg-blue-700',
-    },
-  },
-  defaultVariants: { type: 'info' },
-});
+// A toast action is an action whatever the toast type: it always speaks Steady Blue
+const actionClasses =
+  'text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors mt-2 bg-blue-600 text-white hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2';
 
 export const ToastItem = ({ toast }: ToastItemProps) => {
   const type = resolveType(toast.type);
 
   return (
-    <div className={twMerge(toastContainerVariants({ type }))}>
-      <div className={twMerge(toastIconVariants({ type }))}>{icons[type]}</div>
+    <div data-toast-surface className={toastSurfaceClasses}>
+      <div data-toast-icon className={toastIconVariants({ type })}>
+        {icons[type]}
+      </div>
 
       <div className="flex-1 min-w-0">
         <Toast.Title className="font-medium text-sm text-slate-900 dark:text-white">
           {toast.title}
         </Toast.Title>
         {toast.description && (
-          <Toast.Description className="text-sm text-slate-600 dark:text-slate-400 mt-0.5">
+          <Toast.Description className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
             {toast.description}
           </Toast.Description>
         )}
         {toast.action && (
-          <Toast.ActionTrigger
-            className={twMerge(actionVariants({ type }))}
-            onClick={toast.action.onClick}
-          >
+          <Toast.ActionTrigger className={actionClasses} onClick={toast.action.onClick}>
             {toast.action.label}
           </Toast.ActionTrigger>
         )}
