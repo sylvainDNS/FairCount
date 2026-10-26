@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { RECURRENCE_TIME_ZONE, todayIn } from '@/lib/recurrence';
 import { toaster } from '@/shared/components';
+import { focusOutside } from '@/test/focus-outside';
 import type { ExpenseDetail, RecurringExpenseDetail } from '../types';
 import { ExpenseForm } from './ExpenseForm';
 
@@ -332,5 +333,57 @@ describe('ExpenseForm — generated expense', () => {
         'Ajoutée automatiquement par une récurrence. La modifier ne change pas les prochaines.',
       ),
     ).toBeInTheDocument();
+  });
+});
+
+describe('ExpenseForm — dismissal', () => {
+  const expense: ExpenseDetail = {
+    id: 'e1',
+    groupId: 'g1',
+    paidBy: { id: 'alex', name: 'Alex', isCurrentUser: true, isJointAccount: false },
+    amount: 4200,
+    description: 'Courses',
+    date: '2026-10-20',
+    createdBy: { id: 'alex', name: 'Alex', isCurrentUser: true },
+    createdAt: '2026-10-20T00:00:00.000Z',
+    updatedAt: '2026-10-20T00:00:00.000Z',
+    participants: [],
+    recurrence: null,
+  };
+
+  const renderEdit = (onCancel = vi.fn()) =>
+    render(
+      <>
+        <button type="button">Dehors</button>
+        <ExpenseForm
+          groupId="g1"
+          currency="EUR"
+          expense={expense}
+          onSuccess={vi.fn()}
+          onCancel={onCancel}
+        />
+      </>,
+      { wrapper },
+    );
+
+  it('stays open when focus moves outside programmatically', async () => {
+    const onCancel = vi.fn();
+    renderEdit(onCancel);
+    await screen.findByRole('dialog', { name: 'Modifier la dépense' });
+
+    await focusOutside(screen.getByRole('button', { name: 'Dehors', hidden: true }));
+
+    expect(onCancel).not.toHaveBeenCalled();
+    expect(screen.getByRole('dialog', { name: 'Modifier la dépense' })).toBeInTheDocument();
+  });
+
+  it('cancels from the Annuler button', async () => {
+    const user = userEvent.setup();
+    const onCancel = vi.fn();
+    renderEdit(onCancel);
+
+    await user.click(await screen.findByRole('button', { name: 'Annuler' }));
+
+    expect(onCancel).toHaveBeenCalledTimes(1);
   });
 });

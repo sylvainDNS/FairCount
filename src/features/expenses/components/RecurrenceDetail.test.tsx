@@ -1,6 +1,7 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { focusOutside } from '@/test/focus-outside';
 import type { RecurringExpenseDetail } from '../types';
 import { RecurrenceDetail } from './RecurrenceDetail';
 
@@ -62,7 +63,10 @@ const active: RecurringExpenseDetail = {
 
 const renderDetail = (onClose = vi.fn()) =>
   render(
-    <RecurrenceDetail groupId="g1" recurringExpenseId="r1" currency="EUR" onClose={onClose} />,
+    <>
+      <button type="button">Dehors</button>
+      <RecurrenceDetail groupId="g1" recurringExpenseId="r1" currency="EUR" onClose={onClose} />
+    </>,
   );
 
 const resetActions = () => {
@@ -180,5 +184,37 @@ describe('RecurrenceDetail — actions', () => {
     renderDetail();
     await user.click(screen.getByRole('button', { name: 'Modifier' }));
     expect(screen.getByText('Formulaire de récurrence')).toBeInTheDocument();
+  });
+});
+
+describe('RecurrenceDetail — dismissal', () => {
+  beforeEach(() => {
+    state.recurrence = active;
+    resetActions();
+  });
+
+  it('stays open when focus moves outside programmatically', async () => {
+    const onClose = vi.fn();
+    renderDetail(onClose);
+    await screen.findByRole('dialog', { name: 'Loyer' });
+
+    await focusOutside(screen.getByRole('button', { name: 'Dehors', hidden: true }));
+
+    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.getByRole('dialog', { name: 'Loyer' })).toBeInTheDocument();
+  });
+
+  it('keeps the delete confirmation open when focus moves outside programmatically', async () => {
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    renderDetail(onClose);
+
+    await user.click(await screen.findByRole('button', { name: 'Supprimer la récurrence' }));
+    await screen.findByRole('dialog', { name: 'Supprimer la récurrence' });
+
+    await focusOutside(screen.getByRole('button', { name: 'Dehors', hidden: true }));
+
+    expect(screen.getByRole('dialog', { name: 'Supprimer la récurrence' })).toBeInTheDocument();
+    expect(onClose).not.toHaveBeenCalled();
   });
 });

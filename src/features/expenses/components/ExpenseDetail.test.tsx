@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { ComponentProps } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { focusOutside } from '@/test/focus-outside';
 import type { ExpenseDetail as ExpenseDetailType } from '../types';
 import { ExpenseDetail } from './ExpenseDetail';
 
@@ -24,17 +26,21 @@ const base: ExpenseDetailType = {
   recurrence: null,
 };
 
-const renderDetail = (onOpenRecurrence = vi.fn()) =>
+const renderDetail = (props: Partial<ComponentProps<typeof ExpenseDetail>> = {}) =>
   render(
-    <ExpenseDetail
-      groupId="g1"
-      expenseId="e1"
-      currency="EUR"
-      onClose={vi.fn()}
-      onEditSuccess={vi.fn()}
-      onDeleteRequest={vi.fn()}
-      onOpenRecurrence={onOpenRecurrence}
-    />,
+    <>
+      <button type="button">Dehors</button>
+      <ExpenseDetail
+        groupId="g1"
+        expenseId="e1"
+        currency="EUR"
+        onClose={vi.fn()}
+        onEditSuccess={vi.fn()}
+        onDeleteRequest={vi.fn()}
+        onOpenRecurrence={vi.fn()}
+        {...props}
+      />
+    </>,
   );
 
 describe('ExpenseDetail — recurrence row', () => {
@@ -54,7 +60,7 @@ describe('ExpenseDetail — recurrence row', () => {
       ...base,
       recurrence: { id: 'r1', rule: { frequency: 'monthly', dayOfMonth: 13 }, isDeleted: false },
     };
-    renderDetail(onOpenRecurrence);
+    renderDetail({ onOpenRecurrence });
 
     expect(screen.getByText('Récurrence')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Tous les mois, le 13' }));
@@ -71,5 +77,42 @@ describe('ExpenseDetail — recurrence row', () => {
     expect(screen.getByText('Tous les mois, le 13')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Tous les mois, le 13' })).not.toBeInTheDocument();
     expect(screen.getByText('Récurrence supprimée')).toBeInTheDocument();
+  });
+});
+
+describe('ExpenseDetail — dismissal', () => {
+  beforeEach(() => {
+    state.expense = base;
+  });
+
+  it('stays open when focus moves outside programmatically', async () => {
+    const onClose = vi.fn();
+    renderDetail({ onClose });
+    await screen.findByRole('dialog');
+
+    await focusOutside(screen.getByRole('button', { name: 'Dehors', hidden: true }));
+
+    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
+
+  it('closes from the Fermer button', async () => {
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    renderDetail({ onClose });
+
+    await user.click(await screen.findByRole('button', { name: 'Fermer' }));
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('requests the deletion from the Supprimer button', async () => {
+    const user = userEvent.setup();
+    const onDeleteRequest = vi.fn();
+    renderDetail({ onDeleteRequest });
+
+    await user.click(await screen.findByRole('button', { name: 'Supprimer' }));
+
+    expect(onDeleteRequest).toHaveBeenCalledWith('e1');
   });
 });

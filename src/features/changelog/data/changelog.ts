@@ -5,6 +5,16 @@ import type { ChangelogRelease } from '../types';
 // Texts: French, plain language, inclusive writing.
 export const changelog = [
   {
+    version: '0.3.1',
+    date: '2026-10-26',
+    changes: [
+      {
+        category: 'fix',
+        text: 'Les fenêtres pour supprimer ou modifier une dépense ne se ferment plus toutes seules sur Firefox',
+      },
+    ],
+  },
+  {
     version: '0.3.0',
     date: '2026-09-30',
     changes: [
